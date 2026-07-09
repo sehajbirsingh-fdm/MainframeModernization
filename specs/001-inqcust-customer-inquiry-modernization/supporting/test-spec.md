@@ -23,7 +23,7 @@ Given customers `0000000001`, `0000000002`, and `0000000005` exist for sort code
 Given no customers exist for sort code `999999`, when customer number `9999999999` is requested, then response has inquirySuccess `N` and fail code `9`.
 
 ### TC-005 Random customer found
-Given random selector returns a customer number that exists, when customer number `0000000000` is requested, then the matching customer is returned with inquirySuccess `Y`.
+Given `0000000000` triggers random command mode and random selector returns a customer number that exists, when customer number `0000000000` is requested, then the matching customer is returned with inquirySuccess `Y`.
 
 ### TC-006 Random customer retry failure
 Given random selector never returns an existing customer within retry limit, when random lookup is requested, then response has inquirySuccess `N` and fail code `1`.

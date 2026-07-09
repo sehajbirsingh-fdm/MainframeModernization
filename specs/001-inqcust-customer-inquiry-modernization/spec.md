@@ -78,6 +78,7 @@ And risk reasons explain the rule that triggered the result.
 ### Business Rules
 
 - **BR-001**: `0000000000` means random customer lookup.
+- **BR-001a**: `0000000000` is a command value for random mode and is not looked up as a literal customer number.
 - **BR-002**: `9999999999` means latest/highest customer lookup.
 - **BR-003**: A found customer returns `inquirySuccess = Y` and `inquiryFailCode = 0`.
 - **BR-004**: A specific customer not found returns `inquirySuccess = N` and `inquiryFailCode = 1`.
