@@ -35,8 +35,8 @@ public class StepDefinitions {
 
     @Given("the API is running at localhost:8080")
     public void theApiIsRunningAtLocalhost8080() {
-        // Base URI/port are configured in @Before; this step is a no-op placeholder
-        // that keeps the feature readable and documents the assumed environment.
+        assertThat(RestAssured.baseURI).isEqualTo("http://localhost");
+        assertThat(RestAssured.port).isEqualTo(8080);
     }
 
     @When("I request the customer with sort code {string} and customer number {string}")
