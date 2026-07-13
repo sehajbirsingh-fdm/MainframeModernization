@@ -11,7 +11,10 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 @Suite
 @IncludeEngines("cucumber")
 @SelectPackages("com.modernizemainframe")
-@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty")
+@ConfigurationParameter(
+    key = PLUGIN_PROPERTY_NAME, 
+    value = "pretty, junit:tests/target/surefire-reports/junitreport.xml"
+)
 @ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.modernizemainframe")
 public class RunCucumberTest {
 }
