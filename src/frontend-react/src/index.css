@@ -1,0 +1,144 @@
+:root {
+  color: #1d2330;
+  background: radial-gradient(circle at top right, #f4f1e4, #f8f9fb 38%, #eef4f9 100%);
+  font-family: 'Avenir Next', 'Gill Sans', 'Trebuchet MS', sans-serif;
+  line-height: 1.45;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.page {
+  max-width: 920px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  background: #0f4c5c;
+  color: #eef8fb;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+}
+
+.page-header h1 {
+  margin: 0.1rem 0 0.5rem;
+  font-size: clamp(1.6rem, 2.2vw, 2.2rem);
+}
+
+.pill {
+  display: inline-block;
+  margin: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #ea9f2d;
+  color: #232323;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #d5dbe3;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.3rem;
+  margin-bottom: 0.9rem;
+}
+
+label {
+  font-weight: 600;
+}
+
+input[type='text'] {
+  width: 100%;
+  border: 1px solid #a8b2bf;
+  border-radius: 8px;
+  padding: 0.65rem 0.7rem;
+  font-size: 1rem;
+  background: #fcfcfd;
+}
+
+input[type='text']:focus,
+button:focus {
+  outline: 3px solid #ea9f2d;
+  outline-offset: 2px;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  background: #0f4c5c;
+  color: #ffffff;
+  padding: 0.65rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.kv-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 0.35rem 0.75rem;
+}
+
+.kv-grid dt {
+  font-weight: 600;
+}
+
+.kv-grid dd {
+  margin: 0;
+}
+
+.error-text {
+  color: #9b1c1c;
+  margin: 0;
+}
+
+.warn-text {
+  color: #7a4f01;
+  margin: 0;
+}
+
+.info-text {
+  color: #0f4c5c;
+  margin: 0;
+}
+
+.status-region {
+  min-height: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .kv-grid {
+    grid-template-columns: 1fr;
+  }
+}

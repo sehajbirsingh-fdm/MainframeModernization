@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3001;
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:9080';
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8080';
 
 // MIME types for different file extensions
 const mimeTypes = {

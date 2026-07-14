@@ -24,6 +24,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = CustomerInquiryController.class)
@@ -146,6 +147,20 @@ class CustomerInquiryControllerTest {
         mockMvc.perform(get("/api/v1/customers/123456/0000000001").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value("INTERNAL_ERROR"));
+    }
+
+    @Test
+    void includesCorsHeaderForFrontendOrigin() throws Exception {
+        when(customerInquiryService.inquire("123456", "0000000001"))
+                .thenReturn(successResponse("0000000001", LookupMode.SPECIFIC));
+
+        mockMvc.perform(
+                        get("/api/v1/customers/123456/0000000001")
+                                .header("Origin", "http://localhost:5173")
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
     }
 
     private static CustomerInquiryResponse successResponse(String customerNumber, LookupMode mode) {
