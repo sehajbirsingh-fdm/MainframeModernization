@@ -1,8 +1,8 @@
 # Implementation Plan: INQCUST Frontend React Integration
 
-Branch: 002-inqcust-frontend-react  
+Branch: 001a-inqcust-frontend  
 Date: 2026-07-13  
-Spec: specs/002-inqcust-frontend-react/spec.md  
+Spec: specs/001a-inqcust-frontend/spec.md  
 Backend Source Of Truth: specs/001-inqcust-customer-inquiry-modernization/spec.md
 
 ## Summary

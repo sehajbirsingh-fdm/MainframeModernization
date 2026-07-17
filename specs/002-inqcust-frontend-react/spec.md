@@ -1,6 +1,6 @@
 # Feature Specification: INQCUST Frontend React Customer Inquiry
 
-**Feature Branch**: `002-inqcust-frontend-react`  
+**Feature Branch**: `001a-inqcust-frontend`  
 **Created**: 2026-07-13  
 **Status**: Draft  
 **Input**: Backend spec at `specs/001-inqcust-customer-inquiry-modernization/spec.md`.

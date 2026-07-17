@@ -1,6 +1,6 @@
 # Tasks: INQCUST Frontend React Integration
 
-Input: specs/002-inqcust-frontend-react/spec.md, plan.md, supporting docs  
+Input: specs/001a-inqcust-frontend/spec.md, plan.md, supporting docs  
 Prerequisites: backend API running and existing spec 001 available
 
 Format: [ID] [P?] Description
