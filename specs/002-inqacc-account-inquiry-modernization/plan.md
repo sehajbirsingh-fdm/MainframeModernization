@@ -2,7 +2,7 @@
 
 **Document ID:** `plan.md`  
 **Pipeline:** mainframe_modernization  
-**Authority:** provided/system-intent.md + output/intended-system.md + output/business-rules.md + output/requirements.md + output/spec.md + output/program-analysis.md + output/mapping-matrix.md + output/tasks.md + output/test-spec.md + output/traceability-matrix.md + output/openapi.yaml  
+**Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md + supporting/program-analysis.md + supporting/mapping-matrix.md + spec.md + contracts/openapi.yaml + plan.md + tasks.md + supporting/test-spec.md + supporting/traceability-matrix.md  
 **Status:** Implementation-ready phased delivery plan  
 **Generated:** 2024  
 **Plan Horizon:** 6 months (26 weeks) to production readiness  
@@ -65,7 +65,7 @@ This document defines a phased delivery plan to modernize the legacy INQACC CICS
 **TASK-001 to TASK-010** (API contract, OAuth2 adapter, build toolchain setup)
 
 **Dependencies:**
-- System Intent Blueprint (`provided/system-intent.md`) must be finalized before TASK-001 kickoff
+- Authoritative legacy source analysis and corrected specification/openapi artifacts must be finalized before TASK-001 kickoff
 - No external mainframe connectivity required (mock repository only)
 
 **Risks:**

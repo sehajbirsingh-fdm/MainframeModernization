@@ -3,7 +3,7 @@
 
 **Document ID:** `test-spec.md`  
 **Pipeline:** mainframe_modernization  
-**Authority:** system-intent.md + intended-system.md + business-rules.md + requirements.md + spec.md + program-analysis.md + mapping-matrix.md + plan.md + tasks.md + traceability-matrix.md  
+**Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md + supporting/program-analysis.md + supporting/mapping-matrix.md + spec.md + contracts/openapi.yaml + plan.md + tasks.md + supporting/traceability-matrix.md  
 **Status:** Implementation-ready test specification  
 **Generated:** 2024  
 **Target Stack:** Java 21 + Spring Boot 3.3.x + React 18.x + TypeScript 5.x + Vite 5.x + Mock Repository (POC)
@@ -72,11 +72,11 @@
 ---
 
 #### TC-001: Account Record Retrieval
-- **Description:** Verify that the system retrieves account records based on valid account number and account type.
+- **Description:** Verify that the system retrieves account records based on valid sortcode and account number.
 - **Mapped Requirement:** FR-001
 - **Inputs:**
+  - Sortcode: "123456"
   - Account Number: "12345678"
-  - Account Type: "SAVINGS"
 - **Expected Output:**
   ```json
   {
@@ -96,11 +96,11 @@
 ---
 
 #### TC-002: Invalid Account Number
-- **Description:** Verify that the system returns an error for an invalid account number.
+- **Description:** Verify that the system returns an error for an invalid account number format.
 - **Mapped Requirement:** FR-001
 - **Inputs:**
+  - Sortcode: "123456"
   - Account Number: "INVALID"
-  - Account Type: "SAVINGS"
 - **Expected Output:**
   ```json
   {
@@ -127,18 +127,18 @@
 ---
 
 #### TC-004: Logging of Requests and Responses
-- **Description:** Verify that all account inquiry requests and responses are logged correctly.
+- **Description:** Verify that account inquiry operations are logged with correlation metadata and without raw sensitive payload logging.
 - **Mapped Requirement:** FR-003
 - **Inputs:**
-  - Request: { "accountNumber": "12345678", "accountType": "SAVINGS" }
+  - Request: GET /v1/accounts/123456/12345678
   - Response: { "accountEyecatcher": "EYEC", ... }
 - **Expected Log Entry:**
   ```json
   {
     "correlationId": "abc123",
     "timestamp": "2023-10-01T12:00:00Z",
-    "request": { "accountNumber": "12345678", "accountType": "SAVINGS" },
-    "response": { "accountEyecatcher": "EYEC", ... }
+    "request": { "method": "GET", "path": "/v1/accounts/123456/12345678" },
+    "response": { "status": 200 }
   }
   ```
 
@@ -179,11 +179,11 @@
 ## 5. Negative and Boundary Scenarios
 
 ### TC-008: Missing Account Number
-- **Description:** Verify that the system returns an error when the account number is missing.
+- **Description:** Verify that the system returns an error when the account number path segment is missing.
 - **Mapped Requirement:** FR-001
 - **Inputs:**
+  - Sortcode: "123456"
   - Account Number: ""
-  - Account Type: "SAVINGS"
 - **Expected Output:**
   ```json
   {
@@ -194,17 +194,17 @@
 
 ---
 
-### TC-009: Invalid Account Type
-- **Description:** Verify that the system returns an error for an invalid account type.
-- **Mapped Requirement:** FR-001
+### TC-009: Invalid Sortcode Format
+- **Description:** Verify that the system returns an error for invalid sortcode format.
+- **Mapped Requirement:** FR-002
 - **Inputs:**
+  - Sortcode: "12A456"
   - Account Number: "12345678"
-  - Account Type: "INVALID_TYPE"
 - **Expected Output:**
   ```json
   {
     "errorCode": "400",
-    "errorMessage": "Invalid account type"
+    "errorMessage": "Invalid sortcode"
   }
   ```
 

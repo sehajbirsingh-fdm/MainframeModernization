@@ -3,7 +3,7 @@
 **Document ID:** `program-analysis.md`  
 **Analysis Date:** 2024  
 **Target Pipeline:** mainframe_modernization  
-**System Intent Authority:** provided/system-intent.md  
+**System Intent Authority:** supporting/intended-system.md  
 **Legacy Source Files:** cobol/INQACC.cbl, copybooks/ACCDB2.cpy, copybooks/ACCOUNT.cpy, copybooks/INQACCCZ.cpy  
 **Target Stack:** Java 21, Spring Boot 3.3.x, React 18.x, TypeScript 5.x, Vite 5.x, Mock Repository (POC)
 
@@ -19,7 +19,7 @@
 | **Author** | Jon Collett |
 | **Type** | CICS-DB2 Online Inquiry Program |
 | **Compiler Directives** | `CBL CICS('SP,EDF,DLI')`, `CBL SQL` |
-| **Purpose** | Accept incoming account number; access DB2 ACCOUNT table; retrieve and return matching account record by composite key (ACCOUNT_SORTCODE + ACCOUNT_NUMBER) with optional ACCOUNT_TYPE discriminator |
+| **Purpose** | Retrieve and return an account record by composite key (ACCOUNT_SORTCODE + ACCOUNT_NUMBER); ACCOUNT_TYPE is returned as a selected field, not part of the SQL lookup predicate |
 | **Entry Point** | CICS Transaction (transaction code not documented in provided source) |
 | **Error Handling Strategy** | Program abends on issues (legacy behavior noted in header comment: "Should there be any issues, the program will abend") |
 | **Copybook Dependencies** | SORTCODE, ACCDB2, ACCOUNT, INQACCCZ, SQLCA (embedded) |
@@ -27,11 +27,13 @@
 | **State Management** | Stateless inquiry (read-only); no persistent working storage retained across transactions |
 | **Performance Characteristics** | Synchronous blocking call to DB2; latency depends on table size and composite key index availability on (ACCOUNT_SORTCODE, ACCOUNT_NUMBER) |
 
+**Reserved Account Number Behavior:** If input account number equals `99999999`, INQACC branches to `READ-ACCOUNT-LAST` and executes a sortcode-only query ordered by descending account number, returning the first row.
+
 ### 1.2 Copybook Dependencies
 
 | Copybook | Source | Records/Sections | Purpose |
 |----------|--------|------------------|---------|
-| **SORTCODE** | Referenced in INQACC.cbl (line 22) | Not provided | Assumed to define SORTCODE data structure or constants |
+| **SORTCODE** | src/base/cics/copy/SORTCODE.cpy | 77-level constant | Provides sortcode value moved into required sortcode and host sortcode in lookup flow |
 | **ACCDB2** | copybooks/ACCDB2.cpy | 1 EXEC SQL DECLARE TABLE | DB2 ACCOUNT table schema definition (12 columns) |
 | **ACCOUNT** | copybooks/ACCOUNT.cpy | 1 structured copybook (ACCOUNT-DATA) | COBOL working storage structure mirroring DB2 ACCOUNT table |
 | **INQACCCZ** | copybooks/INQACCCZ.cpy | 1 COMMAREA structure | CICS communication area for account inquiry results; supports 1–20 account occurrences |
@@ -54,12 +56,12 @@
 | ACCOUNT_CUSTOMER_NUMBER | CHAR(10) | YES | HV-ACCOUNT-CUST-NO | PIC X(10) | 10 bytes | `customerNumber` | Numeric string (10 digits max); cross-reference to CUSTOMER master table |
 | ACCOUNT_SORTCODE | CHAR(6) | NO | HV-ACCOUNT-SORTCODE | PIC X(6) | 6 bytes | `sortcode` | Bank routing code; composite key part 1; format: 6 numeric digits (required) |
 | ACCOUNT_NUMBER | CHAR(8) | NO | HV-ACCOUNT-ACC-NO | PIC X(8) | 8 bytes | `accountNumber` | Account identifier; composite key part 2; format: 8 numeric digits (required) |
-| ACCOUNT_TYPE | CHAR(8) | YES | HV-ACCOUNT-ACC-TYPE | PIC X(8) | 8 bytes | `accountType` | Account classification (e.g., 'CURRENT', 'SAVINGS', 'ISA'); optional discriminator in WHERE clause |
+| ACCOUNT_TYPE | CHAR(8) | YES | HV-ACCOUNT-ACC-TYPE | PIC X(8) | 8 bytes | `accountType` | Account classification field selected and returned to output/COMMAREA; not used in WHERE clause |
 | ACCOUNT_INTEREST_RATE | DECIMAL(4,2) | YES | HV-ACCOUNT-INT-RATE | PIC S9(4)V99 COMP-3 | 3 bytes (packed) | `interestRate` | Annual interest rate as numeric decimal (e.g., 2.50 = 2.5%); range [0, 99.99] |
-| ACCOUNT_OPENED | DATE | YES | HV-ACCOUNT-OPENED | PIC X(10) | 10 bytes | `accountOpened` | Account open date; format YYYY-MM-DD in DB2, stored as YYYYMMDD in COBOL |
+| ACCOUNT_OPENED | DATE | YES | HV-ACCOUNT-OPENED | PIC X(10) | 10 bytes | `accountOpened` | Account open date; DB2 DATE source represented through COBOL transport fields before API ISO conversion |
 | ACCOUNT_OVERDRAFT_LIMIT | INTEGER | YES | HV-ACCOUNT-OVERDRAFT-LIM | PIC S9(9) COMP | 4 bytes (binary) | `overdraftLimit` | Maximum overdraft allowance in minor currency units (pence); range: 0 to 999,999,999 |
-| ACCOUNT_LAST_STATEMENT | DATE | YES | HV-ACCOUNT-LAST-STMT | PIC X(10) | 10 bytes | `lastStatementDate` | Date of last generated statement; format YYYY-MM-DD (DB2) → YYYYMMDD (COBOL) |
-| ACCOUNT_NEXT_STATEMENT | DATE | YES | HV-ACCOUNT-NEXT-STMT | PIC X(10) | 10 bytes | `nextStatementDate` | Date of next scheduled statement; format YYYY-MM-DD (DB2) → YYYYMMDD (COBOL) |
+| ACCOUNT_LAST_STATEMENT | DATE | YES | HV-ACCOUNT-LAST-STMT | PIC X(10) | 10 bytes | `lastStatementDate` | Date of last generated statement; DB2 DATE source represented through COBOL transport fields before API ISO conversion |
+| ACCOUNT_NEXT_STATEMENT | DATE | YES | HV-ACCOUNT-NEXT-STMT | PIC X(10) | 10 bytes | `nextStatementDate` | Date of next scheduled statement; DB2 DATE source represented through COBOL transport fields before API ISO conversion |
 | ACCOUNT_AVAILABLE_BALANCE | DECIMAL(10,2) | YES | HV-ACCOUNT-AVAIL-BAL | PIC S9(10)V99 COMP-3 | 6 bytes (packed) | `availableBalance` | Available balance in minor currency units (pence); includes active holds and pending transactions |
 | ACCOUNT_ACTUAL_BALANCE | DECIMAL(10,2) | YES | HV-ACCOUNT-ACTUAL-BAL | PIC S9(10)V99 COMP-3 | 6 bytes (packed) | `actualBalance` | Actual account balance in minor currency units (pence); ledger balance excluding holds |
 
@@ -94,10 +96,10 @@
 | HV-ACCOUNT-ACC-NO | PIC X(8) | `accountNumber` | String | Trim trailing spaces; validate 8 numeric digits |
 | HV-ACCOUNT-ACC-TYPE | PIC X(8) | `accountType` | String | Trim trailing spaces; enumerate values (CURRENT, SAVINGS, ISA, etc.) |
 | HV-ACCOUNT-INT-RATE | PIC S9(4)V99 COMP-3 | `interestRate` | BigDecimal | Unpack COMP-3 binary; scale by 2 decimal places (divide by 100) |
-| HV-ACCOUNT-OPENED | PIC X(10) | `accountOpened` | LocalDate | Parse YYYYMMDD format; convert to ISO 8601 YYYY-MM-DD in JSON |
+| HV-ACCOUNT-OPENED | PIC X(10) | `accountOpened` | LocalDate | Parse legacy date representation; convert to ISO 8601 YYYY-MM-DD in JSON |
 | HV-ACCOUNT-OVERDRAFT-LIM | PIC S9(9) COMP | `overdraftLimit` | Long | Unpack binary integer; treat as pence value |
-| HV-ACCOUNT-LAST-STMT | PIC X(10) | `lastStatementDate` | LocalDate | Parse YYYYMMDD format; convert to ISO 8601 YYYY-MM-DD in JSON |
-| HV-ACCOUNT-NEXT-STMT | PIC X(10) | `nextStatementDate` | LocalDate | Parse YYYYMMDD format; convert to ISO 8601 YYYY-MM-DD in JSON |
+| HV-ACCOUNT-LAST-STMT | PIC X(10) | `lastStatementDate` | LocalDate | Parse legacy date representation; convert to ISO 8601 YYYY-MM-DD in JSON |
+| HV-ACCOUNT-NEXT-STMT | PIC X(10) | `nextStatementDate` | LocalDate | Parse legacy date representation; convert to ISO 8601 YYYY-MM-DD in JSON |
 | HV-ACCOUNT-AVAIL-BAL | PIC S9(10)V99 COMP-3 | `availableBalance` | BigDecimal | Unpack COMP-3 binary; scale by 2 decimal places (divide by 100); preserve sign |
 | HV-ACCOUNT-ACTUAL-BAL | PIC S9(10)V99 COMP-3 | `actualBalance` | BigDecimal | Unpack COMP-3 binary; scale by 2 decimal places (divide by 100); preserve sign |
 

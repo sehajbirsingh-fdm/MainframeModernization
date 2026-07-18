@@ -2,7 +2,7 @@
 
 **Document ID:** `tasks.md`  
 **Pipeline:** mainframe_modernization  
-**Authority:** system-intent.md + intended-system.md + business-rules.md + requirements.md + spec.md + plan.md + program-analysis.md + mapping-matrix.md + traceability-matrix.md + test-spec.md + openapi.yaml  
+**Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md + supporting/program-analysis.md + supporting/mapping-matrix.md + spec.md + contracts/openapi.yaml + plan.md + tasks.md + supporting/test-spec.md + supporting/traceability-matrix.md  
 **Status:** Implementation-ready task catalog  
 **Generated:** 2024  
 **Target Stack:** Java 21 + Spring Boot 3.3.x | React 18.x + TypeScript 5.x + Vite 5.x | Mock Repository (POC)  
@@ -55,7 +55,7 @@ Design and document the canonical OpenAPI 3.0.3 specification for the account in
 **Acceptance Criteria:**
 1. `AC-OP-001`: OpenAPI 3.0.3 JSON/YAML file includes GET endpoint `/accounts/{sortcode}/{accountNumber}`
 2. `AC-OP-002`: Request path parameters include `sortcode` (pattern: `^\d{6}$`) and `accountNumber` (pattern: `^\d{8}$`) with correct schema type and examples
-3. `AC-OP-003`: Success response (HTTP 200) includes `AccountResponse` schema with 12 fields: `eyecatcher`, `customerNumber`, `sortcode`, `accountNumber`, `accountType`, `accountStatus`, `openingDate`, `currency`, `balance`, `availableBalance`, `lastUpdated`, `description`
+3. `AC-OP-003`: Success response (HTTP 200) includes `AccountResponse` schema with 12 fields: `eyecatcher`, `customerNumber`, `sortcode`, `accountNumber`, `accountType`, `interestRate`, `accountOpened`, `overdraftLimit`, `lastStatementDate`, `nextStatementDate`, `availableBalance`, `actualBalance`
 4. `AC-OP-004`: HTTP 400 error response includes `ErrorResponse` schema with `code`, `message`, `correlationId`, `timestamp` fields
 5. `AC-OP-005`: HTTP 404 error response includes `ErrorResponse` schema with correlation ID
 6. `AC-OP-006`: HTTP 401 error response includes `ErrorResponse` schema with correlation ID
@@ -186,7 +186,7 @@ Design Java entity class `AccountEntity` (JPA `@Entity`) mapping to 12 ACCOUNT t
 
 **Acceptance Criteria:**
 1. `AC-ENTITY-001`: `AccountEntity` JPA entity class created in `com.inqacc.entity` package
-2. `AC-ENTITY-002`: Entity includes 12 properties (with @JsonProperty names): `eyecatcher`, `customerNumber`, `sortcode`, `accountNumber`, `accountType`, `accountStatus`, `openingDate`, `currency`, `balance`, `availableBalance`, `lastUpdated`, `description`
+2. `AC-ENTITY-002`: Entity includes 12 properties (with @JsonProperty names): `eyecatcher`, `customerNumber`, `sortcode`, `accountNumber`, `accountType`, `interestRate`, `accountOpened`, `overdraftLimit`, `lastStatementDate`, `nextStatementDate`, `availableBalance`, `actualBalance`
 3. `AC-ENTITY-003`: @Id composite key or @EmbeddedId mapping on (sortcode, accountNumber) fields
 4. `AC-ENTITY-004`: @Table annotation specifies table name (default: "ACCOUNT") and schema (if applicable)
 5. `AC-ENTITY-005`: Field types match program-analysis.md mapping: sortcode (String, length 6), accountNumber (String, length 8), balance (BigDecimal), openingDate (LocalDate), etc.

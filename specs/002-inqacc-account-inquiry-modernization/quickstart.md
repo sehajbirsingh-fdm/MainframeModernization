@@ -19,7 +19,7 @@ This guide validates the feature behavior described in `spec.md` using the contr
 1. Send GET request to `/v1/accounts/{sortcode}/{accountNumber}` with valid token and known record.
 2. Expect HTTP 200 response.
 3. Verify payload structure matches `AccountRecord` from `data-model.md`.
-4. Verify `X-Correlation-ID` exists and matches body correlation identifier.
+4. Verify `X-Correlation-ID` exists in response headers; for error scenarios, verify correlation identifier is present in the standardized error payload.
 
 ### Scenario B: Validation Failure
 1. Send request with malformed sortcode or account number.

@@ -4,7 +4,7 @@
 **Document ID:** `business-rules.md`  
 **Pipeline:** mainframe_modernization  
 **Target System:** Spring Boot 3.3.x + React 18.x (mock persistence POC)  
-**Authority:** System Intent Blueprint + Legacy COBOL/DB2 Analysis  
+**Authority:** INQACC.cbl + ACCDB2.cpy + ACCOUNT.cpy + INQACC.cpy + INQACCCZ.cpy + requirements.md + spec.md  
 **Status:** Implementation-ready canonical business rules  
 **Generated:** 2024
 
@@ -18,10 +18,10 @@
 
 **Rule ID:** `BR-001`  
 **Category:** Data Retrieval  
-**Statement:** The system must retrieve account records from the DB2 datastore based on the provided account number and account type using a composite key consisting of ACCOUNT_SORTCODE and ACCOUNT_NUMBER.
+**Statement:** The system must retrieve account records from the datastore using composite key ACCOUNT_SORTCODE and ACCOUNT_NUMBER.
 
 **Trigger Conditions:**
-- An account inquiry request is received with a valid account number and account type.
+- An account inquiry request is received with valid sortcode and account number values.
 - Both sortcode and account number values are provided and non-empty.
 - User has been authenticated and authorized for account inquiry (role: `ACCOUNT_INQUIRER` or above).
 
@@ -32,15 +32,18 @@
 **Processing Logic:**
 1. Validate sortcode format (numeric, exactly 6 digits; reject if non-numeric or length ≠ 6).
 2. Validate account number format (numeric, exactly 8 digits; reject if non-numeric or length ≠ 8).
-3. Execute SELECT on ACCOUNT table with WHERE clause: `ACCOUNT_SORTCODE = sortcode AND ACCOUNT_NUMBER = accountNumber`.
-4. Return single matching record if found; return not-found condition if no match exists.
-5. Propagate correlation ID through all downstream calls.
+3. If `accountNumber = 99999999`, execute reserved-number branch: select highest `ACCOUNT_NUMBER` for supplied `ACCOUNT_SORTCODE`.
+4. Otherwise execute normal lookup: `ACCOUNT_SORTCODE = sortcode AND ACCOUNT_NUMBER = accountNumber`.
+5. Return single matching record if found; return not-found condition if no match exists.
+6. Propagate correlation ID through all downstream calls.
 
 **Outputs:**
 - Account details including:
   - Account Eyecatcher (HV-ACCOUNT-EYECATCHER)
   - Customer Number (HV-ACCOUNT-CUST-NO)
   - Sort Code (HV-ACCOUNT-SORTCODE)
+  - Account Number (HV-ACCOUNT-ACC-NO)
+  - Account Type (HV-ACCOUNT-ACC-TYPE)
   - Interest Rate (HV-ACCOUNT-INT-RATE)
   - Opened Date (HV-ACCOUNT-OPENED)
   - Overdraft Limit (HV-ACCOUNT-OVERDRAFT-LIM)
@@ -54,7 +57,7 @@
 **Error Conditions:**
 - `ERR-001`: Sortcode format invalid (non-numeric or length ≠ 6) → Return HTTP 400 Bad Request with validation error detail.
 - `ERR-002`: Account number format invalid (non-numeric or length ≠ 8) → Return HTTP 400 Bad Request with validation error detail.
-- `ERR-003`: Database connection failure → Return HTTP 503 Service Unavailable with correlation ID.
+- `ERR-003`: Repository/service unavailable → Return HTTP 503 Service Unavailable with correlation ID.
 - `ERR-004`: SQL execution error → Return HTTP 500 Internal Server Error with correlation ID.
 - `ERR-005`: No matching record found (zero rows returned) → Return HTTP 404 Not Found.
 - `ERR-006`: Authentication token missing or invalid → Return HTTP 401 Unauthorized.
@@ -62,11 +65,14 @@
 
 **Legacy Mapping:**
 - Corresponds to INQACC.cbl lines 52–70 (EXEC SQL DECLARE ACC-CURSOR … WHERE clause).
+- Corresponds to reserved-number branch in INQACC.cbl where `INQACC-ACCNO = 99999999` performs `READ-ACCOUNT-LAST` and selects `ORDER BY ACCOUNT_NUMBER DESC FETCH FIRST 1 ROWS ONLY`.
 - Maps to COBOL host variables: `HV-ACCOUNT-SORTCODE`, `HV-ACCOUNT-ACC-NO`.
 - Preserves DB2 composite-key semantics from ACCDB2.cpy table definition.
 
 **Modernization Notes:**
 - REST GET endpoint replaces CICS terminal transaction entry.
+- Endpoint remains `GET /v1/accounts/{sortcode}/{accountNumber}` for both normal and reserved-number lookup behavior.
+- `accountType` is returned account data and is never part of lookup predicate.
 - Parameterized SQL prevents injection; input validation at boundary.
 - Correlation ID propagation enables distributed tracing.
 
@@ -167,14 +173,14 @@
 2. If header missing → reject with HTTP 401 Unauthorized.
 3. If header does not start with "Bearer " → reject with HTTP 401 Unauthorized.
 4. Extract JWT token from header.
-5. Validate token signature against configured OAuth2 public key.
+5. Validate token authenticity.
 6. Validate token has not expired.
-7. Extract claims (subject, roles, issued-at time).
+7. Verify token grants account inquiry access.
 8. On success: pass authenticated principal to BR-005 (authorization check).
 9. On failure: return HTTP 401 Unauthorized.
 
 **Outputs:**
-- Authenticated principal object (subject, roles, token claims).
+- Authenticated principal context with inquiry permission.
 - Request proceeds to authorization check (BR-005).
 - Or: HTTP 401 Unauthorized rejection.
 
@@ -190,10 +196,8 @@
 - No legacy CICS-equivalent token validation; added as security enhancement.
 
 **Modernization Notes:**
-- Spring Security OAuth2 Resource Server intercepts all requests before controller invocation.
-- Token validation is non-blocking (cache-friendly) via JWT signature validation (no server round-trip required).
-- Correlation ID propagated through authentication failure responses.
-- OAuth2 configuration specified in application properties (issuer URI, audience, key set URI).
+- Authentication is mandatory for account inquiry requests.
+- Correlation ID is propagated through authentication failure responses.
 
 ---
 
@@ -208,11 +212,11 @@
 - Before account inquiry service invocation.
 
 **Inputs:**
-- Authenticated principal (JWT claims containing roles).
+- Authenticated principal context containing permissions.
 
 **Processing Logic:**
-1. Extract roles from JWT token claims.
-2. Check if `ACCOUNT_INQUIRER` role is present in roles list.
+1. Extract account inquiry permission from authenticated principal context.
+2. Check if account inquiry permission is present.
 3. If role present → authorization granted; proceed to BR-001 (lookup).
 4. If role missing → authorization denied; return HTTP 403 Forbidden.
 
@@ -227,13 +231,11 @@
 **Legacy Mapping:**
 - INQACC.cbl runs in CICS transaction environment; CICS resource control enforces transaction access at system level.
 - Modernization makes authorization explicit at application layer via role-based access control.
-- Legacy transaction code (`INQACC`) implicitly restricts who can invoke; modernization uses JWT role claims.
+- Legacy transaction code (`INQACC`) implicitly restricts who can invoke; modernization uses explicit API authorization checks.
 
 **Modernization Notes:**
-- Spring Security method-level authorization via `@PreAuthorize("hasRole('ACCOUNT_INQUIRER')")`.
-- Role claim name configured in application properties (default: `roles` or `scope` depending on OAuth2 provider).
 - Authorization failure returns HTTP 403 (not 401); client has authenticated but is not permitted.
-- Correlation ID propagated through authorization failure responses.
+- Correlation ID is propagated through authorization failure responses.
 
 ---
 
@@ -254,7 +256,7 @@
 **Processing Logic:**
 1. Check for X-Correlation-ID header in incoming request.
 2. If present and valid UUID format → use as correlation ID.
-3. If missing or invalid → generate new UUID v4.
+3. If missing or invalid → generate a new correlation ID.
 4. Store correlation ID in thread-local context (MDC – Mapped Diagnostic Context).
 5. Pass correlation ID to all downstream service calls (repository, logging).
 6. Include correlation ID in all structured log entries.
@@ -274,10 +276,7 @@
 - Modernization adds correlation ID as operational enhancement for distributed tracing and debugging.
 
 **Modernization Notes:**
-- Implemented via Spring Cloud Sleuth MDC interceptor.
-- OpenTelemetry tracing ready (correlation ID serves as trace ID).
-- Correlation ID in logs enables aggregation across backend services, frontend requests, and database queries.
-- Non-functional requirement: supports operations debugging and SLA monitoring.
+- Correlation ID supports request traceability across API processing and logs.
 
 ---
 
@@ -285,7 +284,7 @@
 
 **Rule ID:** `BR-007`  
 **Category:** Observability & Logging  
-**Statement:** All account inquiry operations shall generate structured JSON log entries containing request context (method, path, correlation ID, user subject, response status code) and operation timing.
+**Statement:** All account inquiry operations shall generate structured log entries containing operational metadata (correlation ID, request path/template, HTTP status, duration, event type).
 
 **Trigger Conditions:**
 - At request entry (controller).
@@ -295,23 +294,18 @@
 - On error occurrence.
 
 **Inputs:**
-- HTTP request (method, path, headers, query parameters).
-- Service invocation parameters (sortcode, accountNumber).
-- Repository query results.
+- HTTP request metadata (method, path/template).
 - Response status code and timing.
 
 **Processing Logic:**
-1. On request entry: log `{timestamp, correlationId, method, path, userId, event: "REQUEST_RECEIVED"}`.
-2. On BR-001 invocation: log `{timestamp, correlationId, sortcode, accountNumber, event: "ACCOUNT_LOOKUP_INITIATED"}`.
-3. On successful lookup: log `{timestamp, correlationId, sortcode, accountNumber, recordFound: true, duration_ms, event: "ACCOUNT_LOOKUP_SUCCESS"}`.
-4. On not-found: log `{timestamp, correlationId, sortcode, accountNumber, recordFound: false, event: "ACCOUNT_NOT_FOUND"}`.
-5. On error: log `{timestamp, correlationId, errorCode, errorMessage, stackTrace, event: "ACCOUNT_LOOKUP_ERROR"}`.
-6. On response exit: log `{timestamp, correlationId, statusCode, duration_ms, event: "RESPONSE_SENT"}`.
+1. On request entry: log `{timestamp, correlationId, method, pathTemplate, event}`.
+2. On lookup result: log `{timestamp, correlationId, statusCode, durationMs, event}`.
+3. On error: log `{timestamp, correlationId, statusCode, errorCode, event}`.
+4. Do not log bearer tokens, account numbers, customer numbers, balances, or full account payloads.
 
 **Outputs:**
 - Structured JSON log entries (one per major operation step).
 - All logs include timestamp (ISO 8601), correlationId, and event identifier.
-- Logs persisted to centralized logging backend (ELK stack, Splunk, CloudWatch, etc.).
 
 **Error Conditions:**
 - No error condition; logging is non-blocking and failsafe.
@@ -321,10 +315,8 @@
 - Modernization uses structured JSON logging for cloud-native observability integration.
 
 **Modernization Notes:**
-- Implemented via Spring Boot Actuator + custom logging configuration (JSON format via Logback/SLF4J).
-- Correlation ID included in MDC (Mapped Diagnostic Context) for automatic injection into all log entries.
-- Non-functional requirement: supports operational visibility, debugging, and compliance audit trails.
-- Performance: structured logging adds <5ms latency per request (configurable sampling for high-volume environments).
+- Structured logs are required for operational visibility and auditability.
+- Correlation ID must be included in each operational event.
 
 ---
 
@@ -333,6 +325,7 @@
 **Rule ID:** `BR-008`  
 **Category:** API Contract & Error Handling  
 **Statement:** All error responses shall return a standardized JSON error envelope containing error code, error message, HTTP status code, correlation ID, and timestamp.
+**Statement:** All error responses shall return a standardized JSON error envelope containing `error.code`, `error.message`, `error.correlationId`, and `error.timestamp`.
 
 **Trigger Conditions:**
 - Any error condition (validation failure, authentication failure, not-found, backend error).
@@ -352,7 +345,7 @@
    - ERR-007 (authorization) → HTTP 403 Forbidden.
    - ERR-005 (not-found) → HTTP 404 Not Found.
    - ERR-003, ERR-004 (backend) → HTTP 500 or 503 depending on error type.
-3. Build JSON error envelope with: `{timestamp, correlationId, error: {code, message}, statusCode, path}`.
+3. Build JSON error envelope with: `{error: {code, message, correlationId, timestamp}}`.
 4. Return error envelope with corresponding HTTP status code.
 5. Log error entry (see BR-007).
 

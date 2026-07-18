@@ -14,7 +14,7 @@
 This final modernization report consolidates complete analysis, design, and planning artifacts for the INQACC legacy CICS-DB2 account inquiry program modernization initiative. The modernization objectives—transforming a terminal-based synchronous inquiry into a cloud-ready RESTful web application while preserving legacy observable behavior—have been fully specified across 16 canonical documents with 100% requirement coverage and explicit traceability from legacy artifacts to modern implementation components.
 
 **Report Scope:**
-- Inputs reviewed and validated against system intent authority
+- Inputs reviewed and validated against available legacy and feature authority artifacts
 - Artifacts generated, authored, and status confirmed
 - Identified risks, gaps, and mitigation strategies
 - Recommended next actions with sequencing and dependencies
@@ -35,9 +35,9 @@ This final modernization report consolidates complete analysis, design, and plan
 
 ## 1. Inputs Reviewed and Validated
 
-### 1.1 System Intent Authority
+### 1.1 Confirmed Source Authority
 
-**Source:** `provided/system-intent.md` + `system-intent.md` (validated identical)
+**Source:** `src/base/cics/cobol/INQACC.cbl`, `src/base/cics/copy/ACCDB2.cpy`, `src/base/cics/copy/ACCOUNT.cpy`, `src/base/cics/copy/INQACC.cpy`, `src/base/cics/copy/INQACCCZ.cpy`, `checklists/requirements.md`, `supporting/intended-system.md`
 
 | Dimension | Specification | Validation | Status |
 |-----------|---------------|-----------|--------|
@@ -54,7 +54,7 @@ This final modernization report consolidates complete analysis, design, and plan
 | Artifact | Analysis Summary | Carried Forward | Status |
 |----------|------------------|-----------------|--------|
 | **INQACC.cbl (CICS-DB2 program)** | Stateless inquiry program; accepts sortcode + account number; executes DB2 SELECT with composite-key WHERE clause; returns account record or abends on error | Composite-key semantics (ACCOUNT_SORTCODE + ACCOUNT_NUMBER) → BR-001; error handling → BR-003 through BR-009; field mapping → ACCOUNT-DATA structure | ✓ Validated in program-analysis.md §1–3 |
-| **ACCDB2.cpy (DB2 schema)** | ACCOUNT table: 12 columns (ACCOUNT_SORTCODE, ACCOUNT_NUMBER, ACCOUNT_TYPE, ACCOUNT_NAME, ACCOUNT_SUFFIX, ACCOUNT_OPENING_DATE, ACCOUNT_STATUS_CODE, ACCOUNT_STATUS_TEXT, ACCOUNT_BALANCE, ACCOUNT_CURRENCY, ACCOUNT_INTEREST_RATE, ACCOUNT_INTEREST_DUE) | All 12 fields → `AccountEntity` + `AccountResponseDto` in mapping-matrix.md; field ordering preserved in spec.md §2.2 (response payload) | ✓ Validated in program-analysis.md §2 |
+| **ACCDB2.cpy (DB2 schema)** | ACCOUNT table: 12 columns (ACCOUNT_EYECATCHER, ACCOUNT_CUSTOMER_NUMBER, ACCOUNT_SORTCODE, ACCOUNT_NUMBER, ACCOUNT_TYPE, ACCOUNT_INTEREST_RATE, ACCOUNT_OPENED, ACCOUNT_OVERDRAFT_LIMIT, ACCOUNT_LAST_STATEMENT, ACCOUNT_NEXT_STATEMENT, ACCOUNT_AVAILABLE_BALANCE, ACCOUNT_ACTUAL_BALANCE) | All 12 fields → `AccountEntity` + `AccountResponseDto` in mapping-matrix.md and OpenAPI account response schema | ✓ Validated in program-analysis.md §2 |
 | **ACCOUNT.cpy (COBOL structure)** | Working storage mirror of ACCDB2; ACCOUNT-DATA section with 12 fields mapped to HOST-ACCOUNT-ROW | Direct transformation to Spring DTO; legacy field names preserved in JSON response keys | ✓ Validated in program-analysis.md §2.3 |
 | **INQACCCZ.cpy (CICS COMMAREA)** | Communication area for account inquiry results; supports 1–20 account occurrences; linkage section for passing results to CICS interface | POC scope: single account lookup (not multi-account); COMMAREA semantics → REST JSON response envelope | ✓ Validated in program-analysis.md §2.4 |
 
@@ -64,9 +64,8 @@ This final modernization report consolidates complete analysis, design, and plan
 
 | Artifact ID | Document Title | Status | Authority | Purpose |
 |-------------|----------------|--------|-----------|---------|
-| `system-intent.md` | System Intent Blueprint | ✓ Complete | provided/system-intent.md | Canonical target architecture, stack, security, operational baseline, delivery constraints |
-| `intended-system.md` | Intended System Blueprint | ✓ Complete | system-intent.md + INQACC.cbl analysis | Feature objectives, product scope, architecture blueprint, deployment model, success criteria |
-| `business-rules.md` | Business Rules Catalog | ✓ Complete (13 rules) | system-intent.md + INQACC.cbl + ACCDB2.cpy | BR-001 through BR-013: lookup semantics, validation, error handling, authentication, logging |
+| `intended-system.md` | Intended System Blueprint | ✓ Complete | INQACC.cbl + copybook analysis + confirmed requirements | Feature objectives, product scope, architecture blueprint, deployment model, success criteria |
+| `business-rules.md` | Business Rules Catalog | ✓ Complete (13 rules) | INQACC.cbl + ACCDB2.cpy + confirmed requirements | BR-001 through BR-013: lookup semantics, validation, error handling, authentication, logging |
 | `requirements.md` | Functional & Non-Functional Requirements | ✓ Complete (9 FR + 6 NFR) | intended-system.md + business-rules.md | FR-001 through FR-009, NFR-001 through NFR-006 with acceptance criteria |
 | `spec.md` | Implementation-Ready Specification | ✓ Complete | requirements.md + mapping-matrix.md + test-spec.md | Feature overview, API contract detail, field mapping, error envelope, integration points |
 | `openapi.yaml` | OpenAPI 3.0.3 Specification | ✓ Complete | spec.md (frozen) | REST endpoint definition, request/response schemas, OAuth2 security schemes, error responses, example payloads |
@@ -81,7 +80,7 @@ This final modernization report consolidates complete analysis, design, and plan
 | `copilot-build-prompt.md` | Copilot Implementation Guidance | ✓ Complete | spec.md + tasks.md + openapi.yaml | Development environment setup, iterative prompt patterns, design decision guidance, architecture principles |
 | `modernization-report.md` | Final Modernization Report (THIS DOCUMENT) | ✓ Complete | All 16 artifacts | Comprehensive status, risks, gaps, mitigation, next actions, copilot usage lessons |
 
-**Overall Status:** ✓ **All 16 artifacts generated, authored, and validated against system intent authority. 100% requirement coverage. Ready for implementation handoff.**
+**Overall Status:** ✓ **All artifacts generated and validated against available legacy and feature authority artifacts. 100% requirement coverage. Ready for implementation handoff.**
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Document ID:** `qa-review-checklist.md`  
 **Pipeline:** mainframe_modernization  
-**Authority:** system-intent.md + intended-system.md + business-rules.md + requirements.md + spec.md + program-analysis.md + mapping-matrix.md + plan.md + tasks.md + test-spec.md + traceability-matrix.md + openapi.yaml + copilot-build-prompt.md  
+**Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md + supporting/program-analysis.md + supporting/mapping-matrix.md + spec.md + contracts/openapi.yaml + plan.md + tasks.md + supporting/test-spec.md + supporting/traceability-matrix.md + supporting/copilot-build-prompt.md  
 **Status:** QA verification framework for implementation artifacts  
 **Generated:** 2024  
 **Target Stack:** Java 21 + Spring Boot 3.3.x | React 18.x + TypeScript 5.x + Vite 5.x | Mock Repository (POC)
@@ -208,7 +208,7 @@ This checklist provides structured verification of all generated artifacts and i
 - [ ] HTTP status line is exactly 200 OK
 - [ ] Response Content-Type is `application/json; charset=utf-8`
 - [ ] All 12 ACCOUNT table fields mapped to JSON properties (per program-analysis.md, ACCDB2.cpy)
-- [ ] Field names match OpenAPI schema (e.g., `sortcode`, `accountNumber`, `accountType`, `accountStatus`, `balance`, `currency`, `openDate`, `closeDate`, `accountHolder`, `sortcodeReference`, `accountTypeReference`, `lastUpdated`)
+- [ ] Field names match OpenAPI schema (e.g., `eyecatcher`, `customerNumber`, `sortcode`, `accountNumber`, `accountType`, `interestRate`, `accountOpened`, `overdraftLimit`, `lastStatementDate`, `nextStatementDate`, `availableBalance`, `actualBalance`)
 - [ ] Field order in JSON response consistent with OpenAPI specification
 - [ ] All field data types match specification (string, number, date, boolean, etc.)
 - [ ] No null fields unless explicitly optional in specification

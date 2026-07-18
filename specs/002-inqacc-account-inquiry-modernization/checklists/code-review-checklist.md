@@ -2,7 +2,7 @@
 
 **Document ID:** `code-review-checklist.md`  
 **Pipeline:** mainframe_modernization  
-**Authority:** system-intent.md + intended-system.md + business-rules.md + requirements.md + spec.md + program-analysis.md + mapping-matrix.md + plan.md + tasks.md + test-spec.md + traceability-matrix.md + openapi.yaml + copilot-build-prompt.md  
+**Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md + supporting/program-analysis.md + supporting/mapping-matrix.md + spec.md + contracts/openapi.yaml + plan.md + tasks.md + supporting/test-spec.md + supporting/traceability-matrix.md + supporting/copilot-build-prompt.md  
 **Status:** Implementation-ready code review framework  
 **Generated:** 2024  
 **Target Stack:** Java 21 + Spring Boot 3.3.x (backend) | React 18.x + TypeScript 5.x + Vite 5.x (frontend) | Mock Repository (POC)
@@ -14,7 +14,6 @@
 ### 1.1 Review Authority
 
 All code review activities shall measure conformance to:
-- **System Intent Blueprint** (`provided/system-intent.md`, `system-intent.md`)
 - **Target Architecture** (`intended-system.md`)
 - **Business Rules** (`business-rules.md`) – rule-to-code mapping
 - **Requirements** (`requirements.md`) – requirement-to-code mapping

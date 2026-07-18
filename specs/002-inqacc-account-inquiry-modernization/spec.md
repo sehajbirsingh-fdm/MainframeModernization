@@ -2,366 +2,222 @@
 
 **Document ID:** `spec.md`  
 **Pipeline:** mainframe_modernization  
-**Authority:** provided/system-intent.md + intended-system.md + business-rules.md + requirements.md + program-analysis.md + mapping-matrix.md  
-**Status:** Implementation-ready canonical specification  
-**Generated:** 2024  
-**Stack:** Java 21 + Spring Boot 3.3.x (backend) | React 18.x + TypeScript 5.x + Vite 5.x (frontend) | Mock Repository (POC)
+**Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md + supporting/program-analysis.md + supporting/mapping-matrix.md + supporting/intended-system.md  
+**Status:** Draft — requires review  
+**Generated:** 2026-07-17
 
----
+## 1. Feature Overview
+INQACC account inquiry modernization defines a read-only account lookup capability that exposes legacy inquiry behavior through a web-accessible API and a React web UI used to exercise, validate, test, and demonstrate the API. The feature preserves core legacy inquiry semantics while operating in POC mode with mock persistence and no live mainframe connectivity.
 
-## 1. Feature Overview and Modernization Objective
+## 2. Objective
+Provide a standardized account inquiry feature that:
+- Preserves authoritative legacy lookup semantics and observable outcomes.
+- Uses a consistent request key and endpoint contract.
+- Enforces only source-supported security, validation, and error behaviors.
+- Stays within POC boundaries (read-only inquiry, mock repository, no live DB2/CICS).
 
-### 1.1 Feature Name
-**INQACC Modernized Account Inquiry Service**
+## 3. Scope
+### In Scope
+- Read-only account inquiry.
+- Composite-key lookup using sort code and account number.
+- Endpoint path `GET /v1/accounts/{sortcode}/{accountNumber}`.
+- Validation and standardized error responses.
+- Mock repository operation for POC.
+- Mandatory authentication and authorization at the API boundary for inquiry access.
+- React frontend behavior for exercising, validating, and demonstrating inquiry flow: input entry, validation feedback, submit, loading state, success rendering, not-found/error rendering, and repeat inquiry.
+- Safe observability requirements that are explicitly supported by source authorities.
 
-### 1.2 Objective
-Modernize the legacy INQACC CICS-DB2 account inquiry program into a cloud-ready, RESTful web service with distributed authentication, structured observability, and web UI while preserving legacy observable behavior and enabling future mainframe system integration.
+### Out of Scope
+- Account creation, update, deletion, or any write operation.
+- Live DB2 connectivity.
+- Live CICS connectivity.
+- Batch/multi-account inquiry workflows unless separately approved.
 
-### 1.3 Scope Boundaries
+## 4. Actors
+- Bank employee performing account inquiry.
+- Account inquiry API.
+- Mock repository (POC data source).
+- Authentication/authorization boundary service.
 
-**In-Scope:**
-- Composite-key account lookup (ACCOUNT_SORTCODE + ACCOUNT_NUMBER)
-- OAuth2 bearer token authentication and role-based authorization (ACCOUNT_INQUIRER role)
-- Standardized JSON request/response contracts
-- Mock data repository (POC, no live DB2/CICS)
-- Structured logging with correlation ID propagation
-- OpenAPI 3.0.3 contract-first API design
-- React web UI for employee account inquiry
-- Input validation at HTTP boundary
-- Error categorization with standard HTTP status codes and error envelope
+## 5. Preconditions
+- Request targets `GET /v1/accounts/{sortcode}/{accountNumber}`.
+- `sortcode` and `accountNumber` are supplied in path parameters.
+- POC mode is active with mock repository.
+- Request includes a valid bearer token.
 
-**Out-of-Scope:**
-- Live CICS transaction server integration
-- Live DB2 mainframe database connectivity
-- Account modification or creation workflows
-- Multi-account batch inquiry
-- Account statement generation or history retrieval
-- Real-time mainframe system monitoring or health checks
+## 6. Functional Requirements
+### FR-001 Lookup Key and Retrieval
+The system shall retrieve at most one account record using composite key `ACCOUNT_SORTCODE + ACCOUNT_NUMBER`.
 
-## 2. Intended System Alignment Summary
+### FR-001A Reserved Account Number Branch
+When `accountNumber = 99999999`, the system shall execute the legacy reserved-number behavior: retrieve the highest account number for the supplied `sortcode` and return that record. The endpoint and request parameters remain unchanged.
 
-This specification aligns to the canonical target architecture defined in `provided/system-intent.md`:
+### FR-002 Read-Only Inquiry Behavior
+The system shall support inquiry only and shall not create, modify, or delete account records.
 
-| Dimension | Target | Implementation Strategy |
-|-----------|--------|------------------------|
-| **Backend Runtime** | Java 21 + Spring Boot 3.3.x | Maven-based build; Spring Web MVC REST stack; Spring Security OAuth2 Resource Server |
-| **Frontend Runtime** | React 18.x + TypeScript 5.x + Vite 5.x | Node.js 20 LTS; npm-based dependency management; React Router for navigation |
-| **API Protocol** | REST over HTTPS; OpenAPI 3.0.3 | Spring MVC `@RestController` with Springdoc OpenAPI auto-generation |
-| **Authentication** | OAuth2 resource server; JWT bearer tokens | Spring Security OAuth2 Resource Server; token validation at controller boundary |
-| **Authorization** | Role-based access control (ACCOUNT_INQUIRER) | Spring Security `@PreAuthorize` annotations on service methods; RBAC enforced at service layer |
-| **Persistence (POC)** | Mock in-memory repository | Spring Data JPA with H2 embedded database or custom in-memory Map-based repository |
-| **Observability** | Structured JSON logging + correlation ID propagation | SLF4J + Logback with JSON encoder; MDC (Mapped Diagnostic Context) for correlation ID |
-| **Error Handling** | Standardized JSON error envelope | Global `@ExceptionHandler` in `GlobalExceptionHandler` class; mapped to HTTP status codes per OpenAPI spec |
-| **Modernization Enhancements** | OAuth2, structured logging, correlation IDs, JSON REST | All new capabilities explicitly marked; legacy lookup semantics preserved as default path |
+### FR-003 POC Repository Boundary
+The system shall use mock repository data in this POC and shall not call live DB2 or live CICS.
 
----
+### FR-004 Response Mapping
+The system shall return response fields mapped from legacy structures according to source mapping rules, including required conversions and trimming behavior documented in this specification.
 
-## 3. API Endpoints with Request/Response Contracts
+### FR-005 Validation and Error Responses
+The system shall validate path parameter formats and return standardized error responses with correct HTTP semantics.
 
-### 3.1 Account Inquiry Endpoint: GET /v1/accounts/{sortcode}/{accountNumber}
+### FR-006 Security (Source-Supported)
+The system shall require bearer-token authentication and role-based authorization for inquiry access.
 
-**Endpoint ID:** `ENDPOINT-001`  
-**HTTP Method:** GET  
-**Path:** `/v1/accounts/{sortcode}/{accountNumber}`  
-**Protocol:** HTTPS only (TLS 1.2 minimum)  
-**Authentication:** OAuth2 Bearer Token (JWT)  
-**Authorization:** Requires `ACCOUNT_INQUIRER` role or higher
+### FR-007 Safe Observability
+The system shall record traceable operational events without logging credentials or sensitive business data.
 
-#### 3.1.1 Request Contract
+## 7. Business Rules
+### BR-001 Composite Key Rule
+Lookup key is `sortcode + accountNumber` and corresponds to `ACCOUNT_SORTCODE + ACCOUNT_NUMBER`.
 
-**Path Parameters:**
+### BR-002 Sortcode Format Rule
+`sortcode` must be numeric and exactly 6 digits.
 
-| Parameter | Type | Format | Constraints | Example | Mapping |
-|-----------|------|--------|-------------|---------|---------|
-| `sortcode` | String | `^\d{6}$` | Exactly 6 numeric digits; required; no leading zeros trimmed | `"123456"` | ACCOUNT_SORTCODE (CHAR(6)) |
-| `accountNumber` | String | `^\d{8}$` | Exactly 8 numeric digits; required | `"98765432"` | ACCOUNT_NUMBER (CHAR(8)) |
+### BR-003 Account Number Format Rule
+`accountNumber` must be numeric and exactly 8 digits.
 
-**Header Parameters:**
+### BR-004 Security Rule
+Missing/invalid/expired authentication results in 401. Authenticated users without required permission result in 403.
 
-| Header | Type | Required | Format | Purpose | Example |
-|--------|------|----------|--------|---------|---------|
-| `Authorization` | String | Yes | `Bearer <JWT_token>` | OAuth2 bearer token for authentication | `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
-| `X-Correlation-ID` | String | No | UUID v4 | Optional correlation ID for distributed tracing. If omitted, backend generates unique UUID. | `550e8400-e29b-41d4-a716-446655440000` |
+### BR-005 Error Rule
+Malformed input returns 400. Valid key with no record returns 404. Unexpected internal failure returns 500. Repository or service unavailability returns 503.
 
-**Request Body:** None
+## 8. Validation Rules
+- `sortcode` regex: `^\d{6}$`
+- `accountNumber` regex: `^\d{8}$`
+- Empty, missing, or malformed path values are invalid.
+- Validation failures return HTTP 400 and a standardized error payload.
 
-**Validation Rules (Applied Before Service Logic):**
+## 9. API Behaviour
+- Method and path: `GET /v1/accounts/{sortcode}/{accountNumber}`
+- Request body: none
+- Required path params: `sortcode`, `accountNumber`
+- Correlation ID is generated or propagated by the backend and returned for traceability.
+- Response content: account inquiry success payload or standardized error payload
+- This specification does not define implementation classes, annotations, packages, or frameworks.
 
-- `sortcode` must match pattern `^\d{6}$` (non-empty, exactly 6 digits)
-	- **Failure Response:** HTTP 400 Bad Request (see §3.4.1)
-	- **Error Code:** `VALIDATION_ERROR`
-	- **Error Message:** `"Sortcode must be exactly 6 numeric digits"`
+## 10. Success Behaviour
+On successful lookup:
+- Return HTTP 200.
+- Return one account record mapped from authoritative legacy fields.
+- Return the same 12 response fields for both normal and reserved-number lookups:
+  - `eyecatcher`
+  - `customerNumber`
+  - `sortcode`
+  - `accountNumber`
+  - `accountType`
+  - `interestRate`
+  - `accountOpened`
+  - `overdraftLimit`
+  - `lastStatementDate`
+  - `nextStatementDate`
+  - `availableBalance`
+  - `actualBalance`
+- Preserve documented transformations (trimming, date conversion, decimal conversion).
+- No write-side effects occur.
 
-- `accountNumber` must match pattern `^\d{8}$` (non-empty, exactly 8 digits)
-	- **Failure Response:** HTTP 400 Bad Request (see §3.4.1)
-	- **Error Code:** `VALIDATION_ERROR`
-	- **Error Message:** `"Account number must be exactly 8 numeric digits"`
+## 11. Error Behaviour
+- **400 Bad Request**: malformed `sortcode` or `accountNumber`.
+- **401 Unauthorized**: missing, malformed, invalid, or expired authentication.
+- **403 Forbidden**: authentication succeeded but permission is insufficient.
+- **404 Not Found**: key format is valid but no matching account exists.
+- **500 Internal Server Error**: unexpected internal failure.
+- **503 Service Unavailable**: generic repository/service-unavailable response for transient backend unavailability in POC operation.
 
-- `Authorization` header must be present and contain valid JWT token with `ACCOUNT_INQUIRER` scope
-	- **Failure Response:** HTTP 401 Unauthorized (see §3.4.2) if token missing
-	- **Failure Response:** HTTP 403 Forbidden (see §3.4.3) if token invalid or insufficient scope
-
-#### 3.1.2 Success Response (HTTP 200 OK)
-
-**Response Body Schema:** `AccountResponse`
-
+Canonical error response structure:
 ```json
 {
-	"correlationId": "550e8400-e29b-41d4-a716-446655440000",
-	"account": {
-		"eyecatcher": "ACCOUNT-DATA",
-		"customerNumber": "C000000123",
-		"sortcode": "123456",
-		"accountNumber": "98765432",
-		"accountType": "CHK",
-		"accountStatus": "A",
-		"accountName": "John Doe Account",
-		"accountBalance": "50000.00",
-		"accountCurrency": "GBP",
-		"accountOpenDate": "2020-01-15",
-		"accountManager": "Manager 1",
-		"lastTransactionDate": "2024-01-10"
-	},
-	"timestamp": "2024-01-15T14:23:45.123Z"
+  "error": {
+    "code": "ERR-001",
+    "message": "Sortcode format invalid. Must be exactly 6 numeric digits.",
+    "correlationId": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2024-01-15T10:30:45.123Z"
+  }
 }
 ```
 
-**Response Headers:**
+## 12. Legacy Observable Behaviour
+The following legacy-observable behaviors are preserved based on source analysis:
 
-| Header | Type | Value | Purpose |
-|--------|------|-------|---------|
-| `X-Correlation-ID` | String | UUID from request or generated | Echo correlation ID for tracing |
-| `Content-Type` | String | `application/json; charset=utf-8` | Response content type |
-| `Cache-Control` | String | `no-store, no-cache, must-revalidate` | Disable caching for sensitive data |
+- **Lookup key**: composite `ACCOUNT_SORTCODE + ACCOUNT_NUMBER`.
+- **Reserved account number branch**: `accountNumber = 99999999` returns the record with the highest account number for the supplied `sortcode`.
+- **Record selection**: selection is based on the composite lookup key and returns a single matching account record or no match.
+- **Not-found outcome**: valid key with zero matching records maps to not-found behavior.
+- **Field trimming**: fixed-width character fields are trimmed for response representation.
+- **Date conversion**: source DB2 DATE values (handled through COBOL date decomposition) are converted to ISO `yyyy-MM-dd` in responses.
+- **Decimal conversion**: packed/binary numeric formats are converted to decimal response values with expected scale/sign handling.
+- **Legacy status/error mapping**: legacy abend/error semantics are translated to standardized HTTP error outcomes.
+- **Fields transformed or omitted**: legacy transport-specific fields (for example COMMAREA control/pointer fields and multi-occurrence envelope structures) are not exposed directly in modern response payloads.
 
-**Field Mapping (COBOL → JSON):**
+## 13. Data Mapping Requirements
+- Mapping source authorities are supporting/program-analysis.md and supporting/mapping-matrix.md.
+- Composite key fields in request map to `ACCOUNT_SORTCODE` and `ACCOUNT_NUMBER`.
+- Response fields map from authoritative account table/copybook fields.
+- Transformation requirements:
+  - Trim trailing spaces from fixed-width character values.
+  - Convert date representations to ISO date strings.
+  - Convert decimal/binary legacy numeric fields to correctly scaled decimal values.
+ - POC nullable-field policy: mock records are complete and API responses include all 12 successful-response fields (no omitted/null data in normal POC responses).
 
-| COBOL Field (from ACCOUNT.cpy) | JSON Field | Type | Length | Description |
-|--------------------------------|------------|------|--------|-------------|
-| `ACCOUNT-EYECATCHER` | `eyecatcher` | String | 12 | Literal string "ACCOUNT-DATA" |
-| `ACCOUNT-CUSTOMER-NUMBER` | `customerNumber` | String | 10 | Customer identifier |
-| `ACCOUNT-SORTCODE` | `sortcode` | String | 6 | Sort code (request parameter echo) |
-| `ACCOUNT-NUMBER` | `accountNumber` | String | 8 | Account number (request parameter echo) |
-| `ACCOUNT-TYPE` | `accountType` | String | 3 | Account type code (e.g., "CHK", "SAV") |
-| `ACCOUNT-STATUS` | `accountStatus` | String | 1 | Account status flag (e.g., "A"=Active, "C"=Closed) |
-| `ACCOUNT-NAME` | `accountName` | String | 40 | Account holder name |
-| `ACCOUNT-BALANCE` | `accountBalance` | String (decimal) | 12,2 | Current account balance (formatted with 2 decimals) |
-| `ACCOUNT-CURRENCY` | `accountCurrency` | String | 3 | ISO 4217 currency code (e.g., "GBP", "USD") |
-| `ACCOUNT-OPEN-DATE` | `accountOpenDate` | String (ISO 8601) | 10 | Account open date in YYYY-MM-DD format |
-| `ACCOUNT-MANAGER` | `accountManager` | String | 40 | Account manager name |
-| `ACCOUNT-LAST-TXN-DATE` | `lastTransactionDate` | String (ISO 8601) | 10 | Last transaction date in YYYY-MM-DD format |
+## 14. Non-Functional Requirements Supported by Source Evidence
+### NFR-001 Security Baseline (Supported)
+- Bearer-token authentication and role-based authorization are source-supported and in scope.
 
-#### 3.1.3 Error Response: HTTP 400 Bad Request (Invalid Input)
+### NFR-002 Transport Security (Supported)
+- TLS 1.2+ requirement is source-supported.
 
-**Error Code:** `VALIDATION_ERROR`  
-**Applicable Scenarios:**
-- Sortcode does not match pattern `^\d{6}$`
-- Account number does not match pattern `^\d{8}$`
-- Path parameter is empty or missing
+### NFR-003 Observability Baseline (Supported)
+- Structured logging and correlation-ID propagation are source-supported.
 
-**Response Body:**
+### NFR-004 Safe Logging (Mandatory)
+- Logging shall not include bearer tokens, account numbers, customer numbers, balances, or full account payloads.
+- Logging shall contain operational metadata only: correlation ID, request path/template, HTTP status, duration, and event type.
 
-```json
-{
-	"correlationId": "550e8400-e29b-41d4-a716-446655440000",
-	"error": {
-		"code": "VALIDATION_ERROR",
-		"message": "Invalid input parameters",
-		"details": [
-			{
-				"field": "sortcode",
-				"value": "12345",
-				"reason": "Must be exactly 6 numeric digits"
-			}
-		]
-	},
-	"timestamp": "2024-01-15T14:23:45.123Z"
-}
-```
+### NFR-005 Optional Enhancement
+- Distributed tracing integration may be added as an optional enhancement and is not a mandatory requirement for this POC specification.
 
-**HTTP Status Code:** `400`  
-**Response Headers:** `X-Correlation-ID`, `Content-Type: application/json`
+## 15. Acceptance Criteria
+### AC-001 Exact Input Validation
+Given an inquiry request with `sortcode` not matching `^\d{6}$` or `accountNumber` not matching `^\d{8}$`, the API returns HTTP 400 with standardized error payload.
 
-#### 3.1.4 Error Response: HTTP 401 Unauthorized (Missing/Invalid Token)
+### AC-002 Successful Composite-Key Lookup
+Given valid `sortcode` and `accountNumber` that exist in the repository, the API returns HTTP 200 with one mapped account record.
 
-**Error Code:** `UNAUTHORIZED`  
-**Applicable Scenarios:**
-- `Authorization` header missing
-- JWT token malformed or expired
-- Token does not contain required `ACCOUNT_INQUIRER` scope
+### AC-002A Reserved-Number Lookup
+Given valid `sortcode` and `accountNumber = 99999999`, the API returns HTTP 200 with the account record having the highest account number for that sortcode.
 
-**Response Body:**
+### AC-003 No-Match Behaviour
+Given valid `sortcode` and `accountNumber` that do not exist, the API returns HTTP 404 with standardized error payload.
 
-```json
-{
-	"correlationId": "550e8400-e29b-41d4-a716-446655440000",
-	"error": {
-		"code": "UNAUTHORIZED",
-		"message": "Authentication required. Provide a valid OAuth2 bearer token with ACCOUNT_INQUIRER scope.",
-		"details": []
-	},
-	"timestamp": "2024-01-15T14:23:45.123Z"
-}
-```
+### AC-004 Response Field Mapping
+Given a successful lookup, response fields reflect authoritative mapping and conversions (trimmed CHAR fields, ISO date format, correctly scaled decimals).
 
-**HTTP Status Code:** `401`  
-**Response Headers:** `WWW-Authenticate: Bearer realm="INQACC", X-Correlation-ID`, `Content-Type: application/json`
+### AC-005 Read-Only Behaviour
+For all inquiry requests, no create/update/delete side effects occur in account data.
 
-#### 3.1.5 Error Response: HTTP 403 Forbidden (Insufficient Authorization)
+### AC-006 Mock-Repository Boundary
+In POC mode, inquiry requests are served from mock repository only, with no live DB2/CICS calls.
 
-**Error Code:** `FORBIDDEN`  
-**Applicable Scenarios:**
-- JWT token valid but user role does not include `ACCOUNT_INQUIRER`
-- Token scope insufficient for account inquiry operation
+### AC-007 Error Semantics
+The API uses HTTP semantics exactly as specified in Section 11, including 401 vs 403 distinction and 500/503 handling.
 
-**Response Body:**
+### AC-008 Safe Logging
+Operational logs exclude bearer tokens, account numbers, customer numbers, balances, and full account detail payloads while preserving traceability metadata.
 
-```json
-{
-	"correlationId": "550e8400-e29b-41d4-a716-446655440000",
-	"error": {
-		"code": "FORBIDDEN",
-		"message": "Insufficient permissions. Required role: ACCOUNT_INQUIRER",
-		"details": []
-	},
-	"timestamp": "2024-01-15T14:23:45.123Z"
-}
-```
+### AC-009 Security Behaviour
+Missing/invalid/expired authentication returns 401 and authenticated-but-unauthorized requests return 403.
 
-**HTTP Status Code:** `403`  
-**Response Headers:** `X-Correlation-ID`, `Content-Type: application/json`
+### AC-010 Legacy Behaviour Preservation
+The documented legacy observable behaviors in Section 12 are preserved and testable.
 
-#### 3.1.6 Error Response: HTTP 404 Not Found (No Matching Account)
+## 16. Assumptions and Unresolved Decisions
+### Assumptions
+- Supporting artifacts under `supporting/` and source requirements in `checklists/requirements.md` are treated as current authority inputs for this rewrite.
+- Security and observability baselines remain in scope per source authorities unless governance explicitly removes them.
 
-**Error Code:** `ACCOUNT_NOT_FOUND`  
-**Applicable Scenarios:**
-- Sortcode and account number are valid format
-- No matching record exists in ACCOUNT table (composite key not found)
-
-**Response Body:**
-
-```json
-{
-	"correlationId": "550e8400-e29b-41d4-a716-446655440000",
-	"error": {
-		"code": "ACCOUNT_NOT_FOUND",
-		"message": "No account found for the specified sortcode and account number",
-		"details": [
-			{
-				"field": "composite_key",
-				"value": "sortcode=123456, accountNumber=98765432",
-				"reason": "Record does not exist in ACCOUNT table"
-			}
-		]
-	},
-	"timestamp": "2024-01-15T14:23:45.123Z"
-}
-```
-
-**HTTP Status Code:** `404`  
-**Response Headers:** `X-Correlation-ID`, `Content-Type: application/json`
-
-#### 3.1.7 Error Response: HTTP 500 Internal Server Error (Repository/System Failure)
-
-**Error Code:** `INTERNAL_SERVER_ERROR`  
-**Applicable Scenarios:**
-- Mock repository connection failure
-- Unexpected exception during account lookup (null pointer, data corruption, etc.)
-- Database adapter error (if future live DB2 integration)
-
-**Response Body:**
-
-```json
-{
-	"correlationId": "550e8400-e29b-41d4-a716-446655440000",
-	"error": {
-		"code": "INTERNAL_SERVER_ERROR",
-		"message": "An unexpected error occurred while processing your request",
-		"details": []
-	},
-	"timestamp": "2024-01-15T14:23:45.123Z"
-}
-```
-
-**HTTP Status Code:** `500`  
-**Response Headers:** `X-Correlation-ID`, `Content-Type: application/json`  
-**Note:** Backend shall log full stack trace with correlation ID; do not expose internal stack trace to client.
-
-#### 3.1.8 Error Response: HTTP 503 Service Unavailable (Downstream Adapter Unreachable)
-
-**Error Code:** `SERVICE_UNAVAILABLE`  
-**Applicable Scenarios:**
-- Mock repository initialization failure
-- Database adapter not available (future live DB2 integration)
-- Circuit breaker open on downstream service
-
-**Response Body:**
-
-```json
-{
-	"correlationId": "550e8400-e29b-41d4-a716-446655440000",
-	"error": {
-		"code": "SERVICE_UNAVAILABLE",
-		"message": "Account inquiry service is temporarily unavailable. Please try again later.",
-		"details": []
-	},
-	"timestamp": "2024-01-15T14:23:45.123Z"
-}
-```
-
-**HTTP Status Code:** `503`  
-**Response Headers:** `Retry-After: 60`, `X-Correlation-ID`, `Content-Type: application/json`
-
----
-
-## 4. Business Rule Realization
-
-### 4.1 Rule ID: BR-001
-- **Description:** Retrieve account records based on account number and type.
-- **Inputs:** 
-	- Account Number (HV-ACCOUNT-ACC-NO)
-	- Account Type (HV-ACCOUNT-ACC-TYPE)
-- **Outputs:** Account details as specified in the API response.
-
-### 4.2 Rule ID: BR-002
-- **Description:** Handle errors gracefully and provide standardized error responses.
-- **Outputs:** Standardized error response format.
-
-### 4.3 Rule ID: BR-003
-- **Description:** Log all account inquiry requests and responses.
-- **Outputs:** Structured JSON log entry.
-
-### 4.4 Rule ID: BR-004
-- **Description:** Enforce role-based access control for account inquiry endpoints.
-- **Outputs:** Access granted or denied based on user roles.
-
-## 5. Validation and Error Semantics
-- **Validation Rules:**
-	- Account Number and Account Type must not be empty and must conform to expected formats.
-- **Error Handling:**
-	- Return a 400 Bad Request for invalid inputs.
-
-## 6. Security and Compliance Controls
-- **Authentication:** OAuth2 resource server with JWT bearer tokens.
-- **Authorization:** Role-based access control for account inquiry endpoints.
-- **Transport Security:** TLS 1.2+ for all communications.
-- **Input Validation:** Strict path/query validation and standardized error responses.
-- **Secrets Handling:** Environment variables or secret manager, never in source control.
-
-## 7. Non-Functional Behavior
-- **Latency:** API response time should be under 200ms for 95% of requests.
-- **Reliability:** 99.9% uptime for the account inquiry service.
-- **Logging:** Structured JSON logs with correlation ID per request.
-- **Metrics:** Request latency, error rate, and downstream adapter status.
-- **Tracing:** Distributed tracing ready (OpenTelemetry).
-
-## 8. Acceptance Criteria Table
-
-| Acceptance Criteria ID | Description                                                                 |
-|------------------------|-----------------------------------------------------------------------------|
-| AC-001                 | The system retrieves account records based on valid account number and type.|
-| AC-002                 | The system returns a 400 error for invalid account number or type.         |
-| AC-003                 | The system logs all requests and responses in structured JSON format.      |
-| AC-004                 | The system enforces role-based access control for account inquiry endpoints.|
-| AC-005                 | The system returns a 403 error for unauthorized access attempts.           |
-| AC-006                 | The system maintains legacy observable behavior in all responses.          |
+### Unresolved Decisions
+- None. Legacy lookup behavior and system-intent authority references have been resolved in this correction.

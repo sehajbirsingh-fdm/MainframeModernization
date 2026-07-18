@@ -2,7 +2,7 @@
 
 **Document ID:** `intended-system.md`  
 **Pipeline:** mainframe_modernization  
-**Authority:** provided/system-intent.md + Legacy Analysis (INQACC.cbl, ACCDB2.cpy, ACCOUNT.cpy, INQACCCZ.cpy)  
+**Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md
 **Status:** Canonical target architecture for downstream requirement and spec generation  
 **Generated:** 2024
 
