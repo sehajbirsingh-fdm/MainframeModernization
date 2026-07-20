@@ -75,7 +75,9 @@ describe('AccountInquiryPage', () => {
 
     expect(fetchSpy).toHaveBeenCalledWith(
       '/v1/accounts/123456/00000001',
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: expect.stringContaining('Bearer ') }) }),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer valid-inqacc-inquirer-token' }),
+      }),
     )
 
     expect(await screen.findByText('Account inquiry successful.')).toBeInTheDocument()
@@ -235,12 +237,104 @@ describe('AccountInquiryPage', () => {
 
     await user.clear(screen.getByLabelText('Account Number'))
     await user.type(screen.getByLabelText('Account Number'), '00000001')
-    await user.clear(screen.getByLabelText('Bearer Token'))
-    await user.type(screen.getByLabelText('Bearer Token'), 'invalid-token')
     await user.click(screen.getByRole('button', { name: 'Inquire Account' }))
 
     expect((await screen.findAllByText('Unauthorized')).length).toBeGreaterThan(0)
     expect(screen.getByText('ERR-002')).toBeInTheDocument()
+  })
+
+  it('shows timeout error and clears stale success data', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(accountSuccessBody()), {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+            'X-Correlation-ID': 'corr-success',
+          },
+        }),
+      )
+      .mockRejectedValueOnce(new DOMException('Timed out', 'AbortError'))
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Sortcode'), '123456')
+    await user.type(screen.getByLabelText('Account Number'), '00000001')
+    await user.click(screen.getByRole('button', { name: 'Inquire Account' }))
+    await screen.findByText('Account inquiry successful.')
+
+    await user.click(screen.getByRole('button', { name: 'Repeat Inquiry' }))
+
+    expect(await screen.findByText('The account inquiry request timed out. Please retry.')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Account Result' })).not.toBeInTheDocument()
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows network error and clears stale success data', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(accountSuccessBody()), {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+            'X-Correlation-ID': 'corr-success',
+          },
+        }),
+      )
+      .mockRejectedValueOnce(new Error('network down'))
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Sortcode'), '123456')
+    await user.type(screen.getByLabelText('Account Number'), '00000001')
+    await user.click(screen.getByRole('button', { name: 'Inquire Account' }))
+    await screen.findByText('Account inquiry successful.')
+
+    await user.click(screen.getByRole('button', { name: 'Repeat Inquiry' }))
+
+    expect(await screen.findByText('Network unavailable. Check connection and retry.')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Account Result' })).not.toBeInTheDocument()
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows fallback backend error for non-json error response', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(accountSuccessBody()), {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+            'X-Correlation-ID': 'corr-success',
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response('service unavailable', {
+          status: 503,
+          headers: {
+            'content-type': 'text/plain',
+            'X-Correlation-ID': 'corr-503',
+          },
+        }),
+      )
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Sortcode'), '123456')
+    await user.type(screen.getByLabelText('Account Number'), '00000001')
+    await user.click(screen.getByRole('button', { name: 'Inquire Account' }))
+    await screen.findByText('Account inquiry successful.')
+
+    await user.click(screen.getByRole('button', { name: 'Repeat Inquiry' }))
+
+    expect((await screen.findAllByText('Unexpected internal failure')).length).toBeGreaterThan(0)
+    expect(screen.getByText('ERR-006')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Account Result' })).not.toBeInTheDocument()
   })
 
   it('supports repeat inquiry without page reload', async () => {

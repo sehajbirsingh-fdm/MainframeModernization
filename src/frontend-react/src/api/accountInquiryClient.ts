@@ -1,4 +1,4 @@
-import { apiBaseUrl, requestTimeoutMs } from '../config/env'
+import { apiBaseUrl, inqaccDefaultToken, requestTimeoutMs } from '../config/env'
 import type { AccountErrorEnvelope, AccountInquiryRequest, AccountInquiryResult, AccountResponse } from '../domain/accountTypes'
 
 export async function inquireAccount(request: AccountInquiryRequest): Promise<AccountInquiryResult> {
@@ -11,7 +11,7 @@ export async function inquireAccount(request: AccountInquiryRequest): Promise<Ac
       {
         signal: controller.signal,
         headers: {
-          Authorization: `Bearer ${request.bearerToken}`,
+          Authorization: `Bearer ${inqaccDefaultToken}`,
         },
       },
     )

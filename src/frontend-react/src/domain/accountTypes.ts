@@ -26,7 +26,6 @@ export interface AccountErrorEnvelope {
 export interface AccountInquiryRequest {
   sortcode: string
   accountNumber: string
-  bearerToken: string
 }
 
 export type AccountInquiryResult =

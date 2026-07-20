@@ -108,6 +108,8 @@ If DB mode is enabled without valid DB values, startup will fail by design.
 - `Bearer valid-inqacc-limited-token` -> authenticated but forbidden (403)
 - Missing/malformed/invalid token -> 401
 
+Current INQACC authentication implementation is a deterministic development adapter that demonstrates bearer-header handling, 401/403 behavior, and role boundaries for the POC. It is not a production OAuth2 identity provider or JWT signature/issuer/expiry validation pipeline.
+
 ## Source Layout
 
 - `src/main/java/com/bankofz/inqcust/api/controller`

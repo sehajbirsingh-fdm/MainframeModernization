@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import type { FormEvent, ReactElement } from 'react'
 import { inquireAccount } from '../../api/accountInquiryClient'
-import { inqaccDefaultToken } from '../../config/env'
 import type { AccountErrorEnvelope, AccountInquiryRequest, AccountResponse } from '../../domain/accountTypes'
 import { type AccountValidationErrors, validateAccountInquiryInput } from './validation'
 
@@ -10,11 +9,10 @@ type UiState = 'IDLE' | 'LOADING' | 'SUCCESS' | 'NOT_FOUND' | 'ERROR'
 interface AccountFormData {
   sortcode: string
   accountNumber: string
-  bearerToken: string
 }
 
 function inputKey(form: AccountFormData): string {
-  return `${form.sortcode}:${form.accountNumber}:${form.bearerToken}`
+  return `${form.sortcode}:${form.accountNumber}`
 }
 
 function fieldDisplay(label: string, value: string | number): ReactElement {
@@ -49,7 +47,6 @@ export function AccountInquiryPage() {
   const [formData, setFormData] = useState<AccountFormData>({
     sortcode: '',
     accountNumber: '',
-    bearerToken: inqaccDefaultToken,
   })
   const [validationErrors, setValidationErrors] = useState<AccountValidationErrors>({})
   const [uiState, setUiState] = useState<UiState>('IDLE')
@@ -66,7 +63,7 @@ export function AccountInquiryPage() {
 
   async function executeInquiry(request: AccountInquiryRequest): Promise<void> {
     const sequence = ++requestSequenceRef.current
-    inFlightKeyRef.current = `${request.sortcode}:${request.accountNumber}:${request.bearerToken}`
+    inFlightKeyRef.current = `${request.sortcode}:${request.accountNumber}`
 
     setUiState('LOADING')
     setMessage('Loading account inquiry...')
@@ -131,7 +128,6 @@ export function AccountInquiryPage() {
     void executeInquiry({
       sortcode: formData.sortcode,
       accountNumber: formData.accountNumber,
-      bearerToken: formData.bearerToken,
     })
   }
 
@@ -143,7 +139,6 @@ export function AccountInquiryPage() {
     void executeInquiry({
       sortcode: formData.sortcode,
       accountNumber: formData.accountNumber,
-      bearerToken: formData.bearerToken,
     })
   }
 
@@ -205,18 +200,6 @@ export function AccountInquiryPage() {
                 {validationErrors.accountNumber}
               </p>
             ) : null}
-          </div>
-
-          <div className="field">
-            <label htmlFor="bearerToken">Bearer Token</label>
-            <input
-              id="bearerToken"
-              name="bearerToken"
-              type="text"
-              autoComplete="off"
-              value={formData.bearerToken}
-              onChange={(event) => setFormData((previous) => ({ ...previous, bearerToken: event.target.value }))}
-            />
           </div>
 
           <div className="actions">

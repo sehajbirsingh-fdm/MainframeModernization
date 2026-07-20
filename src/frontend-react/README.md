@@ -30,7 +30,7 @@ The UI is backend-only at runtime and always calls the backend API.
 
 - VITE_API_BASE_URL: backend base URL (default: empty, uses Vite dev proxy)
 - VITE_API_TIMEOUT_MS: optional request timeout in milliseconds
-- VITE_INQACC_BEARER_TOKEN: default bearer token prefilled in INQACC form
+- VITE_INQACC_BEARER_TOKEN: development bearer token attached transparently to INQACC requests
 
 Example .env.local:
 
@@ -64,5 +64,6 @@ npm run build
 - INQACC reserved value:
   - 99999999 requests highest-account-number lookup for the entered sortcode
 - INQACC authorization:
-  - default token `valid-inqacc-inquirer-token` is accepted for inquiry access
+  - configured development token `valid-inqacc-inquirer-token` is accepted for inquiry access
   - `valid-inqacc-limited-token` is authenticated but forbidden (403) for inquiry role
+  - this is a deterministic development authentication adapter for bearer-header and role-boundary behavior; it is not production OAuth2/JWT identity validation

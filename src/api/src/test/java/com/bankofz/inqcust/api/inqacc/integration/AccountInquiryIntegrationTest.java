@@ -40,4 +40,13 @@ class AccountInquiryIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("ERR-004"));
     }
+
+    @Test
+    void shouldIncludeCorsHeadersForAllowedFrontendOriginOnV1Path() throws Exception {
+        mockMvc.perform(get("/v1/accounts/123456/00000001")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
+                        .header("Origin", "http://localhost:5173"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
+    }
 }
