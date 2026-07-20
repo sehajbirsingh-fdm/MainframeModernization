@@ -6,7 +6,7 @@
 **Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md + supporting/program-analysis.md + supporting/mapping-matrix.md + spec.md + contracts/openapi.yaml + plan.md + tasks.md + supporting/traceability-matrix.md  
 **Status:** Implementation-ready test specification  
 **Generated:** 2024  
-**Target Stack:** Java 21 + Spring Boot 3.3.x + React 18.x + TypeScript 5.x + Vite 5.x + Mock Repository (POC)
+**Target Stack:** Java 21 + Spring Boot 3.3.x + existing `src/frontend-react` React + TypeScript + Vite stack using repository-configured versions + Mock Repository (POC)
 
 ---
 
@@ -59,9 +59,9 @@
 |-------------|---------------|-------------|-----------------|---------|
 | **Developer Local** | Java 21 + Maven; Node.js 20 + npm | Mock (in-memory H2) | Mock OAuth2 token provider (TestJwtTokenGenerator) | Rapid iteration; pre-commit verification |
 | **CI/CD Pipeline** | Java 21 + Maven; Node.js 20 + npm | Mock (in-memory H2) | Mock OAuth2 token provider; test fixtures | Automated gate checks; pull request validation |
-| **Integration Test Environment** | Java 21 + Spring Boot 3.3.x; React 18.x via Vite dev server | Mock (H2 embedded) | Mock OAuth2 resource server (Spring Security + @EnableResourceServer) | Full integration testing; API contract verification |
-| **User Acceptance Testing (UAT)** | Java 21 + Spring Boot 3.3.x (containerized); React 18.x (production build) | Mock repository (H2 or PostgreSQL test instance) | OAuth2 bearer tokens from UAT authorization server | End-user workflow validation; non-functional acceptance |
-| **Production Readiness** | Java 21 + Spring Boot 3.3.x (Docker); React 18.x (static asset CDN) | Mock repository (to be replaced with real DB2 adapter in future phase) | OAuth2 bearer tokens from production authorization server | Pre-deployment smoke test; artifact validation |
+| **Integration Test Environment** | Java 21 + Spring Boot 3.3.x; existing `src/frontend-react` module via Vite dev server | Mock (H2 embedded) | Mock OAuth2 resource server (Spring Security + @EnableResourceServer) | Full integration testing; API contract verification |
+| **User Acceptance Testing (UAT)** | Java 21 + Spring Boot 3.3.x (containerized); existing `src/frontend-react` production build | Mock repository (H2 or PostgreSQL test instance) | OAuth2 bearer tokens from UAT authorization server | End-user workflow validation; non-functional acceptance |
+| **Production Readiness** | Java 21 + Spring Boot 3.3.x (Docker); existing `src/frontend-react` static asset build | Mock repository (to be replaced with real DB2 adapter in future phase) | OAuth2 bearer tokens from production authorization server | Pre-deployment smoke test; artifact validation |
 
 ---
 

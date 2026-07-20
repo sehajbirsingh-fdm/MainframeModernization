@@ -5,7 +5,7 @@
 **Target Pipeline:** mainframe_modernization  
 **System Intent Authority:** supporting/intended-system.md  
 **Legacy Source Files:** cobol/INQACC.cbl, copybooks/ACCDB2.cpy, copybooks/ACCOUNT.cpy, copybooks/INQACCCZ.cpy  
-**Target Stack:** Java 21, Spring Boot 3.3.x, React 18.x, TypeScript 5.x, Vite 5.x, Mock Repository (POC)
+**Target Stack:** Java 21, Spring Boot 3.3.x, existing `src/frontend-react` React + TypeScript + Vite stack using repository-configured versions, Mock Repository (POC)
 
 ---
 

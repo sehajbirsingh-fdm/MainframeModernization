@@ -46,7 +46,7 @@ Modernize the legacy INQACC CICS-DB2 account inquiry program into a cloud-ready,
 
 **Deliverables:**
 1. Spring Boot REST API (Java 21, Spring Boot 3.3.x)
-2. React web application (TypeScript 5.x, Vite 5.x)
+2. Existing `src/frontend-react` web application (React + TypeScript + Vite, repository-configured versions)
 3. Mock repository adapter (in-memory or embedded database)
 4. OpenAPI 3.0.3 specification (auto-generated from Spring)
 5. Deployment artifacts (Docker image, Maven build)
@@ -61,7 +61,7 @@ Modernize the legacy INQACC CICS-DB2 account inquiry program into a cloud-ready,
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     Browser / Web Client                    │
-│              (React 18.x + TypeScript 5.x)                 │
+│              (existing src/frontend-react module)           │
 └──────────────────────┬──────────────────────────────────────┘
                        │ HTTPS (TLS 1.2+)
                        │ Bearer Token (Authorization header)
@@ -121,7 +121,7 @@ Modernize the legacy INQACC CICS-DB2 account inquiry program into a cloud-ready,
 - **Port Exposure:** HTTPS 8443 (TLS termination at ingress) or 8080 (HTTP via load balancer proxy)
 
 **Frontend Deployment:**
-- **Build Output:** Static files (HTML, JavaScript, CSS) via Vite 5.x build
+- **Build Output:** Static files (HTML, JavaScript, CSS) via the existing `src/frontend-react` Vite build pipeline
 - **Hosting:** CloudFront / S3 (AWS) or static file server (on-premises)
 - **API Base URL:** Configurable via environment variable or config file
 
@@ -152,9 +152,9 @@ Modernize the legacy INQACC CICS-DB2 account inquiry program into a cloud-ready,
 | Component | Version | Purpose | Rationale |
 |-----------|---------|---------|-----------|
 | **Node.js** | 20 LTS | JavaScript runtime | LTS release; npm package manager |
-| **React** | 18.x | UI framework | Industry standard; hooks-based stateful components; ecosystem maturity |
-| **TypeScript** | 5.x | Type safety | Compile-time error detection; improved developer experience; long-term maintainability |
-| **Vite** | 5.x | Build tool & dev server | Fast HMR; optimized production builds; native ES module support |
+| **React** | Repository-configured in `src/frontend-react` | UI framework | Reuse established module; avoid duplicate app scaffolding |
+| **TypeScript** | Repository-configured in `src/frontend-react` | Type safety | Preserve existing frontend conventions without migration |
+| **Vite** | Repository-configured in `src/frontend-react` | Build tool & dev server | Reuse established build/dev flow already in repository |
 | **Axios** | 1.6.x+ | HTTP client | Simple API; request/response interceptors for correlation ID propagation |
 | **React Query** (optional) | 5.x | Server state management | Automatic caching; request deduplication; background sync (if required) |
 | **React Testing Library** | 14.x+ | UI component testing | Best practices alignment; accessible component testing |

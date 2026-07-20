@@ -70,9 +70,9 @@ Backend:
 
 Frontend:
 
-- React 18
-- Vite
-- JavaScript aligned to existing repository conventions
+- existing `src/frontend-react` React + TypeScript + Vite stack
+- repository-configured frontend dependency versions
+- existing frontend module conventions and patterns
 - approved frontend testing tooling required by frozen tasks
 
 Test-only database:
@@ -83,13 +83,18 @@ Test-only database:
 
 Do not introduce:
 
-- TypeScript
 - Spring Data JPA
 - Hibernate
 - JPA entities
 - OpenFeign
 - live CICS integration
 - live DB2 connectivity as POC acceptance requirement
+
+Frontend reconciliation constraints:
+
+- do not create a duplicate frontend application
+- do not migrate the existing frontend between JavaScript and TypeScript solely for INQACC
+- do not upgrade or downgrade React solely for INQACC; use the module's configured version
 
 ## 6. Approved architecture
 Preserve this architecture exactly:

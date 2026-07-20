@@ -9,12 +9,13 @@
 ## 1. Setup Tasks
 
 ### T001 - Align module baseline to approved stack
-- Description: Ensure the INQACC implementation module uses the approved stack only: Java 21, Spring Boot 3.x, Spring Web, Spring Validation, Spring Security, Spring JDBC, Jackson, React 18, and Vite.
+- Description: Ensure the INQACC implementation module uses the approved stack only: Java 21, Spring Boot 3.x, Spring Web, Spring Validation, Spring Security, Spring JDBC, Jackson, and the existing `src/frontend-react` React + TypeScript + Vite stack using repository-configured versions.
 - Dependencies: None.
 - Acceptance / Done Criteria:
   - Backend build configuration is present and runnable with Java 21 and Spring Boot 3.x.
-  - Frontend build configuration is present and runnable with React 18 and Vite.
-  - No disallowed technology is introduced (including TypeScript, Spring Data JPA, Hibernate, and OpenFeign).
+  - Frontend build configuration is present and runnable in the existing `src/frontend-react` module with its established React/TypeScript/Vite conventions.
+  - No disallowed technology is introduced (including Spring Data JPA, Hibernate, and OpenFeign).
+  - No duplicate frontend application is created and no migration between JavaScript and TypeScript is introduced solely for INQACC.
   - No live DB2 or CICS connectivity is required for POC completion. No CICS adapter is introduced.
   - JDBC database mode is permitted only through the approved `JdbcAccountRepository` boundary and remains inactive by default.
   - H2 usage, if present, is limited to automated JDBC tests only.

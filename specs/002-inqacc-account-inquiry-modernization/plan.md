@@ -33,13 +33,15 @@ Database-readiness posture: DB2-ready JDBC architecture with configuration-drive
 ## Technology Stack
 
 - **Backend**: Java 21, Spring Boot 3.x, Spring Web, Spring Validation, Spring Security, Spring JDBC, Jackson.
-- **Frontend (POC demo UI)**: React 18 with Vite-based build tooling.
+- **Frontend (POC demo UI)**: Existing `src/frontend-react` React + TypeScript + Vite module, using repository-configured versions and conventions.
 - **Testing**: JUnit 5, Spring test tooling, and frontend component/flow testing tooling aligned to the selected React setup; H2 may be used only as a test database for JDBC-mode tests.
 - **Data modes**:
   - **Mock mode (default)**: controlled mock data loaded in memory; no `DataSource` creation.
   - **Database mode (inactive until configured)**: JDBC adapter with Hikari-backed `DataSource` created only when `app.data.mode=db`.
 
 Technology choices are retained to stay consistent with project direction while keeping POC acceptance independent from any live database.
+
+Repository reconciliation note: earlier planning drafts assumed JavaScript-oriented wording and fixed React versions. Repository inspection confirmed the existing `src/frontend-react` application already used React, Vite, and TypeScript prior to INQACC implementation. INQACC therefore reuses that module in-place, avoids duplicate frontend creation, and does not introduce JavaScript/TypeScript migration solely for this feature.
 
 Runtime configuration model (equivalent behavior):
 

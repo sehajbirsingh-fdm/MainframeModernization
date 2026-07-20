@@ -6,7 +6,7 @@
 **Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md + supporting/program-analysis.md + spec.md + contracts/openapi.yaml + plan.md + tasks.md  
 **Status:** Implementation-ready traceability matrix  
 **Generated:** 2024  
-**Stack:** Java 21 + Spring Boot 3.3.x (backend) | React 18.x + TypeScript 5.x + Vite 5.x (frontend) | Mock Repository (POC)
+**Stack:** Java 21 + Spring Boot 3.3.x (backend) | existing `src/frontend-react` React + TypeScript + Vite stack using repository-configured versions (frontend) | Mock Repository (POC)
 
 ---
 

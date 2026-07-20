@@ -5,7 +5,7 @@
 **Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + supporting/intended-system.md + supporting/program-analysis.md + supporting/mapping-matrix.md + spec.md
 **Status:** Implementation-ready requirements  
 **Generated:** 2024  
-**Target Stack:** Java 21 + Spring Boot 3.3.x | React 18.x + TypeScript 5.x + Vite 5.x | Mock Repository (POC)
+**Target Stack:** Java 21 + Spring Boot 3.3.x | Existing `src/frontend-react` React + TypeScript + Vite stack using repository-configured versions | Mock Repository (POC)
 
 ---
 
@@ -36,7 +36,7 @@
 
 ### 1.3 Delivery Constraints
 
-- Target stack: Java 21, Spring Boot 3.3.x, Maven 3.9+, React 18.x, TypeScript 5.x, Vite 5.x, Node.js 20 LTS.
+- Target stack: Java 21, Spring Boot 3.3.x, Maven 3.9+, and the existing `src/frontend-react` React/TypeScript/Vite module with versions already configured in the repository.
 - Security baseline: OAuth2 bearer tokens and role-based authorization for inquiry access.
 - Backward compatibility: preserve legacy observable behavior as default path.
 - Any enhancement beyond legacy behavior must be explicitly marked and toggleable.

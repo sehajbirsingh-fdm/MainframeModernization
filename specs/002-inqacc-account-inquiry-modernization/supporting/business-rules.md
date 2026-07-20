@@ -3,7 +3,7 @@
 
 **Document ID:** `business-rules.md`  
 **Pipeline:** mainframe_modernization  
-**Target System:** Spring Boot 3.3.x + React 18.x (mock persistence POC)  
+**Target System:** Spring Boot 3.3.x + existing `src/frontend-react` React/TypeScript/Vite module (mock persistence POC)  
 **Authority:** INQACC.cbl + ACCDB2.cpy + ACCOUNT.cpy + INQACC.cpy + INQACCCZ.cpy + requirements.md + spec.md  
 **Status:** Implementation-ready canonical business rules  
 **Generated:** 2024

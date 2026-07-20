@@ -5,7 +5,7 @@
 **Report Date:** 2024  
 **Authority:** System Intent Blueprint + Complete Artifact Analysis  
 **Status:** Final Comprehensive Report – Implementation Handoff Ready  
-**Target Stack:** Java 21 + Spring Boot 3.3.x | React 18.x + TypeScript 5.x + Vite 5.x | Mock Repository (POC)
+**Target Stack:** Java 21 + Spring Boot 3.3.x | existing `src/frontend-react` React + TypeScript + Vite stack using repository-configured versions | Mock Repository (POC)
 
 ---
 
@@ -42,7 +42,7 @@ This final modernization report consolidates complete analysis, design, and plan
 | Dimension | Specification | Validation | Status |
 |-----------|---------------|-----------|--------|
 | **Product Goal** | Modernize INQACC account inquiry into web-accessible application with Spring Boot backend + React frontend while preserving legacy observable behavior | Confirmed in intended-system.md (§1); carried forward to all downstream artifacts (requirements.md, spec.md, business-rules.md) | ✓ Validated |
-| **Target Stack** | Backend: Java 21, Spring Boot 3.3.x, Maven 3.9+ / Frontend: React 18.x, TypeScript 5.x, Vite 5.x, Node.js 20 LTS / API: REST over HTTPS, OpenAPI 3.0.3 / Persistence: Mock repository (POC) | Implemented in intended-system.md §3 (architecture blueprint); carried to spec.md §2 (implementation detail); openapi.yaml confirms REST+HTTPS+OpenAPI 3.0.3 | ✓ Validated |
+| **Target Stack** | Backend: Java 21, Spring Boot 3.3.x, Maven 3.9+ / Frontend: existing `src/frontend-react` React + TypeScript + Vite stack with repository-configured versions / API: REST over HTTPS, OpenAPI 3.0.3 / Persistence: Mock repository (POC) | Implemented in intended-system.md §3 (architecture blueprint); carried to spec.md §2 (implementation detail); openapi.yaml confirms REST+HTTPS+OpenAPI 3.0.3 | ✓ Validated |
 | **Security Baseline** | Authentication: OAuth2 resource server with JWT bearer tokens / Authorization: Role-based access control (ACCOUNT_INQUIRER) / Transport: TLS 1.2+ / Input validation: strict path/query validation + standardized error responses / Secrets: environment variables or secret manager, never in source control | Specified in business-rules.md (BR-005 through BR-009); implemented in spec.md §2.4 (security architecture); openapi.yaml security schemes defined; code-review-checklist.md §3.1–3.3 validates implementation conformance | ✓ Validated |
 | **Operational Baseline** | Logging: structured JSON logs with correlation ID per request / Metrics: request latency, error rate, downstream adapter status / Tracing: distributed tracing ready (OpenTelemetry) | Specified in intended-system.md §3.5 (operational architecture); carried to spec.md §2.5 (implementation detail); copilot-build-prompt.md §4 provides implementation guidance | ✓ Validated |
 | **Delivery Constraints** | Preserve legacy behavior as default; enhancements must be explicitly marked and toggleable / Controllers remain thin, business logic in services / No production mainframe system integration in POC mode | Embedded in requirements.md §1.3 (delivery constraints); enforced in code-review-checklist.md §2 (architectural conformance criteria); mapping-matrix.md confirms thin controller pattern (AccountInquiryController → AccountInquiryService) | ✓ Validated |
