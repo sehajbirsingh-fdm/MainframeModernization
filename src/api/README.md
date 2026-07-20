@@ -1,6 +1,9 @@
-# INQCUST API Module
+# INQCUST and INQACC API Module
 
-This module is the Spring Boot implementation of the INQCUST customer inquiry service.
+This module is the Spring Boot implementation of:
+
+- INQCUST customer inquiry
+- INQACC account inquiry
 
 This README reflects the current implementation.
 
@@ -14,11 +17,22 @@ This README reflects the current implementation.
 	- `sortCode` must be 6 digits
 	- `customerNumber` must be 10 digits
 
+- Endpoint: `GET /v1/accounts/{sortcode}/{accountNumber}`
+	- Requires bearer token and role `ACCOUNT_INQUIRER`
+	- Validation:
+		- `sortcode` must be 6 digits
+		- `accountNumber` must be 8 digits
+
 ### Special Customer Numbers
 
 - `0000000000` = RANDOM lookup mode
 - `9999999999` = LATEST lookup mode
 - Any other 10-digit number = SPECIFIC lookup mode
+
+### Special Account Numbers
+
+- `99999999` = return highest account number for the given sortcode
+- Any other 8-digit number = standard composite-key lookup mode
 
 ## Data Source Modes
 
@@ -28,8 +42,17 @@ Switching mode is configuration-only via `app.data.mode` in `src/main/resources/
 	- Uses `mock-data/customer-records.json`
 - Optional mode: `db`
 	- Uses repository-backed DB queries when DB properties are provided
+	- INQACC db-mode properties:
+		- `APP_INQACC_DB_URL`
+		- `APP_INQACC_DB_USERNAME`
+		- `APP_INQACC_DB_PASSWORD`
+		- `APP_INQACC_DB_DRIVER` (optional)
+		- `APP_INQACC_DB_SCHEMA` (optional)
+		- `APP_INQACC_DB_MAX_POOL_SIZE` (optional)
+		- `APP_INQACC_DB_MIN_IDLE` (optional)
 
 Important: a production database is not configured in this project by default.
+Live DB2 connectivity is not verified in this POC and is not required for POC acceptance.
 
 ## Repository Architecture
 
@@ -72,9 +95,18 @@ Use the Spring Boot Maven commands above for local build and run.
 		- `$env:APP_DB_URL='jdbc:db2://host:port/database'`
 		- `$env:APP_DB_USERNAME='your_user'`
 		- `$env:APP_DB_PASSWORD='your_password'`
+		- `$env:APP_INQACC_DB_URL='jdbc:db2://host:port/database'`
+		- `$env:APP_INQACC_DB_USERNAME='your_user'`
+		- `$env:APP_INQACC_DB_PASSWORD='your_password'`
 		- `mvn spring-boot:run`
 
 If DB mode is enabled without valid DB values, startup will fail by design.
+
+## INQACC Auth Tokens For Local Verification
+
+- `Bearer valid-inqacc-inquirer-token` -> authorized for `/v1/accounts/**`
+- `Bearer valid-inqacc-limited-token` -> authenticated but forbidden (403)
+- Missing/malformed/invalid token -> 401
 
 ## Source Layout
 

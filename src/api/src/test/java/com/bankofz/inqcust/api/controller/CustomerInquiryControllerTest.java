@@ -1,5 +1,9 @@
 package com.bankofz.inqcust.api.controller;
 
+import com.bankofz.inqcust.api.inqacc.config.InqaccSecurityConfiguration;
+import com.bankofz.inqcust.api.inqacc.security.BearerTokenAuthenticationFilter;
+import com.bankofz.inqcust.api.inqacc.security.InqaccAccessDeniedHandler;
+import com.bankofz.inqcust.api.inqacc.security.InqaccAuthenticationEntryPoint;
 import com.bankofz.inqcust.api.domain.AddressResponse;
 import com.bankofz.inqcust.api.domain.CustomerInquiryResponse;
 import com.bankofz.inqcust.api.domain.CustomerResponse;
@@ -14,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -28,6 +33,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = CustomerInquiryController.class)
+@Import({
+        InqaccSecurityConfiguration.class,
+        BearerTokenAuthenticationFilter.class,
+        InqaccAuthenticationEntryPoint.class,
+        InqaccAccessDeniedHandler.class
+})
 class CustomerInquiryControllerTest {
 
     @Autowired

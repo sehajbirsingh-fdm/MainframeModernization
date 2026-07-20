@@ -1,6 +1,9 @@
-# Customer Inquiry Frontend (React + TypeScript)
+# Inquiry Frontend (React + TypeScript)
 
-This frontend implements the INQCUST customer inquiry workflow with textbox-only input for sort code and customer number and API-driven responses.
+This frontend hosts both inquiry experiences in one React/Vite application:
+
+- INQCUST customer inquiry
+- INQACC account inquiry
 
 ## Prerequisites
 
@@ -16,12 +19,18 @@ npm run dev
 
 App runs by default on http://localhost:5173.
 
+## Routes
+
+- http://localhost:5173/customers for INQCUST
+- http://localhost:5173/accounts for INQACC
+
 ## Configuration
 
 The UI is backend-only at runtime and always calls the backend API.
 
 - VITE_API_BASE_URL: backend base URL (default: empty, uses Vite dev proxy)
 - VITE_API_TIMEOUT_MS: optional request timeout in milliseconds
+- VITE_INQACC_BEARER_TOKEN: default bearer token prefilled in INQACC form
 
 Example .env.local:
 
@@ -29,10 +38,12 @@ Example .env.local:
 # Optional for cross-origin mode. If omitted, local dev uses Vite proxy.
 # VITE_API_BASE_URL=http://localhost:8080
 VITE_API_TIMEOUT_MS=7000
+VITE_INQACC_BEARER_TOKEN=valid-inqacc-inquirer-token
 ```
 
 Local development behavior:
 - `npm run dev` proxies `/api/*` to `http://localhost:8080`.
+- `npm run dev` also proxies `/v1/*` to `http://localhost:8080`.
 - This avoids browser CORS issues for common localhost development.
 - For explicit cross-origin testing, set `VITE_API_BASE_URL` and keep backend CORS enabled.
 
@@ -50,3 +61,8 @@ npm run build
 - Special values are passed to backend unchanged:
   - 0000000000 for random customer lookup
   - 9999999999 for latest customer lookup
+- INQACC reserved value:
+  - 99999999 requests highest-account-number lookup for the entered sortcode
+- INQACC authorization:
+  - default token `valid-inqacc-inquirer-token` is accepted for inquiry access
+  - `valid-inqacc-limited-token` is authenticated but forbidden (403) for inquiry role
