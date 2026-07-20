@@ -1,248 +1,278 @@
-# INQACC Modernized Account Inquiry – Delivery Plan
+# Implementation Plan: INQACC Account Inquiry Modernization
 
-**Document ID:** `plan.md`  
-**Pipeline:** mainframe_modernization  
-**Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md + supporting/program-analysis.md + supporting/mapping-matrix.md + spec.md + contracts/openapi.yaml + plan.md + tasks.md + supporting/test-spec.md + supporting/traceability-matrix.md  
-**Status:** Implementation-ready phased delivery plan  
-**Generated:** 2024  
-**Plan Horizon:** 6 months (26 weeks) to production readiness  
-**Target Stack:** Java 21 + Spring Boot 3.3.x | React 18.x + TypeScript 5.x + Vite 5.x | Mock Repository (POC)
+**Branch**: `002-inqacc-account-inquiry-modernization`  
+**Date**: 2026-07-19  
+**Spec Authority**: `spec.md`  
+**Contract Authority**: `contracts/openapi.yaml`
 
----
+## Summary
 
-## Executive Summary
+This plan defines how the approved INQACC account inquiry feature will be built as a specification-driven modernization. The feature modernizes legacy read-only account inquiry behavior behind a REST API and a lightweight React UI used for exercising and demonstrating the flow in POC mode.
 
-This document defines a phased delivery plan to modernize the legacy INQACC CICS-DB2 account inquiry program into a cloud-ready Spring Boot 3.3.x REST API with React 18.x web UI. The plan preserves legacy observable behavior while enabling future mainframe integration. Delivery is structured in **4 phases** spanning **26 weeks**, with explicit environment progression (dev → test → UAT → prod) and compliance checkpoints for security, API contract stability, and operational readiness.
+The implementation preserves legacy-observable behavior defined in the specification, including:
+- canonical endpoint `GET /v1/accounts/{sortcode}/{accountNumber}`
+- composite-key lookup using `ACCOUNT_SORTCODE` and `ACCOUNT_NUMBER`
+- reserved account-number behavior when `accountNumber = 99999999`
+- standardized error semantics and safe observability
 
-**Critical Success Factors:**
-- API contract freeze by end of Phase 1 (week 4)
-- Mock repository fully functional by end of Phase 2 (week 8)
-- Complete legacy parity and E2E testing by end of Phase 3 (week 16)
-- Production-ready artifact hardening in Phase 4 (weeks 17–26)
-- Zero critical security findings before production promotion
+This plan does not redefine business rules or API behavior. Behavioral authority remains in `spec.md`, and contract authority remains in `contracts/openapi.yaml`.
 
----
+Database-readiness posture: DB2-ready JDBC architecture with configuration-driven database activation, not verified live DB2 integration.
 
-## 1. Phasing Overview
+## Technical Context
 
-| Phase | Name | Duration | Primary Objective | Key Deliverables |
-|-------|------|----------|-------------------|------------------|
-| **1** | Foundation & Contract Design | Weeks 1–4 | Establish API contract, security baseline, build toolchain | OpenAPI 3.0.3 spec (frozen), OAuth2 adapter, Maven/Node.js build pipeline, dev environment setup |
-| **2** | Core Service & Persistence | Weeks 5–8 | Implement account inquiry service, mock repository, structured logging | Spring Boot service, AccountRepository, mock data, structured JSON logging, integration tests (75%+ coverage) |
-| **3** | Legacy Parity & Frontend | Weeks 9–16 | React UI, field mapping validation, E2E testing, UAT preparation | React web app (TypeScript + Vite), complete field mapping tests, E2E test suite, UAT readiness documentation |
-| **4** | Hardening, Deployment & Operationalization | Weeks 17–26 | Security hardening, containerization, observability, production readiness | Docker image, deployment pipeline, security scanning report, operational runbooks, production sign-off |
+- **Modernization target**: Legacy INQACC inquiry capability exposed through HTTP API and demo-oriented web UI.
+- **Feature boundary**: Read-only inquiry only. No create, update, delete, or batch workflows.
+- **Execution mode**: Default POC runtime is mock mode. A relational database mode is implemented but inactive unless explicitly enabled by configuration.
+- **Contract model**: Contract-first implementation under the hierarchy: Specification -> OpenAPI -> Implementation.
+- **Security baseline**: Bearer-token authentication and role-based authorization at API boundary as defined by specification and contract.
+- **Observability baseline**: Correlation-ID-aware structured logging with safe diagnostic content only.
+- **Performance posture**: No new latency or availability commitments are introduced in this plan beyond approved scope.
+- **Database-readiness boundary**: No live DB2 connection is required for POC acceptance. Activation against a specific DB2 environment requires compatible driver availability, valid credentials, confirmed schema/table mappings, and environment/network/security access.
 
----
+## Technology Stack
 
-## 2. Phase 1: Foundation & Contract Design (Weeks 1–4)
+- **Backend**: Java 21, Spring Boot 3.x, Spring Web, Spring Validation, Spring Security, Spring JDBC, Jackson.
+- **Frontend (POC demo UI)**: React 18 with Vite-based build tooling.
+- **Testing**: JUnit 5, Spring test tooling, and frontend component/flow testing tooling aligned to the selected React setup; H2 may be used only as a test database for JDBC-mode tests.
+- **Data modes**:
+  - **Mock mode (default)**: controlled mock data loaded in memory; no `DataSource` creation.
+  - **Database mode (inactive until configured)**: JDBC adapter with Hikari-backed `DataSource` created only when `app.data.mode=db`.
 
-### 2.1 Objectives
+Technology choices are retained to stay consistent with project direction while keeping POC acceptance independent from any live database.
 
-- Define and freeze OpenAPI 3.0.3 REST API contract aligned to FR-001, FR-002, FR-003, BR-001
-- Establish OAuth2 resource server security baseline (JWT bearer tokens, ACCOUNT_INQUIRER role)
-- Configure Maven 3.9+ build pipeline with Spring Boot 3.3.x and required dependencies
-- Configure Node.js 20 LTS + npm + Vite 5.x build pipeline for React 18.x frontend
-- Set up development environment (IDE configurations, linting, code formatting, pre-commit hooks)
-- Establish structured logging and correlation ID propagation framework
-- Conduct security baseline review and authorize OAuth2 token handling
-- Prepare UAT environment specification
+Runtime configuration model (equivalent behavior):
 
-### 2.2 Deliverables
+```properties
+app.data.mode=mock
 
-| Deliverable | Owner | Due Date | Status Gate |
-|---|---|---|---|
-| **OpenAPI 3.0.3 Specification (openapi.yaml)** | Architecture + Backend Lead | Week 1 EOD | Contract review + freeze authorization |
-| **Spring Boot 3.3.x Starter Project** | Backend Lead | Week 2 | Build success + dependency resolution |
-| **OAuth2 Adapter Configuration (Spring Security)** | Backend Lead + Security | Week 2 | Security baseline review approved |
-| **React 18.x + Vite 5.x Starter Project** | Frontend Lead | Week 2 | Build success + dev server operational |
-| **Structured Logging Framework (SLF4J + JSON)** | Backend Lead | Week 3 | Correlation ID propagation verified |
-| **Development Environment Runbook** | DevOps + Tech Lead | Week 3 | Team onboarding readiness |
-| **Security Baseline Review Report** | Security Officer | Week 4 | Phase 1 gate approval |
-| **UAT Environment Specification** | QA + DevOps | Week 4 | Infrastructure provisioning kickoff |
+app.db.url=${APP_DB_URL:}
+app.db.username=${APP_DB_USERNAME:}
+app.db.password=${APP_DB_PASSWORD:}
+app.db.schema=${APP_DB_SCHEMA:}
+app.db.table-name=${APP_DB_TABLE_NAME:ACCOUNT}
 
-### 2.3 Work Breakdown
-
-**TASK-001 to TASK-010** (API contract, OAuth2 adapter, build toolchain setup)
-
-**Dependencies:**
-- Authoritative legacy source analysis and corrected specification/openapi artifacts must be finalized before TASK-001 kickoff
-- No external mainframe connectivity required (mock repository only)
-
-**Risks:**
-- **RISK-P1-001 (Medium):** OpenAPI specification scope creep beyond composite-key lookup. **Mitigation:** Require architecture sign-off on spec by EOD week 1; any additions require formal change control.
-- **RISK-P1-002 (Medium):** Spring Boot OAuth2 Resource Server configuration complexity. **Mitigation:** Assign senior backend engineer; include external security review before week 2 gate.
-
-**Team & Effort Estimate:**
-
-| Role | FTE | Primary Tasks |
-|---|---|---|
-| **Architecture Lead** | 0.5 | OpenAPI design, security baseline, tech stack validation |
-| **Backend Lead** | 1.0 | Spring Boot setup, OAuth2 adapter, logging framework |
-| **Frontend Lead** | 1.0 | React + Vite setup, development environment |
-| **Security Officer** | 0.25 | OAuth2 token handling review, transport security |
-| **DevOps** | 0.5 | Maven/npm pipeline, artifact repository, environment provisioning |
-
-### 2.4 Phase 1 Gate Criteria (Week 4 EOD)
-
-**MUST PASS (Blocking):**
-- ✓ OpenAPI 3.0.3 specification frozen with architecture sign-off
-- ✓ OAuth2 JWT bearer token validation functional (Spring Security Resource Server)
-- ✓ Maven 3.9+ build produces executable Spring Boot 3.3.x JAR with no critical security findings
-- ✓ Node.js 20 LTS + npm build produces Vite dev server and production bundle
-- ✓ Correlation ID injected in all application logs (SLF4J JSON format)
-- ✓ ACCOUNT_INQUIRER role recognized by OAuth2 adapter
-- ✓ Structured logging test suite passes (correlation ID propagation verified)
-- ✓ Development environment runbook reviewed and approved by all team members
-
-**SHOULD PASS (Non-blocking, escalate if missing):**
-- ✓ Pre-commit hooks (code formatting, linting) operational for both Java and TypeScript
-- ✓ IDE configurations (IntelliJ, VSCode) documented and distributed
-- ✓ Security baseline review completed with zero critical findings
-
-**Phase 1 Sign-Off Authority:** Program Manager + Architecture Lead + Security Officer
-
----
-
-## 3. Phase 2: Core Service & Persistence (Weeks 5–8)
-
-### 3.1 Objectives
-
-- Implement Spring Boot REST controller for GET `/accounts/{sortcode}/{accountNumber}` endpoint
-- Implement AccountInquiryService with business logic for BR-001 (composite-key lookup)
-- Implement validation service for FR-002 (sortcode/account number format validation)
-- Implement mock AccountRepository with in-memory or H2 embedded database
-- Implement global exception handler for standardized error responses (FR-004, FR-005, FR-006)
-- Implement structured logging with correlation ID propagation across all service methods
-- Achieve 75%+ unit and integration test coverage for service and persistence layers
-- Produce comprehensive API integration test suite validating OpenAPI contract compliance
-- Generate API documentation from code (Spring OpenAPI auto-generation)
-
-### 3.2 Deliverables
-
-| Deliverable | Owner | Due Date | Status Gate |
-|---|---|---|---|
-| **AccountInquiryController (REST endpoint)** | Backend Dev Team | Week 5 | Integration test passes |
-| **AccountInquiryService (business logic)** | Backend Dev Team | Week 5 | Unit tests 80%+ coverage |
-| **ValidationService (format checks)** | Backend Dev Team | Week 5 | Unit tests 90%+ coverage |
-| **AccountRepository (mock persistence)** | Backend Dev Team | Week 6 | Integration tests, data mapping verified |
-| **GlobalExceptionHandler (error translation)** | Backend Dev Team | Week 6 | All error paths tested (TC-008, TC-009, TC-010) |
-| **Structured Logging Implementation** | Backend Dev Team | Week 6 | Correlation ID tests pass; sample logs reviewed |
-| **Unit Test Suite (service + data layers)** | QA + Backend Dev | Week 7 | 75%+ coverage report; all tests pass |
-| **Integration Test Suite (Spring Boot context)** | QA + Backend Dev | Week 7 | Contract tests pass; end-to-end flows verified |
-| **API Documentation (generated from code)** | Backend Dev Team | Week 8 | Matches openapi.yaml (phase 1) |
-| **Mock Data Repository (ACCOUNT records)** | Backend Dev Team | Week 8 | 20+ test accounts pre-loaded; full field mapping |
-| **Phase 2 QA Report** | QA Lead | Week 8 | Coverage metrics, risk assessment |
-
-### 3.3 Work Breakdown
-
-**TASK-011 to TASK-024** (REST controller, service layer, validation, exception handling, mock repository, unit/integration tests)
-
-**Key Components to Implement:**
-
-```
-Backend Source Tree:
-├── src/main/java/com/inqacc/
-│   ├── controller/
-│   │   └── AccountInquiryController.java
-│   ├── service/
-│   │   ├── AccountInquiryService.java
-│   │   └── ValidationService.java
-│   ├── repository/
-│   │   ├── AccountRepository.java
-│   │   └── MockAccountRepository.java (implementation)
-│   ├── entity/
-│   │   └── AccountEntity.java
-│   ├── dto/
-│   │   ├── AccountResponseDto.java
-│   │   └── ErrorResponseDto.java
-│   ├── exception/
-│   │   ├── AccountNotFoundException.java
-│   │   ├── ValidationException.java
-│   │   └── GlobalExceptionHandler.java
-│   ├── logging/
-│   │   └── CorrelationIdFilter.java
-│   └── config/
-│       ├── OAuth2Config.java
-│       └── WebConfig.java
-├── src/test/java/com/inqacc/
-│   ├── service/
-│   │   ├── AccountInquiryServiceTest.java
-│   │   └── ValidationServiceTest.java
-│   ├── repository/
-│   │   └── MockAccountRepositoryTest.java
-│   ├── controller/
-│   │   └── AccountInquiryControllerTest.java
-│   └── integration/
-│       └── AccountInquiryE2ETest.java
-└── pom.xml (Maven configuration)
+app.db.pool.max-size=10
+app.db.pool.min-idle=2
 ```
 
-**Dependencies:**
-- Phase 1 OpenAPI specification must be finalized and authorized
-- Spring Boot 3.3.x starter project from Phase 1 available
-- OAuth2 adapter from Phase 1 operational
+Property names may follow existing repository conventions if behavior remains equivalent.
+Database credentials and sensitive settings remain external to source control.
 
-**Risks:**
-- **RISK-P2-001 (Medium):** Field mapping between COBOL ACCOUNT copybook and Java AccountEntity may have discrepancies. **Mitigation:** Conduct detailed mapping review (program-analysis.md) before TASK-015 start; pair-program implementation with legacy analyst.
-- **RISK-P2-002 (Medium):** Mock repository implementation complexity if using H2 embedded DB. **Mitigation:** Start with in-memory HashMap; escalate to H2 only if persistence required between server restarts.
-- **RISK-P2-003 (Low):** Integration test flakiness due to OAuth2 mock setup. **Mitigation:** Use Spring Security test annotations (@WithMockUser); test OAuth2 adapter separately in Phase 1.
+## Architecture Overview
 
-**Team & Effort Estimate:**
+The solution uses a layered architecture with clear boundaries:
 
-| Role | FTE | Primary Tasks |
-|---|---|---|
-| **Backend Dev Lead** | 1.0 | Controller, service, repository design + code review |
-| **Backend Dev (2x Junior)** | 2.0 | Controller, service, validation, exception handler implementation |
-| **QA Automation Lead** | 0.75 | Test strategy, unit/integration test design, mock data setup |
-| **QA Automation (1x)** | 1.0 | Unit test implementation, integration test suite |
+1. **API Boundary**
+Receives `GET /v1/accounts/{sortcode}/{accountNumber}` requests, enforces security boundary integration, and delegates to the application layer.
 
-### 3.4 Phase 2 Gate Criteria (Week 8 EOD)
+2. **Application Service Boundary**
+Orchestrates one shared inquiry flow: validation coordination, reserved-number branch decision, repository lookup invocation, and response/error mapping coordination.
 
-**MUST PASS (Blocking):**
-- ✓ AccountInquiryController GET endpoint functional and responds to HTTP requests
-- ✓ AccountInquiryService executes BR-001 (composite-key lookup) correctly
-- ✓ ValidationService rejects invalid sortcodes and account numbers per FR-002
-- ✓ Mock AccountRepository returns correct account records matching composite key
-- ✓ GlobalExceptionHandler translates service exceptions to standardized HTTP error responses (FR-004, FR-005, FR-006)
-- ✓ Unit test coverage ≥ 75% (service + repository layers); all tests passing
-- ✓ Integration test coverage ≥ 75% (controller + service layers); all tests passing
-- ✓ Correlation ID present in all structured log entries (JSON format)
-- ✓ OpenAPI specification auto-generated from code matches Phase 1 frozen spec
-- ✓ Mock data repository contains ≥ 20 test ACCOUNT records with complete field population
+3. **Repository Abstraction Boundary**
+Defines inquiry data access through `AccountRepository`, with two separate implementations selected by configuration:
+- `MockAccountRepository` for default `app.data.mode=mock`
+- `JdbcAccountRepository` for `app.data.mode=db`
 
-**SHOULD PASS (Non-blocking, escalate if missing):**
-- ✓ Contract test suite validates HTTP semantics against openapi.yaml
-- ✓ Code review completed; all critical findings resolved
-- ✓ Performance baseline latency < 100ms for account lookup (p95)
+`AccountInquiryService` depends only on `AccountRepository` and remains unchanged across data modes.
+Repository adapters are data-access only and do not redefine business rules, validation, error handling, or API behavior.
 
-**Phase 2 Sign-Off Authority:** Tech Lead + QA Lead + Backend Lead
+4. **Data Mode Configuration Boundary**
+Controls conditional bean activation for repository and database configuration.
+- In mock mode, no `DataSource` is created and no database connection is attempted.
+- In db mode, database configuration is activated, a Hikari-backed `DataSource` is created, and startup validation enforces required DB properties.
 
----
+5. **Mapping and Conversion Boundary**
+Applies authoritative field mapping and transformations (trim fixed-width CHAR content, numeric conversion, date conversion) before response serialization.
 
-## 4. Phase 3: Legacy Parity & Frontend (Weeks 9–16)
+6. **Error Translation Boundary**
+Converts validation, not-found, authorization/authentication, and unexpected technical failures into the canonical API error contract.
 
-### 4.1 Objectives
+7. **Observability Boundary**
+Ensures structured, correlation-aware logs that support traceability without exposing sensitive account or credential data.
 
-- Implement React 18.x web UI with TypeScript 5.x for account inquiry interface
-- Integrate React frontend with Spring Boot REST API (authentication flow, request/response handling)
-- Conduct comprehensive legacy parity validation (COBOL/DB2 behavior → modernized behavior)
-- Implement React component unit tests (React Testing Library + Vitest)
-- Implement end-to-end (E2E) test suite covering complete user workflows
-- Prepare UAT environment with all hardening and pre-release validations
-- Achieve 80%+ overall line coverage (backend + frontend combined)
-- Validate all test cases from test-spec.md (47+ explicit test cases)
-- Produce comprehensive E2E test report with evidence of legacy parity
+## Project Structure
 
-### 4.2 Deliverables
+This feature plan aligns with the existing repository structure and does not introduce a separate application topology.
 
-| Deliverable | Owner | Due Date | Status Gate |
-|---|---|---|---|
-| **React 18.x Frontend Application** | Frontend Dev Team | Week 10 | Builds without errors; dev server operational |
-| **AccountInquiry React Component** | Frontend Dev Team | Week 10 | API integration functional; displays account details |
-| **Authentication/Authorization Flow (OAuth2 UI)** | Frontend Dev Team | Week 11 | Login/logout flow works; bearer token captured |
-| **Input Validation UI (sortcode/account number)** | Frontend Dev Team | Week 11 | Client-side validation; error messages displayed |
-| **Error Handling & Display (4xx/5xx responses)** | Frontend Dev Team | Week 11 | Error messages from API rendered correctly |
-| **React Component Tests** | QA + Frontend Dev | Week 12 | 80%+ coverage; all component tests pass |
-| **E2E Test Suite (Playwright or Cypress)** | QA Automation | Week 13 | All 47+ test cases from test-spec.md implemented |
-| **Legacy Parity Validation Report** | QA Lead + Backend Lead | Week 14 | All COBOL observable behavior verified in modernized system |
-| **Field Mapping Validation Tests** | QA + Backend Dev | Week 14
+- **Feature documents**: `specs/002-inqacc-account-inquiry-modernization/`
+- **API contract**: `specs/002-inqacc-account-inquiry-modernization/contracts/openapi.yaml`
+- **Supporting analysis and mapping**:
+  - `supporting/program-analysis.md`
+  - `supporting/mapping-matrix.md`
+  - `supporting/test-spec.md`
+  - `supporting/traceability-matrix.md`
+- **Backend and frontend source roots** remain under the established project source layout.
+
+The plan references mapping and traceability artifacts rather than duplicating their content.
+
+## Component Responsibilities
+
+At planning level, major component responsibilities are:
+
+- **HTTP/API adapter**: Bind canonical route, parse path inputs, apply boundary-level concerns, return success/error responses.
+- **Inquiry application service**: Execute shared inquiry orchestration, coordinate validation, make the reserved-number branch decision once, invoke repository operations, and preserve shared business behavior across data modes.
+- **Validation boundary**: Enforce sortcode and account-number format constraints prior to business lookup processing.
+- **Repository interface**: Define lookup operations for standard and reserved-number flows.
+- **Mock repository adapter**: Load controlled account data and serve in-memory lookups in default mock mode.
+- **JDBC repository adapter**: Execute parameterized SQL lookups and map rows to the same canonical account domain model in db mode.
+- **Database configuration boundary**: Activate JDBC/Hikari configuration only in db mode, read externalized DB properties, and fail startup clearly when required DB-mode configuration is missing or invalid.
+- **Mapper/converter**: Provide one shared mapping/conversion boundary for canonical API response output, including authoritative field mapping and required data-format conversions, independent of active repository adapter.
+- **Exception and error mapping mechanism**: Standardize all failure outcomes to canonical error envelope and HTTP semantics.
+- **Logging/correlation mechanism**: Generate or propagate correlation IDs and produce safe structured logs.
+
+## Data Flow
+
+High-level request and response flow:
+
+1. Request enters API boundary at `GET /v1/accounts/{sortcode}/{accountNumber}`.
+2. Authentication and authorization checks run at API/security boundary.
+3. Path parameter validation enforces six-digit sortcode and eight-digit account-number rules.
+4. Application service determines lookup path:
+   - standard composite-key lookup, or
+   - reserved-number branch for `accountNumber = 99999999` selecting highest account number for the sortcode.
+5. Repository abstraction executes lookup through the active repository implementation:
+  - mock mode: in-memory lookup from controlled mock data
+  - db mode: JDBC lookup through parameterized SQL
+6. Retrieved legacy-shaped data is mapped and converted using approved mapping rules.
+7. Success response returns canonical account payload fields.
+8. Failure paths are translated to canonical error payload and status semantics.
+9. Correlation ID is propagated in response and logs for traceability.
+
+Runtime mode behavior:
+- `app.data.mode=mock` (default): activates `MockAccountRepository`, loads controlled mock records into memory, and does not create a `DataSource`.
+- `app.data.mode=db`: activates `JdbcAccountRepository` and database configuration, creates Hikari-backed `DataSource`, and requires valid externally provided DB connection settings.
+
+Architecture intent is to minimize code changes for future DB2 activation while avoiding claims of verified connectivity to unknown DB2 environments.
+
+## Implementation Strategy
+
+Implementation is organized as a contract-first, layered modernization flow:
+
+1. **Contract alignment first**
+Confirm technical design alignment to frozen specification and OpenAPI before coding behavior.
+
+2. **Layered backend construction**
+Implement API boundary, service orchestration, repository abstraction, and mapping/conversion boundaries in alignment with authoritative artifacts.
+
+3. **Dual repository realization with default mock runtime**
+Implement both repository adapters in this feature while keeping mock mode as default POC runtime.
+- Mock mode remains the acceptance path and requires no live database.
+- Database mode remains inactive until explicitly configured.
+
+4. **Conditional data-mode configuration**
+Implement configuration-based repository selection and DB-mode startup validation.
+- Support `app.data.mode` with default `mock` behavior when unset (unless existing project conventions explicitly require property declaration).
+- Support environment-backed DB settings, safe table-name configuration, and pool settings for db mode.
+
+5. **Frontend integration for feature exercise**
+Connect the React-based inquiry experience to the canonical API contract for validation and demonstration flows.
+
+6. **Conformance verification**
+Validate implemented behavior against specification, OpenAPI, mapping matrix, and test-spec artifacts.
+
+The strategy remains technical and high-level; detailed execution tasks are intentionally deferred to `tasks.md` after plan approval.
+
+## Validation Strategy
+
+Validation is enforced at the API/application boundary prior to lookup execution.
+
+- `sortcode` must be numeric and exactly 6 digits.
+- `accountNumber` must be numeric and exactly 8 digits.
+- Invalid path inputs are treated as validation errors and mapped to canonical bad-request outcomes.
+
+Validation rules are implemented from the specification and OpenAPI contract; this plan does not redefine those rules.
+
+Configuration validation is also enforced for db mode startup:
+- When `app.data.mode=db`, required DB configuration (URL, username, password, and applicable table configuration) must be present and valid.
+- Invalid or missing required db-mode configuration causes clear startup failure.
+
+## Error Handling Strategy
+
+Error handling follows canonical API semantics and envelope structure defined by specification and OpenAPI.
+
+- **Validation failures** map to bad-request error outcomes.
+- **Authentication/authorization failures** map to unauthorized/forbidden outcomes.
+- **No-match results** map to not-found outcomes.
+- **Unexpected technical failures** map to internal-error outcomes.
+- **Transient repository/service unavailability** maps to service-unavailable outcomes.
+
+Mode-specific handling:
+- Mock mode avoids database connectivity paths entirely.
+- DB-mode configuration failures are treated as startup-time failures, not runtime fallback to silent mock behavior.
+
+All error responses preserve the canonical nested error payload with `code`, `message`, `correlationId`, and `timestamp` fields, as defined by authoritative artifacts.
+
+## Logging and Observability Strategy
+
+Observability implementation is structured, correlation-aware, and safe by default.
+
+- Correlation ID is generated or propagated at request entry and carried across logs and response metadata.
+- Logs capture operational metadata needed for diagnostics and traceability.
+- Sensitive data is excluded from logs, including bearer tokens, account numbers, customer numbers, balances, and full account payloads.
+- POC observability remains lightweight and avoids introducing unnecessary production telemetry platforms.
+
+## Security Strategy
+
+Security planning is limited to approved scope:
+
+- Enforce bearer-token authentication at API boundary.
+- Enforce role/permission-based authorization for inquiry access.
+- Preserve required HTTP distinction between authentication and authorization failures.
+- Avoid introducing new security domains or unrelated authentication workflows beyond the frozen feature scope.
+- Keep database credentials external to source control and supplied through environment-backed configuration.
+
+## Testing Strategy
+
+Testing is organized by technical boundaries and conformance goals:
+
+- **Unit testing** for service orchestration, validation behavior, mapping/conversion, and error translation logic.
+- **API/controller testing** for contract-conformant request/response and status semantics.
+- **Repository adapter testing** for composite-key and reserved-number lookup behavior under mock data.
+- **Data-mode testing** for conditional repository activation and mode-specific lifecycle behavior.
+- **JDBC adapter testing** for parameterized-query execution and row mapping using a test-only relational database.
+- **Frontend behavior testing** for inquiry flow exercise, validation feedback, and error display behavior.
+- **Integration/conformance testing** across API, service, mapping, and mock repository boundaries.
+
+Testing verifies that service and API behavior remain consistent across mock and db modes.
+
+Test design references `supporting/test-spec.md` and `supporting/traceability-matrix.md` rather than duplicating those artifacts.
+
+## Technical Risks and Assumptions
+
+### Key Technical Risks
+
+- **Legacy conversion fidelity risk**: Incorrect trimming, numeric conversion, or date conversion can break parity.
+- **Reserved-branch lookup risk**: Reserved account-number flow may regress without explicit verification.
+- **Mock-data representativeness risk**: Incomplete mock records can hide mapping or formatting defects.
+- **Data-mode parity risk**: Behavioral drift between mock and jdbc adapters can cause inconsistent outcomes.
+- **DB configuration risk**: Incomplete db-mode configuration can cause startup failure when db mode is enabled.
+- **Environment compatibility risk**: Actual DB2 activation still depends on driver, schema alignment, credentials, network access, and security/TLS settings in the target environment.
+- **Contract drift risk**: Implementation behavior can diverge if contract-first discipline is not maintained.
+
+### Assumptions
+
+- `spec.md` remains the frozen behavior authority for this feature.
+- `contracts/openapi.yaml` remains the machine-readable contract authority.
+- Supporting mapping and traceability artifacts are maintained and available during implementation.
+- POC execution and acceptance run in default mock mode with no live DB2/CICS dependency.
+- Database mode is implemented in this feature but remains inactive until `app.data.mode=db` and required DB settings are provided.
+- No claim is made that live DB2 connectivity has been tested in this feature.
+
+## Broad Implementation Phases
+
+The technical build will progress through broad phases:
+
+1. **Design and contract alignment**
+Confirm architecture boundaries and contract-first conformance approach.
+
+2. **Core backend boundary implementation**
+Establish API, service orchestration, repository abstraction, dual adapters (mock and jdbc), conditional data-mode configuration, and mapping/error boundaries.
+
+3. **Frontend integration and end-to-end behavior alignment**
+Connect UI inquiry flow to canonical API behavior for exercise and demonstration.
+
+4. **Conformance and readiness verification**
+Verify alignment with specification, OpenAPI, mapping, and test artifacts, including parity across mock and db modes, prior to final implementation completion and POC acceptance.
+
+This plan is the approved technical authority for implementation task execution and conformance review.

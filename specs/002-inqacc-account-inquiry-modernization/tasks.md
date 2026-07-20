@@ -1,257 +1,504 @@
-# INQACC Modernized Account Inquiry – Implementation Tasks
+# INQACC Account Inquiry Modernization - Implementation Tasks
 
 **Document ID:** `tasks.md`  
-**Pipeline:** mainframe_modernization  
-**Authority:** src/base/cics/cobol/INQACC.cbl + src/base/cics/copy/ACCDB2.cpy + src/base/cics/copy/ACCOUNT.cpy + src/base/cics/copy/INQACC.cpy + src/base/cics/copy/INQACCCZ.cpy + checklists/requirements.md + supporting/program-analysis.md + supporting/mapping-matrix.md + spec.md + contracts/openapi.yaml + plan.md + tasks.md + supporting/test-spec.md + supporting/traceability-matrix.md  
-**Status:** Implementation-ready task catalog  
-**Generated:** 2024  
-**Target Stack:** Java 21 + Spring Boot 3.3.x | React 18.x + TypeScript 5.x + Vite 5.x | Mock Repository (POC)  
-**Delivery Horizon:** 26 weeks (6 months) to production readiness
+**Feature:** `002-inqacc-account-inquiry-modernization`  
+**Behavior Authority:** `spec.md`  
+**Contract Authority:** `contracts/openapi.yaml`  
+**Technical Plan Authority:** `plan.md`
 
----
+## 1. Setup Tasks
 
-## Executive Summary
+### T001 - Align module baseline to approved stack
+- Description: Ensure the INQACC implementation module uses the approved stack only: Java 21, Spring Boot 3.x, Spring Web, Spring Validation, Spring Security, Spring JDBC, Jackson, React 18, and Vite.
+- Dependencies: None.
+- Acceptance / Done Criteria:
+  - Backend build configuration is present and runnable with Java 21 and Spring Boot 3.x.
+  - Frontend build configuration is present and runnable with React 18 and Vite.
+  - No disallowed technology is introduced (including TypeScript, Spring Data JPA, Hibernate, and OpenFeign).
+  - No live DB2 or CICS connectivity is required for POC completion. No CICS adapter is introduced.
+  - JDBC database mode is permitted only through the approved `JdbcAccountRepository` boundary and remains inactive by default.
+  - H2 usage, if present, is limited to automated JDBC tests only.
 
-This document defines **42 actionable engineering tasks** organized across **4 delivery phases** and **8 workstreams** (API Contract, Backend Service, Persistence, Authorization, Frontend, Integration, Observability, Deployment). Each task includes explicit dependencies, sizing estimates (S/M/L), requirement/rule mappings, and definition of done criteria. Tasks are sequenced to unblock parallel work while maintaining critical path integrity (API contract freeze by week 4, mock repository by week 8, E2E readiness by week 16).
+### T002 - Create INQACC package and folder skeleton
+- Description: Create the backend and frontend folder/package structure for controller, service, repository, mapper/conversion, validation, error handling, logging/correlation, and tests.
+- Dependencies: T001.
+- Acceptance / Done Criteria:
+  - Structure is present and consistent with repository patterns.
+  - Structure separates controller, service, repository, mapping/conversion, validation, error-handling, and test responsibilities.
 
----
+### T003 - Prepare mock-data source for account inquiry
+- Description: Establish default mock-mode account data source for POC execution and wire it to the mock repository adapter.
+- Dependencies: T001.
+- Acceptance / Done Criteria:
+  - Mock repository data source is available locally.
+  - Mock mode is the default runtime when `app.data.mode` is absent unless project conventions require explicit declaration.
+  - Data shape supports all required response fields and reserved lookup scenarios.
+  - Mock mode activates only the mock repository path.
+  - Mock mode does not create a `DataSource` and does not attempt a database connection.
+  - Mock mode requires no database credentials.
+  - No live DB2 or CICS connectivity is used.
 
-## Task Catalog
+### T004 - Configure correlation ID propagation utilities
+- Description: Configure reusable correlation ID handling for request intake, response headers, and logging context.
+- Dependencies: T002.
+- Acceptance / Done Criteria:
+  - Correlation ID handling is implemented for backend request lifecycle.
+  - `X-Correlation-ID` is available for response handling and diagnostics.
 
----
+## 2. Backend Tasks
 
-## PHASE 1: Foundation & Contract Design (Weeks 1–4)
+### T005 - Implement account inquiry response model
+- Description: Create backend response model aligned to the OpenAPI `AccountResponse` schema and required fields.
+- Dependencies: T002.
+- Acceptance / Done Criteria:
+  - Response model includes all 12 required fields from contract.
+  - Field names and formats align with `contracts/openapi.yaml`.
 
----
+### T006 - Implement canonical error envelope model
+- Description: Create backend error response model aligned to OpenAPI `ErrorResponse` envelope.
+- Dependencies: T002.
+- Acceptance / Done Criteria:
+  - Error envelope includes `error.code`, `error.message`, `error.correlationId`, and `error.timestamp`.
+  - Error model serialization aligns with contract.
 
-### TASK-001: Establish OpenAPI 3.0.3 Specification for Account Inquiry Endpoint
+### T007 - Implement repository interface for account inquiry
+- Description: Define repository abstraction for standard composite-key lookup and reserved lookup behavior.
+- Dependencies: T002.
+- Acceptance / Done Criteria:
+  - Interface supports lookup by sortcode + accountNumber.
+  - Interface supports technical query operations required for both standard lookup and highest-account-number lookup by sortcode.
+  - `AccountInquiryService` depends only on this interface.
 
-**Task ID:** `TASK-001`  
-**Category:** API Contract Design  
-**Phase:** 1  
-**Week:** 1  
-**Workstream:** API Contract  
-**Estimate:** M (Medium)
+### T008 - Implement mock repository adapter
+- Description: Implement `MockAccountRepository` backed by controlled mock data only.
+- Dependencies: T003, T007.
+- Acceptance / Done Criteria:
+  - Adapter is activated only when mock mode is selected.
+  - Standard lookup path returns single account or no match.
+  - Adapter supports technical lookup operations defined by `AccountRepository`.
+  - Adapter is read-only and has no write operations.
 
-**Description:**
-Design and document the canonical OpenAPI 3.0.3 specification for the account inquiry REST endpoint. The specification shall define request/response schemas, path parameters, authentication requirements, error responses, and HTTP status codes aligned to FR-001, FR-002, BR-001, and MOD-001. Specification shall be generated from source of truth (manual or Spring Boot annotation-driven), reviewed for completeness, and frozen for downstream consumer integration.
+### T052 - Implement JDBC repository adapter
+- Description: Implement `JdbcAccountRepository` using parameterized SQL for standard and reserved lookup paths.
+- Dependencies: T007.
+- Acceptance / Done Criteria:
+  - Adapter activates only when `app.data.mode=db`.
+  - Standard lookup executes parameterized SQL using composite key fields.
+  - Highest-account-number query by sortcode is implemented as repository technical lookup support.
+  - Returned rows map to the same canonical domain model used by mock mode.
+  - SQL statements are documented as DB2-ready where practical, but not validated against a live DB2 environment in this feature.
+  - Adapter is read-only and has no write operations.
 
-**Requirements Linked:**
-- `FR-001`: Execute Account Lookup by Composite Key
-- `FR-002`: Validate Sortcode and Account Number Format
-- `FR-003`: Return Standardized Account Record JSON
-- `FR-004`: Return HTTP 400 Bad Request for Invalid Input
-- `FR-005`: Return HTTP 404 Not Found for No Match
-- `FR-006`: Return HTTP 401 Unauthorized for Missing/Invalid Token
+### T053 - Implement conditional data-mode configuration
+- Description: Implement configuration-based repository bean selection and database-mode configuration activation.
+- Dependencies: T008, T052.
+- Acceptance / Done Criteria:
+  - `app.data.mode=mock` selects `MockAccountRepository`.
+  - `app.data.mode=db` selects `JdbcAccountRepository`.
+  - No `DataSource` bean is created in mock mode.
 
-**Business Rules Linked:**
-- `BR-001`: Account Record Lookup by Composite Key (trigger, inputs, processing logic, outputs, error conditions)
-- `BR-002`: Sortcode Format Validation (6 numeric digits)
-- `BR-003`: Account Number Format Validation (8 numeric digits)
+### T054 - Implement database-mode DataSource and startup validation
+- Description: Implement db-mode configuration for a Hikari-backed `DataSource` with environment-backed properties.
+- Dependencies: T053.
+- Acceptance / Done Criteria:
+  - DB connection properties are read from environment-backed settings (`url`, `username`, `password`).
+  - Optional schema and table-name configuration are supported safely.
+  - Pool settings for max size and min idle are configurable for db mode.
+  - Startup fails clearly when db mode is selected without valid required configuration.
+  - Required DB2 JDBC driver and target schema/column assumptions are documented for future environment activation.
+  - No claim is made that SQL has been verified against a live DB2 environment.
+  - Database credentials are externalized and not committed to source control.
 
-**Dependencies:**
-- None (critical path starter)
+### T009 - Implement mapping and conversion boundary
+- Description: Implement mapping from mock/legacy-shaped records to API response model.
+- Dependencies: T005, T007.
+- Acceptance / Done Criteria:
+  - Both adapters return the same canonical account model used by one shared mapping boundary.
+  - API response mapping is implemented once and reused across data modes.
+  - Trailing spaces are trimmed for fixed-width character fields.
+  - Date values are converted to ISO `yyyy-MM-dd`.
+  - Numeric values are converted with correct decimal behavior.
+  - Transport-only legacy fields are not emitted.
 
-**Acceptance Criteria:**
-1. `AC-OP-001`: OpenAPI 3.0.3 JSON/YAML file includes GET endpoint `/accounts/{sortcode}/{accountNumber}`
-2. `AC-OP-002`: Request path parameters include `sortcode` (pattern: `^\d{6}$`) and `accountNumber` (pattern: `^\d{8}$`) with correct schema type and examples
-3. `AC-OP-003`: Success response (HTTP 200) includes `AccountResponse` schema with 12 fields: `eyecatcher`, `customerNumber`, `sortcode`, `accountNumber`, `accountType`, `interestRate`, `accountOpened`, `overdraftLimit`, `lastStatementDate`, `nextStatementDate`, `availableBalance`, `actualBalance`
-4. `AC-OP-004`: HTTP 400 error response includes `ErrorResponse` schema with `code`, `message`, `correlationId`, `timestamp` fields
-5. `AC-OP-005`: HTTP 404 error response includes `ErrorResponse` schema with correlation ID
-6. `AC-OP-006`: HTTP 401 error response includes `ErrorResponse` schema with correlation ID
-7. `AC-OP-007`: Security scheme defined as `OAuth2Bearer` (type: http, scheme: bearer)
-8. `AC-OP-008`: Optional `X-Correlation-ID` request header documented (UUID format); response includes `X-Correlation-ID` header
-9. `AC-OP-009`: Specification includes server definitions for dev (http://localhost:8080/v1), test, UAT, and prod environments
-10. `AC-OP-010`: Specification signed off by architecture team; no further breaking changes permitted without governance approval
+### T010 - Implement input validation boundary
+- Description: Enforce path parameter validation for sortcode and accountNumber.
+- Dependencies: T002.
+- Acceptance / Done Criteria:
+  - Sortcode validation enforces exactly 6 numeric digits.
+  - Account-number validation enforces exactly 8 numeric digits.
+  - Validation failures are routed to canonical 400 error handling.
 
-**Definition of Done:**
-- OpenAPI 3.0.3 file (openapi.yaml) validated against OpenAPI 3.0.3 schema
-- Specification matches output/openapi.yaml from artifact library
-- Code review completed by architecture team and API lead
-- Specification published to API portal or versioned in source repository (v1.0.0 tag)
-- Downstream consumers (frontend, test automation, client code generation) notified of availability
-- Zero breaking changes permitted after sign-off without formal change control
+### T011 - Implement inquiry application service orchestration
+- Description: Implement service orchestration for standard and reserved lookup paths.
+- Dependencies: T008, T009, T010, T052, T053.
+- Acceptance / Done Criteria:
+  - Service executes standard composite-key lookup for non-reserved account numbers.
+  - Service makes the reserved `99999999` branch decision once in shared service flow.
+  - Reserved branch uses repository technical lookup operation for highest-account-number resolution.
+  - Service preserves read-only behavior.
 
----
+### T012 - Implement controller for canonical endpoint
+- Description: Implement API adapter for `GET /v1/accounts/{sortcode}/{accountNumber}`.
+- Dependencies: T010, T011.
+- Acceptance / Done Criteria:
+  - Canonical endpoint is implemented exactly once.
+  - Controller delegates business orchestration to service layer.
+  - Response body and headers align with OpenAPI contract.
 
-### TASK-002: Set Up Maven Build Configuration and Spring Boot Project Structure
+### T013 - Implement authentication boundary
+- Description: Enforce bearer token authentication at API boundary.
+- Dependencies: T001, T012.
+- Acceptance / Done Criteria:
+  - Missing/invalid/expired bearer token maps to 401.
+  - Authenticated principal context is available to endpoint processing.
 
-**Task ID:** `TASK-002`  
-**Category:** Build & Infrastructure  
-**Phase:** 1  
-**Week:** 1–2  
-**Workstream:** Backend Service  
-**Estimate:** M (Medium)
+### T014 - Implement authorization boundary
+- Description: Enforce inquiry permission/role checks for account inquiry access.
+- Dependencies: T013.
+- Acceptance / Done Criteria:
+  - Authenticated but unauthorized requests map to 403.
+  - Authorized requests proceed to inquiry flow.
 
-**Description:**
-Initialize Maven-based Spring Boot 3.3.x project structure with Java 21 compilation target. Configure parent POM, dependency management (Spring Boot BOM, Spring Cloud, testing libraries), Maven plugins (compiler, Surefire, Jacoco, Shade for assembly), build profiles (dev, test, prod), and reproducible build settings. Establish project layout following Spring Boot conventions: src/main/java, src/main/resources, src/test/java, src/test/resources.
+### T015 - Implement exception-to-error mapping
+- Description: Implement centralized error translation to canonical error envelope.
+- Dependencies: T006, T010, T011, T012.
+- Acceptance / Done Criteria:
+  - Error mapping supports 400, 401, 403, 404, 500, and 503 outcomes.
+  - Error responses include canonical envelope fields and correlation ID.
 
-**Requirements Linked:**
-- `FR-011`: Technology stack conformance (Java 21, Spring Boot 3.3.x, Maven 3.9+)
+### T016 - Implement not-found behavior mapping
+- Description: Map no-match repository outcome to canonical 404 response behavior.
+- Dependencies: T011, T015.
+- Acceptance / Done Criteria:
+  - Valid but unmatched lookup returns 404 with canonical error envelope.
+  - No-match path is distinct from validation and auth failures.
+  - Not-found behavior is identical regardless of active repository mode.
 
-**Business Rules Linked:**
-- None (infrastructure)
+### T017 - Implement service-unavailable mapping
+- Description: Map transient repository/service unavailability to 503 behavior.
+- Dependencies: T008, T015, T052, T054.
+- Acceptance / Done Criteria:
+  - Transient dependency failures produce 503 with canonical envelope.
+  - Unexpected internal failures remain mapped to 500.
 
-**Dependencies:**
-- None (critical path starter)
+### T018 - Implement correlation ID propagation
+- Description: Ensure correlation ID is generated or propagated and returned in responses.
+- Dependencies: T004, T012, T015.
+- Acceptance / Done Criteria:
+  - Each response includes correlation ID traceability.
+  - Correlation ID is available in logs and error envelope.
 
-**Acceptance Criteria:**
-1. `AC-BUILD-001`: Maven pom.xml created with Spring Boot 3.3.x parent POM
-2. `AC-BUILD-002`: Java 21 compilation target configured (maven-compiler-plugin source/target = 21)
-3. `AC-BUILD-003`: Spring Web, Spring Data JPA, Spring Security, Spring Cloud OpenFeign dependencies declared
-4. `AC-BUILD-004`: Testing dependencies included (JUnit 5, Mockito, Spring Boot Test, REST Assured)
-5. `AC-BUILD-005`: Maven Shade plugin configured for uber-JAR assembly (if required)
-6. `AC-BUILD-006`: Jacoco code coverage plugin configured with 85% line coverage threshold
-7. `AC-BUILD-007`: Build profiles defined: `dev` (logging=DEBUG, mocked-auth=enabled), `test` (in-memory H2), `prod` (external OAuth2)
-8. `AC-BUILD-008`: Project compiles cleanly: `mvn clean compile` succeeds
-9. `AC-BUILD-009`: Unit test skeleton executes: `mvn test` runs (0 failures expected initially)
-10. `AC-BUILD-010`: Maven build is reproducible (no non-deterministic outputs; timestamps, build IDs stable)
+### T019 - Implement safe structured logging
+- Description: Implement structured logging with safe diagnostic content only.
+- Dependencies: T018.
+- Acceptance / Done Criteria:
+  - Logs contain operational metadata needed for traceability.
+  - Logs exclude bearer tokens, account numbers, customer numbers, balances, and full account payloads.
 
-**Definition of Done:**
-- pom.xml checked into version control with proper encoding (UTF-8)
-- Project directory structure follows Spring Boot conventions
-- README.md includes build and run instructions
-- CI/CD pipeline (GitHub Actions, Jenkins) configured to execute `mvn clean package`
-- Build succeeds on CI and locally with same output hash (reproducible build)
-- No compile warnings or errors
+### T020 - Enforce read-only operation boundaries
+- Description: Verify backend implementation does not introduce write operations or batch workflows.
+- Dependencies: T011, T012.
+- Acceptance / Done Criteria:
+  - No create/update/delete behavior exists in API or repository paths.
+  - No additional endpoints or batch workflows are introduced.
 
----
+## 3. Frontend Tasks
 
-### TASK-003: Configure OAuth2 Resource Server and JWT Bearer Token Validation
+### T021 - Prepare React + Vite inquiry frontend baseline
+- Description: Set up frontend application baseline for INQACC inquiry flow using repository-proven patterns.
+- Dependencies: T001.
+- Acceptance / Done Criteria:
+  - React/Vite frontend runs locally.
+  - Frontend structure is consistent with repository organization patterns.
+  - Frontend structure keeps form input, request/state handling, and result/error rendering maintainably separated.
 
-**Task ID:** `TASK-003`  
-**Category:** Authorization & Security  
-**Phase:** 1  
-**Week:** 2–3  
-**Workstream:** Authorization  
-**Estimate:** M (Medium)
+### T022 - Implement inquiry form inputs
+- Description: Implement inquiry form with sortcode and account number inputs.
+- Dependencies: T021.
+- Acceptance / Done Criteria:
+  - Form captures sortcode and account number values.
+  - Inputs support repeat inquiry flow without page reload.
 
-**Description:**
-Configure Spring Security OAuth2 Resource Server to validate incoming JWT bearer tokens against a pre-configured authorization server (e.g., Keycloak, Auth0, or in-memory for dev). Implement token validation, role extraction (ACCOUNT_INQUIRER), and SecurityContext population. Create mock OAuth2 adapter for POC environments that generates signed tokens for testing. Integrate with `AccountInquiryController` to enforce `@PreAuthorize("hasRole('ACCOUNT_INQUIRER')")` on account inquiry endpoints.
+### T023 - Implement client-side validation behavior
+- Description: Add client-side validation aligned to API input rules.
+- Dependencies: T022.
+- Acceptance / Done Criteria:
+  - Sortcode validation enforces 6-digit numeric format.
+  - Account-number validation enforces 8-digit numeric format.
+  - Validation feedback updates correctly as input changes.
 
-**Requirements Linked:**
-- `FR-006`: Return HTTP 401 Unauthorized for Missing/Invalid Token
-- `FR-007`: Return HTTP 403 Forbidden for User Lacking ACCOUNT_INQUIRER Role
-- `FR-009`: Enforce Role-Based Access Control (ACCOUNT_INQUIRER)
+### T024 - Implement API client for account inquiry endpoint
+- Description: Implement frontend API client integration for canonical endpoint.
+- Dependencies: T022, T012.
+- Acceptance / Done Criteria:
+  - Client calls `GET /v1/accounts/{sortcode}/{accountNumber}`.
+  - Client handles correlation ID exposure for support diagnostics where appropriate.
+  - No additional or out-of-scope endpoints are used.
 
-**Business Rules Linked:**
-- `BR-004`: User Authentication and Role Verification (trigger, processing, outputs, error conditions)
+### T025 - Implement explicit UI state model
+- Description: Implement explicit, testable UI states for inquiry lifecycle.
+- Dependencies: T024.
+- Acceptance / Done Criteria:
+  - States include equivalent behavior to IDLE, LOADING, SUCCESS, NOT_FOUND, and ERROR.
+  - State transitions are deterministic and testable.
 
-**Dependencies:**
-- TASK-001 (API contract must define security scheme)
-- TASK-002 (Maven build with Spring Security dependency)
+### T026 - Implement loading and submission guards
+- Description: Prevent duplicate submissions and unstable loading interactions.
+- Dependencies: T025.
+- Acceptance / Done Criteria:
+  - Duplicate requests cannot be submitted while loading.
+  - Disabled controls prevent click-through.
+  - Loading transitions avoid visible layout jumps.
 
-**Acceptance Criteria:**
-1. `AC-AUTH-001`: Spring Security OAuth2 Resource Server configured via `application.yml` (issuer-uri, JWK set-uri, audience validation)
-2. `AC-AUTH-002`: JWT bearer token validation interceptor implemented as Spring Security `@Component` or `@Configuration` class
-3. `AC-AUTH-003`: Role extraction from JWT claim `realm_access.roles` or equivalent (configurable per provider)
-4. `AC-AUTH-004`: Mock OAuth2 adapter generates signed JWT tokens for dev/test with configurable expiry and role claim
-5. `AC-AUTH-005`: SecurityContext populated with authenticated principal and granted authorities after token validation
-6. `AC-AUTH-006`: Requests without bearer token receive HTTP 401 Unauthorized with `WWW-Authenticate: Bearer` header
-7. `AC-AUTH-007`: Requests with expired or invalid token receive HTTP 401 Unauthorized with error detail in body
-8. `AC-AUTH-008`: Requests with valid token but missing ACCOUNT_INQUIRER role receive HTTP 403 Forbidden
-9. `AC-AUTH-009`: Integration test validates token validation flow: valid token → 200, invalid token → 401, missing role → 403
-10. `AC-AUTH-010`: OAuth2 configuration extracted to environment variables (issuer-uri, client-id, client-secret); no hardcoded credentials
+### T027 - Implement success rendering for all account fields
+- Description: Render all required response fields on successful inquiry.
+- Dependencies: T024, T025.
+- Acceptance / Done Criteria:
+  - UI displays all 12 required response fields from success payload.
+  - Previous content does not flicker unnecessarily during successful refreshes.
 
-**Definition of Done:**
-- Spring Security OAuth2 Resource Server configuration compiles and runs without errors
-- Mock OAuth2 adapter generates valid JWTs that pass validation
-- Integration test suite includes OAuth2 flow tests (TASK-028)
-- All OAuth2 configuration externalized via environment variables or application-{profile}.yml
-- Security baseline documented in README.md
+### T028 - Implement error state rendering
+- Description: Render error outcomes for validation failures, not-found, auth/authz errors, and general failures.
+- Dependencies: T025.
+- Acceptance / Done Criteria:
+  - Not-found state is distinct from generic error state.
+  - Authentication and authorization failure responses are surfaced clearly.
+  - General 500/503 failures are surfaced with stable UI behavior.
 
----
+### T029 - Implement stale-response protection
+- Description: Prevent older in-flight responses from overwriting newer user requests.
+- Dependencies: T024, T025.
+- Acceptance / Done Criteria:
+  - Stale responses cannot overwrite current result state.
+  - Repeated rapid inquiries preserve most-recent-request correctness.
 
-### TASK-004: Design and Implement Account Entity and Repository Interface
+### T030 - Implement responsive and accessible inquiry view
+- Description: Ensure inquiry UI remains responsive and accessible across expected viewport sizes.
+- Dependencies: T022, T027, T028.
+- Acceptance / Done Criteria:
+  - Layout is usable on desktop and narrow/mobile widths.
+  - Form and status/result regions are keyboard-usable and screen-reader-friendly.
+  - Visual hierarchy remains clean and easy to use.
 
-**Task ID:** `TASK-004`  
-**Category:** Data Access Layer  
-**Phase:** 1  
-**Week:** 2  
-**Workstream:** Persistence  
-**Estimate:** M (Medium)
+## 4. Integration Tasks
 
-**Description:**
-Design Java entity class `AccountEntity` (JPA `@Entity`) mapping to 12 ACCOUNT table fields from legacy ACCDB2.cpy and ACCOUNT.cpy copybooks. Define Spring Data JPA repository interface `AccountRepository` with method signature `findBySortcodeAndNumber(String sortcode, String accountNumber)` to execute parameterized SQL SELECT with composite-key WHERE clause. Implement entity equals/hashCode using sortcode+accountNumber composite key. Document field mapping from legacy COBOL field names to modern Java property names and JSON serialization names.
+### T031 - Integrate frontend and backend inquiry flow
+- Description: Validate end-to-end interaction between frontend inquiry UI and backend endpoint.
+- Dependencies: T012, T024, T025.
+- Acceptance / Done Criteria:
+  - Frontend requests and backend responses interoperate for success and error paths.
+  - Correlation ID behavior is observable end-to-end.
 
-**Requirements Linked:**
-- `FR-001`: Execute Account Lookup by Composite Key
-- `FR-003`: Return Standardized Account Record JSON
+### T032 - Integrate security behavior across UI and API
+- Description: Validate handling of authenticated, unauthorized, and unauthenticated paths in integrated flow.
+- Dependencies: T013, T014, T028, T031.
+- Acceptance / Done Criteria:
+  - 401 and 403 outcomes are distinguishable and handled in UI.
+  - Authorized request flow reaches success path when data exists.
 
-**Business Rules Linked:**
-- `BR-001`: Account Record Lookup by Composite Key (data structure mapping)
+### T033 - Integrate reserved lookup behavior end-to-end
+- Description: Validate reserved account-number lookup behavior through full stack.
+- Dependencies: T011, T024, T031.
+- Acceptance / Done Criteria:
+  - `accountNumber = 99999999` triggers highest-account-number behavior for the sortcode.
+  - End-to-end response format matches success contract.
 
-**Dependencies:**
-- TASK-002 (Maven build with Spring Data JPA dependency)
+## 5. Testing Tasks
 
-**Acceptance Criteria:**
-1. `AC-ENTITY-001`: `AccountEntity` JPA entity class created in `com.inqacc.entity` package
-2. `AC-ENTITY-002`: Entity includes 12 properties (with @JsonProperty names): `eyecatcher`, `customerNumber`, `sortcode`, `accountNumber`, `accountType`, `interestRate`, `accountOpened`, `overdraftLimit`, `lastStatementDate`, `nextStatementDate`, `availableBalance`, `actualBalance`
-3. `AC-ENTITY-003`: @Id composite key or @EmbeddedId mapping on (sortcode, accountNumber) fields
-4. `AC-ENTITY-004`: @Table annotation specifies table name (default: "ACCOUNT") and schema (if applicable)
-5. `AC-ENTITY-005`: Field types match program-analysis.md mapping: sortcode (String, length 6), accountNumber (String, length 8), balance (BigDecimal), openingDate (LocalDate), etc.
-6. `AC-ENTITY-007`: `AccountRepository` extends `CrudRepository<AccountEntity, CompositeKey>` or uses @Query for custom finder method
-7. `AC-ENTITY-008`: Repository method `findBySortcodeAndNumber(String, String)` returns `Optional<AccountEntity>`
-8. `AC-ENTITY-009`: Entity includes `@ToString`, `@EqualsAndHashCode` (via Lombok or manual implementation) using composite key
-9. `AC-ENTITY-010`: Mapping document created (mapping-matrix.md section 1.2) linking legacy field names → Java properties → JSON names
-10. `AC-ENTITY-011`: Entity compiles; no JPA validation errors
+### T034 - Implement service-layer tests
+- Description: Add tests for service orchestration including standard lookup, reserved lookup, and read-only behavior.
+- Dependencies: T011.
+- Acceptance / Done Criteria:
+  - Service tests cover positive and negative paths.
+  - Reserved branch logic is explicitly tested.
 
-**Definition of Done:**
-- `AccountEntity` and `AccountRepository` classes committed to version control
-- Entity mapping documented in mapping-matrix.md
-- Unit tests verify entity instantiation and composite-key semantics (TASK-016)
-- Repository method signature matches OpenAPI path parameters
+### T035 - Implement controller/API tests
+- Description: Add tests for endpoint binding, status mappings, and response contract alignment.
+- Dependencies: T012, T015.
+- Acceptance / Done Criteria:
+  - Tests cover 200, 400, 401, 403, 404, 500, and 503 outcomes.
+  - Endpoint path and parameter behavior align with contract.
 
----
+### T036 - Implement repository adapter tests
+- Description: Add tests for mock repository standard and reserved lookups.
+- Dependencies: T008.
+- Acceptance / Done Criteria:
+  - Standard composite-key lookup behavior is verified.
+  - Highest-account-number repository technical lookup behavior is verified.
+  - Mock-mode repository activation is verified.
+  - Mock mode confirms no `DataSource` creation.
 
-### TASK-005: Create Mock In-Memory Account Repository Implementation
+### T055 - Implement JDBC repository tests with test-only relational database
+- Description: Add JDBC repository tests using a test-only relational database (H2) for query and mapping verification.
+- Dependencies: T052, T054.
+- Acceptance / Done Criteria:
+  - H2 is used only for automated JDBC tests.
+  - Parameterized SQL query behavior is verified.
+  - Row mapping to canonical domain model is verified.
+  - Highest-account-number repository technical lookup behavior is verified.
+  - Test results are not represented as live DB2 connectivity verification.
 
-**Task ID:** `TASK-005`  
-**Category:** Data Access Layer  
-**Phase:** 1  
-**Week:** 2–3  
-**Workstream:** Persistence  
-**Estimate:** M (Medium)
+### T056 - Implement data-mode configuration and startup-failure tests
+- Description: Add tests for repository bean selection and startup validation across mock and db modes.
+- Dependencies: T053, T054.
+- Acceptance / Done Criteria:
+  - Mock mode selects `MockAccountRepository` and no `DataSource`.
+  - DB mode selects `JdbcAccountRepository` with `DataSource`.
+  - Missing required db-mode configuration fails startup clearly.
 
-**Description:**
-Implement mock in-memory account repository (no external database) with 10–20 predefined account test records. Load test data at application startup from CSV, JSON, or hardcoded initialization. Implement `AccountRepository.findBySortcodeAndNumber()` using stream operations or HashMap lookup. Support both dev/test profile (in-memory map) and future prod profile (JPA-based). Ensure mock data covers happy path (valid lookups), edge cases (zero results), and test-specific scenarios (special account types for negative testing).
+### T057 - Implement service parity tests across repository implementations
+- Description: Add service tests proving the same service behavior with mock and jdbc repositories.
+- Dependencies: T011, T055.
+- Acceptance / Done Criteria:
+  - Service behavior for success, not-found, and reserved lookup is equivalent across both modes.
+  - Read-only behavior is preserved across both modes.
 
-**Requirements Linked:**
-- `FR-001`: Execute Account Lookup by Composite Key (mock implementation)
-- `FR-005`: Return HTTP 404 Not Found (mock returns empty Optional)
+### T037 - Implement mapper and conversion tests
+- Description: Add tests for trimming, date conversion, and decimal conversion behavior.
+- Dependencies: T009.
+- Acceptance / Done Criteria:
+  - Fixed-width character trimming is verified.
+  - ISO date conversion is verified.
+  - Decimal conversion behavior is verified.
 
-**Business Rules Linked:**
-- `BR-001`: Account Record Lookup by Composite Key (mock data must conform to BR rules)
+### T038 - Implement validation tests
+- Description: Add tests for sortcode and account-number input validation rules.
+- Dependencies: T010.
+- Acceptance / Done Criteria:
+  - Valid and invalid boundary cases are covered for both fields.
+  - Validation failures map to canonical 400 behavior.
 
-**Dependencies:**
-- TASK-004 (Repository interface and entity definition)
+### T039 - Implement error-handling tests
+- Description: Add tests for centralized exception mapping to canonical error envelope.
+- Dependencies: T015, T016, T017.
+- Acceptance / Done Criteria:
+  - Envelope fields are present for all error outcomes.
+  - Status-to-error mapping is correct for 400/401/403/404/500/503.
 
-**Acceptance Criteria:**
-1. `AC-MOCK-001`: `InMemoryAccountRepository` class implements `AccountRepository` interface
-2. `AC-MOCK-002`: Mock repository loads 10–20 test account records at startup (via `@PostConstruct` or `ApplicationRunner`)
-3. `AC-MOCK-003`: Test data includes valid account (sortcode=123456, accountNumber=98765432) for happy-path tests
-4. `AC-MOCK-004`: Test data includes account not found scenario (sortcode=999999, accountNumber=00000000 returns empty)
-5. `AC-MOCK-005`: Test data includes edge-case accounts: zero balance, future opening date, inactive status, various account types
-6. `AC-MOCK-006`: `findBySortcodeAndNumber()` executes case-sensitive string matching on sortcode and accountNumber
-7. `AC-MOCK-007`: Returns `Optional.empty()` when no match found (never throws exception)
-8. `AC-MOCK-008`: Mock repository is activated via Spring profile `dev` or `test` (conditional `@ConditionalOnProperty`)
-9. `AC-MOCK-009`: Mock data is externalizable (CSV or JSON file in classpath, not hardcoded if possible)
-10. `AC-MOCK-010`: Unit tests verify lookup success and not-found scenarios (TASK-016)
+### T040 - Implement authentication and authorization tests
+- Description: Add tests for bearer authentication and role-based authorization behavior.
+- Dependencies: T013, T014.
+- Acceptance / Done Criteria:
+  - Missing/invalid/expired token paths are verified as 401.
+  - Authenticated-but-unauthorized path is verified as 403.
 
-**Definition of Done:**
-- InMemoryAccountRepository committed to version control
-- Mock test data (CSV/JSON or initialization code) included in source
-- Spring profile integration verified (dev/test profiles load mock repository)
-- Unit and integration tests execute successfully against mock data
-- No external database required to run application
+### T041 - Implement correlation ID and safe logging tests
+- Description: Add tests for correlation ID propagation and safe logging behavior where practical.
+- Dependencies: T018, T019.
+- Acceptance / Done Criteria:
+  - Correlation ID is present in response and error paths.
+  - Logs do not include prohibited sensitive fields.
 
----
+### T042 - Implement frontend validation and state tests
+- Description: Add frontend tests for validation updates, explicit UI states, and state transitions.
+- Dependencies: T023, T025.
+- Acceptance / Done Criteria:
+  - Validation feedback updates correctly while editing.
+  - State transitions for idle/loading/success/not-found/error are covered.
 
-### TASK-006: Implement Structured JSON Logging with Correlation ID
+### T043 - Implement frontend loading and duplicate-submission tests
+- Description: Add frontend tests ensuring stable loading behavior and submission guards.
+- Dependencies: T026.
+- Acceptance / Done Criteria:
+  - Duplicate submission prevention is verified.
+  - Disabled controls do not permit click-through.
+  - Loading does not cause visible layout jumps.
 
-**Task ID:** `TASK-006`  
-**Category:** Observability  
-**Phase:** 1  
-**Week:** 3  
-**Workstream:** Observability  
-**Estimate:** M (Medium
+### T044 - Implement frontend rendering and repeat-inquiry tests
+- Description: Add frontend tests for success rendering, error rendering, and repeat inquiry behavior.
+- Dependencies: T027, T028.
+- Acceptance / Done Criteria:
+  - All 12 fields render correctly on success.
+  - Not-found and general error rendering are verified.
+  - Repeat inquiries are verified without stale-state regressions.
+
+### T045 - Implement stale-response protection tests
+- Description: Add frontend tests ensuring stale responses cannot overwrite newer requests.
+- Dependencies: T029.
+- Acceptance / Done Criteria:
+  - Out-of-order async responses are handled safely.
+  - Most recent inquiry result remains authoritative in UI state.
+
+### T046 - Implement backend/frontend integration tests
+- Description: Add tests validating integrated request lifecycle across frontend and backend boundaries.
+- Dependencies: T031, T032, T033, T056.
+- Acceptance / Done Criteria:
+  - Integration tests cover success, not-found, and auth error flows.
+  - Correlation behavior and envelope consistency are verified.
+  - Where practical, API-visible behavior is confirmed unchanged between mock and db modes.
+
+### T047 - Implement OpenAPI conformance tests
+- Description: Add automated checks that implementation conforms to frozen OpenAPI contract.
+- Dependencies: T035, T046.
+- Acceptance / Done Criteria:
+  - Implemented endpoint, parameters, statuses, and schemas conform to `contracts/openapi.yaml`.
+  - Contract conformance checks run in local verification workflow.
+
+## 6. Documentation Tasks
+
+### T048 - Verify specification and OpenAPI alignment
+- Description: Verify frozen `spec.md` and `contracts/openapi.yaml` remain aligned for endpoint, status semantics, and response/error schema obligations.
+- Dependencies: None.
+- Acceptance / Done Criteria:
+  - Any genuine mismatch is documented as a blocker for human review.
+  - If an approved correction is required, only contract-alignment updates are applied without behavioral redesign.
+
+### T049 - Verify implementation-to-contract conformance notes
+- Description: Document how implemented backend/frontend behavior maps to frozen contract and plan boundaries.
+- Dependencies: T047.
+- Acceptance / Done Criteria:
+  - Conformance notes exist for endpoint, statuses, security behavior, correlation ID, and both repository modes.
+  - Notes reference supporting artifacts without duplicating them.
+
+### T050 - Update run and verification documentation
+- Description: Update README/run instructions for backend and frontend startup, test execution, and mock-data usage.
+- Dependencies: T031, T046.
+- Acceptance / Done Criteria:
+  - Local run instructions for backend and frontend are accurate.
+  - Test execution instructions are accurate.
+  - Mock mode execution and limitations are documented.
+  - DB mode enablement is documented, including required environment variables, driver requirement, and expected schema/table assumptions.
+  - Documentation states that live DB2 connectivity is not required for POC completion.
+  - Documentation states that database mode is designed for future DB2 activation but live DB2 connectivity is not verified in this POC.
+  - Documentation states that deployment credentials remain external.
+
+## 7. Deployment / Readiness Tasks
+
+### T051 - Perform POC readiness verification
+- Description: Perform final POC readiness pass for build/run/test/documentation completeness within approved scope.
+- Dependencies: T047, T050.
+- Acceptance / Done Criteria:
+  - Backend build succeeds locally.
+  - Frontend build succeeds locally.
+  - Required automated tests pass.
+  - No out-of-scope deployment or production-infrastructure assumptions are introduced.
+
+## 8. Completion Checklist
+
+- [ ] All implementation tasks in this document are complete.
+- [ ] Backend builds successfully.
+- [ ] Frontend builds successfully.
+- [ ] Test suites pass.
+- [ ] Canonical endpoint is implemented: `GET /v1/accounts/{sortcode}/{accountNumber}`.
+- [ ] Standard composite-key lookup works.
+- [ ] Reserved `99999999` lookup works with highest-account-number behavior.
+- [ ] Required response fields are returned.
+- [ ] Required HTTP statuses are implemented: 400, 401, 403, 404, 500, 503.
+- [ ] Security behavior is verified (bearer auth + authorization boundary).
+- [ ] Correlation ID behavior is implemented and verified.
+- [ ] Safe structured logging behavior is verified.
+- [ ] Mock repository is the default POC runtime. JDBC database mode is implemented but inactive by default. No live DB2 or CICS connection is required or used for POC acceptance.
+- [ ] One shared controller and one shared service flow are used across both data modes.
+- [ ] Both adapters implement the same repository contract and return the same canonical account model.
+- [ ] Reserved-number branch decision exists only in shared service flow.
+- [ ] No `DataSource` is created in mock mode.
+- [ ] Database mode is configuration-driven and uses JDBC with Hikari-backed `DataSource` and parameterized SQL.
+- [ ] DB2 driver requirement and schema/table assumptions are documented for future activation.
+- [ ] No claim of live DB2 connectivity verification is made.
+- [ ] No duplicate business logic exists across repository implementations.
+- [ ] Frontend is stable, responsive, and visually usable.
+- [ ] Repeated submissions behave correctly.
+- [ ] Loading transitions do not flicker or allow stale results to overwrite newer responses.
+- [ ] Implementation conforms to `contracts/openapi.yaml`.
+- [ ] Documentation is updated.
+- [ ] No out-of-scope functionality was introduced.
