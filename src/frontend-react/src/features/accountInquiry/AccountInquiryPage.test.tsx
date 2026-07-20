@@ -243,6 +243,121 @@ describe('AccountInquiryPage', () => {
     expect(screen.getByText('ERR-002')).toBeInTheDocument()
   })
 
+  it('hides stale error details and prior correlation id during next request loading', async () => {
+    let resolveSecond: (value: Response) => void = () => {}
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    fetchSpy
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            error: {
+              code: 'ERR-004',
+              message: 'Account record not found',
+              timestamp: '2026-01-01T00:00:00Z',
+              correlationId: 'corr-404',
+            },
+          }),
+          {
+            status: 404,
+            headers: {
+              'content-type': 'application/json',
+              'X-Correlation-ID': 'corr-404',
+            },
+          },
+        ),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveSecond = resolve
+          }),
+      )
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Sortcode'), '123456')
+    await user.type(screen.getByLabelText('Account Number'), '00000123')
+    await user.click(screen.getByRole('button', { name: 'Inquire Account' }))
+
+    expect((await screen.findAllByText('Account record not found')).length).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { name: 'Error Details' })).toBeInTheDocument()
+    expect(screen.getByText('corr-404')).toBeInTheDocument()
+
+    await user.clear(screen.getByLabelText('Account Number'))
+    await user.type(screen.getByLabelText('Account Number'), '00000001')
+    await user.click(screen.getByRole('button', { name: 'Inquire Account' }))
+
+    expect(screen.getByRole('button', { name: 'Loading...' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Error Details' })).not.toBeInTheDocument()
+    expect(screen.queryByText('corr-404')).not.toBeInTheDocument()
+
+    resolveSecond(
+      new Response(JSON.stringify(accountSuccessBody()), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+          'X-Correlation-ID': 'corr-second',
+        },
+      }),
+    )
+
+    expect(await screen.findByText('Account inquiry successful.')).toBeInTheDocument()
+  })
+
+  it('preserves latest successful account result while next request is loading', async () => {
+    let resolveSecond: (value: Response) => void = () => {}
+
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(accountSuccessBody({ accountNumber: '00000001' })), {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+            'X-Correlation-ID': 'corr-first',
+          },
+        }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveSecond = resolve
+          }),
+      )
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Sortcode'), '123456')
+    await user.type(screen.getByLabelText('Account Number'), '00000001')
+    await user.click(screen.getByRole('button', { name: 'Inquire Account' }))
+    await screen.findByText('Account inquiry successful.')
+
+    expect(screen.getByRole('heading', { name: 'Account Result' })).toBeInTheDocument()
+
+    await user.clear(screen.getByLabelText('Account Number'))
+    await user.type(screen.getByLabelText('Account Number'), '00000099')
+    await user.click(screen.getByRole('button', { name: 'Inquire Account' }))
+
+    expect(screen.getByRole('button', { name: 'Loading...' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Account Result' })).toBeInTheDocument()
+    expect(screen.getByText('00000001')).toBeInTheDocument()
+
+    resolveSecond(
+      new Response(JSON.stringify(accountSuccessBody({ accountNumber: '00000099' })), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+          'X-Correlation-ID': 'corr-second',
+        },
+      }),
+    )
+
+    await screen.findByText('Correlation ID: corr-second')
+    expect(screen.getByText('00000099')).toBeInTheDocument()
+  })
+
   it('shows timeout error and clears stale success data', async () => {
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')

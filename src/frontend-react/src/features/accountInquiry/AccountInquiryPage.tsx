@@ -67,6 +67,8 @@ export function AccountInquiryPage() {
 
     setUiState('LOADING')
     setMessage('Loading account inquiry...')
+    setErrorEnvelope(null)
+    setCorrelationId('')
 
     const result = await inquireAccount(request)
     if (sequence !== requestSequenceRef.current) {
@@ -217,14 +219,14 @@ export function AccountInquiryPage() {
         <p className={uiState === 'ERROR' ? 'error-text' : uiState === 'NOT_FOUND' ? 'warn-text' : 'info-text'}>{message}</p>
       </section>
 
-      {uiState === 'SUCCESS' && responseData ? (
+      {responseData && uiState !== 'NOT_FOUND' && uiState !== 'ERROR' ? (
         <section className="card" aria-labelledby="account-response-heading">
           <h2 id="account-response-heading">Account Result</h2>
           {allAccountFields(responseData)}
         </section>
       ) : null}
 
-      {errorEnvelope ? (
+      {uiState !== 'LOADING' && errorEnvelope ? (
         <section className="card" aria-labelledby="account-error-heading">
           <h2 id="account-error-heading">Error Details</h2>
           <dl className="kv-grid">
@@ -236,7 +238,7 @@ export function AccountInquiryPage() {
         </section>
       ) : null}
 
-      {!errorEnvelope && correlationId ? (
+      {uiState !== 'LOADING' && !errorEnvelope && correlationId ? (
         <section className="card" aria-label="Correlation trace">
           <h2>Trace</h2>
           <p className="info-text">Correlation ID: {correlationId}</p>
