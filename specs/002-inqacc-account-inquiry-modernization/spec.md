@@ -182,33 +182,47 @@ The following legacy-observable behaviors are preserved based on source analysis
 
 ## 15. Acceptance Criteria
 ### AC-001 Exact Input Validation
-Given an inquiry request with `sortcode` not matching `^\d{6}$` or `accountNumber` not matching `^\d{8}$`, the API returns HTTP 400 with standardized error payload.
+Given an input `sortcode` not matching `^\d{6}$` or `accountNumber` not matching `^\d{8}$`,
+When the user makes an inquiry request with the input sortcode,
+Then the API returns HTTP 400 with standardized error payload.
 
 ### AC-002 Successful Composite-Key Lookup
-Given valid `sortcode` and `accountNumber` that exist in the repository, the API returns HTTP 200 with one mapped account record.
+Given valid `sortcode` and `accountNumber` that exist in the repository, 
+When the user makes an inquiry request,
+Then the API returns HTTP 200 with one mapped account record.
 
 ### AC-002A Reserved-Number Lookup
-Given valid `sortcode` and `accountNumber = 99999999`, the API returns HTTP 200 with the account record having the highest account number for that sortcode.
+Given valid `sortcode` and `accountNumber = 99999999`, 
+When the user makes an inquiry request,
+Then the API returns HTTP 200 with the account record having the highest account number for that sortcode.
 
 ### AC-003 No-Match Behaviour
-Given valid `sortcode` and `accountNumber` that do not exist, the API returns HTTP 404 with standardized error payload.
+Given a `sortcode` and `accountNumber` with valid formatting but that does not exist in the database, 
+When the user makes a request,
+Then the API returns HTTP 404 with standardized error payload.
 
 ### AC-004 Response Field Mapping
-Given a successful lookup, response fields reflect authoritative mapping and conversions (trimmed CHAR fields, ISO date format, correctly scaled decimals).
+Given the user has made a successful lookup, 
+Then the response fields reflect authoritative mapping and conversions (trimmed CHAR fields, ISO date format, correctly scaled decimals).
 
 ### AC-005 Read-Only Behaviour
-For all inquiry requests, no create/update/delete side effects occur in account data.
+Given any amount of requests since the account database was loaded,
+When the current account database is compared to the initial account database, 
+Then there are no changes made to any information.
 
 ### AC-006 Mock-Repository Boundary
-In POC mode, inquiry requests are served from mock repository only, with no live DB2/CICS calls.
+Given the app is in POC mode, 
+When the user makes inquiry requests 
+Then they are served from the mock repository only, with no live DB2/CICS calls.
 
 ### AC-007 Error Semantics
-The API uses HTTP semantics exactly as specified in Section 11, including 401 vs 403 distinction and 500/503 handling.
+Given a user makes a request that cannot be fulfilled,
+Then the appropriate 401, 403, 500, 503 error code is passed and handled as indicated in section 11.
 
-### AC-008 Safe Logging
+### AC-008 Safe Logging - TODO: Put into Given, When, Then (BDD) form
 Operational logs exclude bearer tokens, account numbers, customer numbers, balances, and full account detail payloads while preserving traceability metadata.
 
-### AC-009 Security Behaviour
+### AC-009 Security Behaviour - TODO: Put into Given, When, Then (BDD) form
 Missing/invalid/expired authentication returns 401 and authenticated-but-unauthorized requests return 403.
 
 ### AC-010 Legacy Behaviour Preservation
