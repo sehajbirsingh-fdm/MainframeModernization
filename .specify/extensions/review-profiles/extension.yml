@@ -1,0 +1,57 @@
+schema_version: "1.0"
+
+extension:
+  id: "review-profiles"
+  name: "Spec Kit Review Profiles"
+  version: "0.3.0"
+  description: "Adds profile-based automated code review for API, frontend, security, and fullstack changes."
+  author: "Mayank Arora"
+  repository: "https://github.com/Mayank1619/spec-kit-review-profiles"
+  license: "MIT"
+  homepage: "https://github.com/Mayank1619/spec-kit-review-profiles"
+
+requires:
+  speckit_version: ">=0.7.0"
+  commands:
+    - "speckit.implement"
+
+provides:
+  commands:
+    - name: "speckit.review-profiles.review"
+      file: "commands/speckit.review-profiles.review.md"
+      description: "Review changes against the spec, tasks, and selected organization review profile"
+      aliases:
+        - "speckit.review-profiles.gate"
+
+  config:
+    - name: "review-profiles-config.yml"
+      template: "review-profiles-config.template.yml"
+      description: "Organization-specific review profile policy"
+      required: false
+
+hooks:
+  after_implement:
+    command: "speckit.review-profiles.review"
+    optional: true
+    prompt: "Run review gate now?"
+    description: "Run profile-based code review after implementation"
+
+tags:
+  - "api"
+  - "code-review"
+  - "quality-gate"
+  - "copilot"
+
+defaults:
+  review:
+    mode: "report-only"
+    fail_on:
+      - "BLOCKER"
+      - "MAJOR"
+    output: "versioned-feature-review"
+  api_standards:
+    require_backward_compatibility: true
+    require_openapi_update: true
+    require_authz_check: true
+    require_validation_tests: true
+    require_error_contract_consistency: true

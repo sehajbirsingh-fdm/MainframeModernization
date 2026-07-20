@@ -1,0 +1,123 @@
+# Spec Kit Review Profiles configuration
+# This committed default is intentionally demo-friendly. Customize it per organization.
+
+review:
+  mode: "report-only"
+  output: "versioned-feature-review"
+  default_profile: "api"
+  fail_on:
+    - "BLOCKER"
+    - "MAJOR"
+  allow_safe_fixes: false
+
+context:
+  preferred_base_branch: "main"
+  spec_directory: "specs"
+  include_uncommitted_changes: true
+  include_pull_request_template: true
+  include_copilot_instructions: true
+
+report:
+  write_markdown_file: true
+  versioned: true
+  directory_name: "reviews"
+  filename_template: "review-{version}-{timestamp}.md"
+  timestamp_format: "yyyyMMdd-HHmmss"
+  timezone: "local"
+  latest_alias: "review.md"
+  update_index: true
+  include_executive_summary: true
+  include_pr_comment: true
+  include_qa_notes: true
+  include_traceability_matrix: true
+
+profiles:
+  api:
+    description: "API contract, compatibility, security, and tests"
+    rule_files:
+      - "rules/api-code-review-rules.md"
+      - "rules/security-code-quality-rules.md"
+    required_review_areas:
+      - "API contract compatibility"
+      - "Authentication and authorization"
+      - "Input validation"
+      - "OpenAPI/schema updates"
+      - "Error contract consistency"
+      - "API tests and negative-path tests"
+      - "Security vulnerabilities and code smells"
+  frontend:
+    description: "Frontend workflow, accessibility, state, security, and tests"
+    rule_files:
+      - "rules/frontend-code-review-rules.md"
+      - "rules/security-code-quality-rules.md"
+    required_review_areas:
+      - "User workflow correctness"
+      - "Accessibility"
+      - "Loading, empty, error, and success states"
+      - "Form validation"
+      - "XSS and sensitive data exposure"
+      - "Responsive layout"
+      - "Frontend tests"
+  security:
+    description: "Security vulnerabilities, test gaps, and code smells"
+    rule_files:
+      - "rules/security-code-quality-rules.md"
+    required_review_areas:
+      - "Secrets and sensitive data"
+      - "Injection and XSS risks"
+      - "Authentication and authorization"
+      - "Missing negative tests"
+      - "Code smells"
+      - "Reliability and maintainability"
+  fullstack:
+    description: "Combined API, frontend, security, and code-quality review"
+    rule_files:
+      - "rules/api-code-review-rules.md"
+      - "rules/frontend-code-review-rules.md"
+      - "rules/security-code-quality-rules.md"
+    required_review_areas:
+      - "API correctness"
+      - "Frontend workflow correctness"
+      - "Security vulnerabilities"
+      - "Test coverage"
+      - "Code smells"
+      - "Operational risk"
+
+api_standards:
+  require_backward_compatibility: true
+  require_versioning_for_breaking_changes: true
+  require_openapi_update: true
+  require_authentication: true
+  require_authorization: true
+  require_input_validation: true
+  require_consistent_error_contract: true
+  require_sensitive_data_protection: true
+  require_pagination_for_collection_endpoints: true
+  require_idempotency_for_retried_writes: true
+  require_observability: true
+  require_rollback_plan_for_risky_changes: true
+
+tests:
+  require_happy_path: true
+  require_authentication_failure: true
+  require_authorization_failure: true
+  require_validation_failure: true
+  require_backward_compatibility: true
+  require_contract_or_schema_tests: true
+
+severity:
+  blocker:
+    - "Introduces an unauthenticated or unauthorized API path"
+    - "Breaks an existing public API contract without documented migration"
+    - "Leaks secrets, tokens, PII, or sensitive business data"
+    - "Deletes or corrupts customer data"
+  major:
+    - "Missing tests for changed API behavior"
+    - "Missing OpenAPI or schema update for public API change"
+    - "Inconsistent error response shape or status code"
+    - "Missing input validation at the API boundary"
+    - "Likely performance issue in normal production usage"
+  minor:
+    - "Naming, documentation, or maintainability issue"
+    - "Incomplete logging or metric coverage"
+    - "Small refactor opportunity that does not block delivery"

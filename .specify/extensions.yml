@@ -1,0 +1,14 @@
+installed:
+- review-profiles
+settings:
+  auto_execute_hooks: true
+hooks:
+  after_implement:
+  - extension: review-profiles
+    command: speckit.review-profiles.review
+    enabled: true
+    optional: true
+    priority: 10
+    prompt: Run review gate now?
+    description: Run profile-based code review after implementation
+    condition: null
