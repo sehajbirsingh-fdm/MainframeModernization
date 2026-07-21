@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: INQACCCU Customer Accounts API
+  version: 1.0.0
+paths:
+  /api/v1/customers/{customerNumber}/accounts:
+    get:
+      summary: Retrieve accounts associated with a customer
+      parameters:
+        - name: customerNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{10}$'
+      responses:
+        '200':
+          description: Inquiry completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAccountsResponse'
+        '400':
+          description: Validation error
+        '500':
+          description: System error
+components:
+  schemas:
+    CustomerAccountsResponse:
+      type: object
+      properties:
+        legacyStatus:
+          $ref: '#/components/schemas/LegacyStatus'
+        customerNumber:
+          type: string
+        numberOfAccounts:
+          type: integer
+          maximum: 20
+        accounts:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/AccountSummary'
+        portfolioSummary:
+          $ref: '#/components/schemas/PortfolioSummary'
+    LegacyStatus:
+      type: object
+      properties:
+        success:
+          type: string
+          enum: [Y, N]
+        failureCode:
+          type: string
+          enum: ['0','1','2','3','4']
+        customerFound:
+          type: string
+          enum: [Y, N]
+        message:
+          type: string
+    AccountSummary:
+      type: object
+      properties:
+        eyecatcher:
+          type: string
+        customerNumber:
+          type: string
+        sortCode:
+          type: string
+        accountNumber:
+          type: string
+        accountType:
+          type: string
+        interestRate:
+          type: number
+        openedDate:
+          type: string
+          format: date
+        overdraftLimit:
+          type: integer
+        lastStatementDate:
+          type: string
+          format: date
+        nextStatementDate:
+          type: string
+          format: date
+        availableBalance:
+          type: number
+        actualBalance:
+          type: number
+    PortfolioSummary:
+      type: object
+      properties:
+        accountCount:
+          type: integer
+        totalAvailableBalance:
+          type: number
+        totalActualBalance:
+          type: number
+        totalOverdraftLimit:
+          type: number
