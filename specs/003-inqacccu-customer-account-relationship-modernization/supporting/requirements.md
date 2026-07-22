@@ -1,27 +1,45 @@
 # requirements.md - INQACCCU Modernization Requirements
 
 ## Purpose
-Modernize INQACCCU customer-account relationship inquiry into a Spring Boot REST API.
 
-## Source assets
-- INQACCCU.cbl
-- INQACCCUZ.cpy
-- ACCOUNT.cpy
-- ACCDB2.cpy
-- INQCUST dependency and INQCUSTZ commarea
+Define what the modernized INQACCCU feature must do while preserving confirmed legacy business behavior.
 
-## Functional requirements
+## Scope
+
+These requirements describe business capability and observable behavior only. They do not define implementation structure, technology choices, endpoint design, deployment, or task sequencing.
+
+## Functional Requirements
+
 | ID | Requirement |
 |---|---|
-| FR-001 | Retrieve accounts by customer number. |
-| FR-002 | Validate customer by linking to INQCUST-equivalent behavior before account retrieval. |
-| FR-003 | Reject zero customer number as customer not found. |
-| FR-004 | Reject customer number `9999999999` as customer not found. |
-| FR-005 | Return up to 20 accounts. |
-| FR-006 | Preserve success, failCode, customerFound, and numberOfAccounts. |
-| FR-007 | Map account fields from DB2 ACCOUNT to API account DTO. |
-| FR-008 | Convert account dates into ISO dates. |
-| FR-009 | Return zero accounts when DB2 fetch reaches SQLCODE +100 with no error. |
-| FR-010 | Convert DB2 open/fetch/close failures into structured API errors with legacy failure codes 2, 3, and 4 respectively. |
-| FR-011 | Use mock repository for POC and adapter interface for future DB2/CICS/zOS Connect/MQ integration. |
-| FR-012 | Provide optional portfolio summary from returned accounts. |
+| FR-001 | The system shall accept a customer-number inquiry as the business inquiry key. |
+| FR-002 | The system shall perform customer validation through an INQCUST-equivalent capability before any account retrieval is attempted. |
+| FR-003 | The system shall treat reserved customer numbers 0000000000 and 9999999999 as customer-not-found outcomes, consistent with legacy behavior. |
+| FR-004 | The system shall derive sort code internally as fixed value 987654 for account retrieval behavior and shall not require sort code as caller input. |
+| FR-005 | The system shall retrieve customer-associated account data in read-only inquiry mode. |
+| FR-006 | The system shall preserve customer-found with zero accounts as a valid successful outcome. |
+| FR-007 | The system shall preserve a maximum returned account count of 20 per inquiry as baseline behavior unless changed by future approved scope. |
+| FR-008 | The system shall preserve normal end-of-data behavior equivalent to SQLCODE +100 as non-error completion. |
+| FR-009 | The system shall preserve legacy status semantics at the business boundary, including success indicator, failure indicator, customer-found indicator, and returned-account count. |
+| FR-010 | The system shall preserve legacy failure-path distinctions, including customer-validation/customer-not-found and account retrieval failure categories equivalent to cursor open, fetch, and close failures. |
+| FR-011 | The system shall preserve complete returned account information: eyecatcher, customer number, sort code, account number, account type, interest rate, opened date, overdraft limit, last statement date, next statement date, available balance, and actual balance. |
+| FR-012 | The system shall preserve fixed-width identifier semantics for customer number and account number, including preservation of leading zeroes. |
+| FR-013 | The system shall preserve legacy date semantics where account dates originate from DB2 date context and legacy output meaning corresponds to DDMMYYYY representation. |
+| FR-014 | The system shall not imply deterministic account ordering unless an explicit future scope decision introduces ordering behavior. |
+
+## Optional Future Enhancements (Not Mandatory Requirements)
+
+- Future scope may revise the 20-record bound.
+- Future scope may introduce deterministic ordering rules.
+- Future scope may define alternate external date representations.
+
+None of the above are required by this baseline requirements set.
+
+## Open Questions (Business and Policy Decisions)
+
+1. What external interface style and contract conventions are required by product policy?
+2. What authentication and authorization policies are required for this feature?
+3. Should future scope intentionally change the legacy 20-record response bound?
+4. Should future scope introduce deterministic ordering for returned accounts?
+5. What production data-source strategy is required for long-term operation?
+6. What external date representation policy is required while preserving legacy business semantics?

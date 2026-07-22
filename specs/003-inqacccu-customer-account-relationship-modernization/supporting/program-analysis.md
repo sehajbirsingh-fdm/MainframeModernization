@@ -1,200 +1,200 @@
-# Program Analysis Report: INQACCCU
-
-**Document ID:** `prog-analysis-inqacccu-001`  
-**Generated:** Mainframe Modernization Pipeline  
-**Target Output:** `program-analysis.md`
-
----
+# Program Analysis: INQACCCU (Legacy Behavior)
 
 ## 1. Program Inventory
 
 | Attribute | Value |
-|-----------|-------|
-| **Program ID** | INQACCCU |
-| **Author** | James O'Grady |
-| **Copyright** | IBM Corp. 2023 |
-| **Language** | COBOL |
-| **Compile Options** | CBL CICS('SP,EDF,DLI'), CBL SQL |
-| **Program Type** | Online Inquiry (CICS) |
-| **Purpose** | Customer ↔ Account Relationship Inquiry |
+|---|---|
+| Program ID | INQACCCU |
+| Author | James O'Grady |
+| Language | COBOL with CICS and embedded SQL |
+| Compile directives in source | `CBL CICS('SP,EDF,DLI')`, `CBL SQL` |
+| Program role | Online inquiry: find accounts associated with a customer |
 
----
+## 2. Authoritative Sources Used
 
-## 2. Data Structures and Field Map
+1. `src/base/cics/cobol/INQACCCU.cbl`
+2. `src/base/cics/copy/INQACCCU.cpy`
+3. `src/base/cics/copy/SORTCODE.cpy`
+4. `src/base/cics/copy/INQCUSTZ.cpy`
+5. `src/base/cics/copy/ACCDB2.cpy`
+6. Supporting cross-check only where consistent with source:
+   - `specs/003-inqacccu-customer-account-relationship-modernization/supporting/business-rules.md`
+   - `specs/003-inqacccu-customer-account-relationship-modernization/supporting/mapping-matrix.md`
 
-### 2.1 Input/Output Communication Area: `INQACCCUZ.cpy`
+## 3. Inputs, Fixed Values, and Keys
 
-| Field Name | Type | Length | PIC Clause | Purpose | Modernization Notes |
-|------------|------|--------|-----------|---------|-------------------|
-| NUMBER-OF-ACCOUNTS | Binary signed | 4 bytes | S9(8) BINARY | Count of returned accounts (0–20) | Map to `Integer` in Java; validate upper bound |
-| CUSTOMER-NUMBER | Numeric | 10 digits | 9(10) | Input: customer identifier | Convert to `String` or `Long`; add format validation |
-| COMM-SUCCESS | Character | 1 byte | X | Success flag ('Y'/'N') | Map to `Boolean` response wrapper |
-| COMM-FAIL-CODE | Character | 1 byte | X | Error code on failure | Standardize to enumerated error codes |
-| CUSTOMER-FOUND | Character | 1 byte | X | Customer existence flag ('Y'/'N') | Include in response DTO |
-| COMM-PCB-POINTER | Character | 4 bytes | X(4) | DLI pointer (mainframe-specific) | **REMOVE** in modernization; not applicable to Spring Boot |
-| ACCOUNT-DETAILS (OCCURS 1-20) | Group | Variable | — | Repeating account records | Map to `List<AccountDetailDTO>` |
+### 3.1 Inquiry Input
 
-#### ACCOUNT-DETAILS Repeating Group (per occurrence):
+- User-supplied inquiry input is `CUSTOMER-NUMBER` in commarea (`PIC 9(10)`).
+- `CUSTOMER-NUMBER` is numeric and fixed length in the commarea definition.
+- Because the field is fixed-width numeric, leading zeroes are significant and must be preserved in legacy-compatible representations.
 
-| Field Name | Type | Length | PIC Clause | Purpose |
-|------------|------|--------|-----------|---------|
-| COMM-EYE | Character | 4 bytes | X(4) | Eyecatcher ('ACCT') |
-| COMM-CUSTNO | Character | 10 bytes | X(10) | Customer number (redundant per occurrence) |
-| COMM-SCODE | Character | 6 bytes | X(6) | Sort code (routing/bank code) |
-| COMM-ACCNO | Numeric | 8 digits | 9(8) | Account number |
-| COMM-ACC-TYPE | Character | 8 bytes | X(8) | Account type (e.g., 'CHECKING', 'SAVINGS') |
-| COMM-INT-RATE | Decimal | 6 digits | 9(4)V99 | Interest rate (0–99.99%) |
-| COMM-OPENED | Numeric | 8 digits | 9(8) | Account open date (YYYYMMDD) |
-| COMM-OVERDRAFT | Numeric | 8 digits | 9(8) | Overdraft limit |
-| COMM-LAST-STMT-DT | Numeric | 8 digits | 9(8) | Last statement date (YYYYMMDD) |
-| COMM-NEXT-STMT-DT | Numeric | 8 digits | 9(8) | Next statement date (YYYYMMDD) |
-| COMM-AVAIL-BAL | Signed Decimal | 12 digits | S9(10)V99 | Available balance (−999999999.99 to +999999999.99) |
-| COMM-ACTUAL-BAL | Signed Decimal | 12 digits | S9(10)V99 | Actual balance (−999999999.99 to +999999999.99) |
+### 3.2 Internally Fixed Sort Code
 
-### 2.2 Database Table: `ACCDB2.cpy`
+- INQACCCU does not take sort code from caller input.
+- It uses constant `SORTCODE` from copybook with value `987654` (`77 SORTCODE PIC 9(6) VALUE 987654.`).
+- Program flow copies this value into host variable before SQL open.
 
-**SQL Declaration:** `ACCOUNT` table
+### 3.3 Account Identifier Handling
 
-| Column Name | DB2 Type | Nullable | Legacy COBOL Field | Purpose |
-|-------------|----------|----------|-------------------|---------|
-| ACCOUNT_EYECATCHER | CHAR(4) | NOT NULL | ACCOUNT-EYE-CATCHER | Record marker ('ACCT') |
-| ACCOUNT_CUSTOMER_NUMBER | CHAR(10) | YES | ACCOUNT-CUST-NO | Foreign key to customer |
-| ACCOUNT_SORTCODE | CHAR(6) | NO | ACCOUNT-SORT-CODE | Bank routing code |
-| ACCOUNT_NUMBER | CHAR(8) | NO | ACCOUNT-NUMBER | Primary key (with sort code) |
-| ACCOUNT_TYPE | CHAR(8) | YES | ACCOUNT-TYPE | Account classification |
-| ACCOUNT_INTEREST_RATE | DECIMAL(4,2) | YES | ACCOUNT-INTEREST-RATE | Annual rate (0–99.99%) |
-| ACCOUNT_OPENED | DATE | YES | ACCOUNT-OPENED | Account creation date |
-| ACCOUNT_OVERDRAFT_LIMIT | INTEGER | YES | ACCOUNT-OVERDRAFT-LIMIT | Overdraft facility amount |
-| ACCOUNT_LAST_STATEMENT | DATE | YES | ACCOUNT-LAST-STMT-DATE | Most recent statement date |
-| ACCOUNT_NEXT_STATEMENT | DATE | YES | ACCOUNT-NEXT-STMT-DATE | Projected next statement date |
-| ACCOUNT_AVAILABLE_BALANCE | DECIMAL(10,2) | YES | ACCOUNT-AVAILABLE-BALANCE | Liquidity-adjusted balance |
-| ACCOUNT_ACTUAL_BALANCE | DECIMAL(10,2) | YES | ACCOUNT-ACTUAL-BALANCE | Book balance |
+- Account number in output is `COMM-ACCNO PIC 9(8)`.
+- Sort code and account number are fixed-width identifiers in output records.
+- Legacy analysis requirement: preserve leading zeroes when represented outside COBOL numeric storage.
 
-**Assumed Primary Key:** `(ACCOUNT_SORTCODE, ACCOUNT_NUMBER)`  
-**Assumed Foreign Key:** `ACCOUNT_CUSTOMER_NUMBER` → CUSTOMER table
+## 4. Customer Validation Behavior
 
----
+INQACCCU validates customer existence before account retrieval:
 
-## 3. Business Process Flow
+1. `CUSTOMER-CHECK` section runs first.
+2. `CUSTOMER-CHECK` links to program `INQCUST` using `INQCUST-COMMAREA`.
+3. If `INQCUST-INQ-SUCCESS = 'Y'`, INQACCCU sets `CUSTOMER-FOUND = 'Y'`.
+4. Otherwise, it sets `CUSTOMER-FOUND = 'N'` and zeroes `NUMBER-OF-ACCOUNTS`.
 
-### 3.1 Inquiry Sequence (Legacy CICS Online)
+Important distinction confirmed from source:
 
-```
-1. CICS terminal user enters customer number
-   ↓
-2. INQACCCU program receives CUSTOMER-NUMBER via COMMAREA
-   ↓
-3. Validate customer number format (10 digits)
-   ↓
-4. Query DB2 ACCOUNT table:
-   WHERE ACCOUNT_CUSTOMER_NUMBER = input_customer_number
-   ↓
-5. Fetch up to 20 matching account records
-   ↓
-6. Populate ACCOUNT-DETAILS repeating group in response COMMAREA
-   ↓
-7. Set flags:
-   - CUSTOMER-FOUND = 'Y' (if ≥1 match) or 'N' (if 0 matches)
-   - NUMBER-OF-ACCOUNTS = count of matches
-   - COMM-SUCCESS = 'Y' (if query succeeded) or 'N' (on error)
-   - COMM-FAIL-CODE = error code (if applicable)
-   ↓
-8. Return COMMAREA to CICS terminal
-   ↓
-9. User views account roster with balances and statement dates
-```
+- Customer existence is not inferred from account row count.
+- A customer can be valid (`CUSTOMER-FOUND = 'Y'`) and still return zero accounts.
 
-### 3.2 Assumptions (Marked Explicitly)
+Outcome states:
 
-| # | Assumption | Evidence | Risk |
-|---|-----------|----------|------|
-| A1 | Query returns **up to 20 accounts per customer** | `ACCOUNT-DETAILS OCCURS 1 TO 20 DEPENDING ON NUMBER-OF-ACCOUNTS` | Customers with >20 accounts will be truncated; no pagination in legacy design. **Modernization:** implement pagination. |
-| A2 | Customer number is **always 10 numeric digits**, left-padded with zeros | `PIC 9(10)` in input and DB2 schema | Validation must reject non-numeric or <10-char input. **Modernization:** stricter format validation in API contract. |
-| A3 | Date fields are **YYYYMMDD format** in COBOL; DATE type in DB2 | `PIC 9(8)` in COBOL; `DATE` in SQL schema | Conversion required: DB2 DATE → COBOL numeric 8-digit. **Modernization:** use ISO 8601 in JSON API. |
-| A4 | Program uses **CICS pseudo-conversational model** (request-response) | `CBL CICS('SP,EDF,DLI')` compile options; ASKTIME, FORMATTIME directives | Legacy online inquiry; no persistent session. **Modernization:** stateless REST endpoint. |
-| A5 | DB2 connectivity is **synchronous and blocking** | Implicit in EXEC SQL structure | Long-running queries will block CICS transaction. **Modernization:** consider async adapters if latency is concern. |
-| A6 | **DLI (Data Language Interface) pointer** is passed but purpose unclear | `COMM-PCB-POINTER PIC X(4)` in COMMAREA | Likely legacy artifact from prior DLI integration. **Action:** confirm with SME; remove if unused. |
-| A7 | Eyecatcher 'ACCT' is **data validation marker**, not functional flag | `88 ACCOUNT-EYECATCHER-VALUE VALUE 'ACCT'` in copybook | Defensive programming; indicates well-formed record. **Modernization:** validate at serialization layer only. |
-| A8 | **No explicit error handling shown in snippet** for DB2 failures (SQLCODE, SQLERRM) | Preview truncated; infer from COMM-FAIL-CODE field | Error codes must be catalogued from full source. **Risk:** ambiguous error reporting. |
-| A9 | **Decimal precision:** balances stored as `DECIMAL(10,2)` (±99,999,999.99) and `9(10)V99` in COBOL | Both schemas align | **Modernization:** use `java.math.BigDecimal` for monetary values; no floating-point arithmetic. |
+1. Customer validation failed / customer not found:
+   - `CUSTOMER-FOUND = 'N'`
+   - `COMM-SUCCESS = 'N'`
+   - `COMM-FAIL-CODE = '1'`
+2. Customer found with zero accounts:
+   - `CUSTOMER-FOUND = 'Y'`
+   - `COMM-SUCCESS = 'Y'`
+   - `NUMBER-OF-ACCOUNTS = 0`
+   - no cursor failure code
+3. Customer found with one or more accounts:
+   - `CUSTOMER-FOUND = 'Y'`
+   - `COMM-SUCCESS = 'Y'`
+   - `NUMBER-OF-ACCOUNTS = 1..20`
 
----
+## 5. Reserved Customer Numbers
 
-## 4. Batch vs. Online Assumptions
+The following values are explicitly handled in `CUSTOMER-CHECK` and immediately treated as not found:
 
-| Characteristic | Classification | Evidence |
-|---|---|---|
-| **Invocation** | **Online (CICS)** | `CBL CICS(...)` compile option; ASKTIME/FORMATTIME directives indicate real-time transaction |
-| **Concurrency** | **Multi-user** | CICS is multi-threaded; no locking strategy visible in preview |
-| **Data Scope** | **Single inquiry per request** | One CUSTOMER-NUMBER input; 1–20 accounts output per call |
-| **Latency Sensitivity** | **High** | Real-time terminal user waiting; query must complete in sub-second |
-| **Transactionality** | **Likely read-only** | No UPDATE/DELETE observed; SELECT + FETCH implied |
-| **Logging** | **CICS Transaction Server logs** | Legacy audit trail via CICS Transaction ID; not portable to modern stacks |
-| **Scheduling** | **On-demand** | No batch scheduling; triggered by user interaction |
+- `0000000000` (checked using numeric zero comparison)
+- `9999999999`
 
-**Modernization Impact:**  
-Convert to **stateless REST endpoint** (Spring Boot `@RestController`); no session affinity required.
+For both values, INQACCCU sets:
 
----
+- `CUSTOMER-FOUND = 'N'`
+- `NUMBER-OF-ACCOUNTS = 0`
 
-## 5. Risks and Unknowns
+Then mainline logic sets customer-not-found failure path:
 
-### 5.1 Critical Risks
+- `COMM-SUCCESS = 'N'`
+- `COMM-FAIL-CODE = '1'`
 
-| ID | Risk | Severity | Mitigation Strategy |
-|----|------|----------|-------------------|
-| **R-001** | **Data truncation at 20 accounts** | HIGH | Implement pagination in REST API; document breaking change in release notes |
-| **R-002** | **Decimal precision loss in JSON serialization** | MEDIUM | Use `BigDecimal` Java type; configure Jackson to preserve scale |
-| **R-003** | **SQLCODE/SQLERRM error codes not documented** | MEDIUM | Extract full error handling from source; catalogue codes in error response enum |
-| **R-004** | **Date format ambiguity (YYYYMMDD vs. ISO 8601)** | MEDIUM | Enforce ISO 8601 (RFC 3339) in REST API; add automated test for date boundary cases |
-| **R-005** | **Customer number validation logic not visible** | MEDIUM | Confirm: is format validation done in INQACCCU or upstream? Add explicit regex: `^\d{10}$` |
-| **R-006** | **DLI pointer (COMM-PCB-POINTER) purpose unclear** | LOW | Confirm with SME; likely legacy artifact; safe to remove |
-| **R-007** | **Concurrent request handling not documented** | MEDIUM | Assume stateless concurrent model; mock repository must be thread-safe |
+These are not random/latest lookup modes in INQACCCU.
 
-### 5.2 Data Quality Unknowns
+## 6. Account Retrieval and Cursor Behavior
 
-| ID | Unknown | Impact | Action Items |
-|----|---------|--------|--------------|
-| **U-001** | **Do all ACCOUNT records have ACCOUNT_CUSTOMER_NUMBER?** | Foreign key validation; orphaned records? | Query: `SELECT COUNT(*) WHERE ACCOUNT_CUSTOMER_NUMBER IS NULL` |
-| **U-002** | **What is distribution of accounts per customer (min, max, average)?** | Pagination design; caching strategy | Run: `SELECT CUSTOMER_NUMBER, COUNT(*) FROM ACCOUNT GROUP BY CUSTOMER_NUMBER ORDER BY COUNT(*) DESC LIMIT 10` |
-| **U-003** | **Are date fields ever NULL or do they default to epoch (00000000)?** | API contract; serialization handling | Confirm with DB2 schema constraints and sample query results |
-| **U-004** | **Do overlapping ACCOUNT_SORTCODE + ACCOUNT_NUMBER exist (duplicate keys)?** | Data integrity; join correctness | Run: `SELECT ACCOUNT_SORTCODE, ACCOUNT_NUMBER, COUNT(*) FROM ACCOUNT GROUP BY 1, 2 HAVING COUNT(*) > 1` |
-| **U-005** | **What is the maximum length of ACCOUNT_TYPE and is it standardized?** | Enum vs. string in DTO | Validate all distinct values: `SELECT DISTINCT ACCOUNT_TYPE FROM ACCOUNT` |
+### 6.1 Selection Criteria
 
-### 5.3 Operational Unknowns
+Cursor `ACC-CURSOR` query criteria:
 
-| ID | Unknown | Impact | Action Items |
-|----|---------|--------|--------------|
-| **O-001** | **Current throughput and latency SLA for INQACCCU in production** | Performance tuning baseline | Obtain from operations: response time p50, p95, p99; TPS |
-| **O-002** | **Are there any ETL or data refresh windows?** | Cache invalidation strategy; availability | Confirm daily/weekly batch jobs that load ACCOUNT table |
-| **O-003** | **What authentication/authorization is currently enforced?** | OAuth2 scope mapping; role names | Interview CICS security team; map RACF roles to Spring Security authorities |
-| **O-004** | **Are there downstream consumers of INQACCCU output (API integration)?** | API versioning; backward compatibility | Identify all CICS transactions or systems calling INQACCCU |
+- `ACCOUNT_CUSTOMER_NUMBER = :HV-ACCOUNT-CUST-NO`
+- `ACCOUNT_SORTCODE = :HV-ACCOUNT-SORTCODE` (fixed sort code path)
 
----
+### 6.2 Cursor Characteristics
 
-## 6. Modernization Readiness Assessment
+- Declared with `FOR FETCH ONLY`.
+- No `ORDER BY` clause in cursor definition.
+- Returned order is therefore whatever DB2 access path provides; no deterministic business ordering is guaranteed by source.
 
-### 6.1 Target Architecture Alignment (per `system-intent.md`)
+### 6.3 Row Limit
 
-| Requirement | Status | Notes |
-|-------------|--------|-------|
-| **Backend: Java 21, Spring Boot 3.3.x** | ✅ READY | No JDK-specific dependencies in COBOL; straightforward mapping |
-| **Frontend: React 18.x, TypeScript 5.x** | ✅ READY | Simple inquiry UI; list + detail view pattern |
-| **API: REST over HTTPS, OpenAPI 3.0.3** | ⚠️ PLANNED | Define `/api/v1/customers/{customerId}/accounts` GET endpoint; generate spec |
-| **OAuth2 + JWT** | ⚠️ PLANNED | Assume bearer token in Authorization header; validate customer scopes |
-| **Role-based access control** | ⚠️ PLANNED | Map CICS RACF roles to Spring Security @PreAuthorize annotations |
-| **Mock repository (no live DB2)** | ⚠️ PLANNED | Create `AccountRepositoryMock` returning hardcoded test datasets |
-| **Structured JSON logging + correlation ID** | ⚠️ PLANNED | Configure Spring Cloud Sleuth + Logback; log all DB queries |
-| **OpenTelemetry ready** | ⚠️ PLANNED | Add `spring-boot-starter-actuator` + micrometer; export to Jaeger/Datadog |
+- Fetch loop stops when either:
+  - SQLCODE is non-zero, or
+  - `NUMBER-OF-ACCOUNTS = 20`
+- Maximum returned account records per call: 20.
 
-### 6.2 Data Model Mapping (COBOL → Java DTO)
+### 6.4 SQLCODE +100
 
-```java
-// Legacy COBOL: INQACCCUZ.cpy
-// Modernized DTO hierarchy:
+- `SQLCODE = +100` during fetch is treated as normal end-of-data.
+- Program sets `COMM-SUCCESS = 'Y'` and exits fetch section without failure code escalation.
 
-@Data
-public class CustomerAccountsResponse {
-  private String customerId;        // CUSTOMER-NUMBER (10 digits)
-  private Boolean customerFound;    // CUSTOMER-FOUND ('Y'/'N')
-  private Integer numberOfAcc
+## 7. Returned Account Data (Complete Legacy Set)
+
+Per returned occurrence in `ACCOUNT-DETAILS`:
+
+1. `COMM-EYE` (eyecatcher)
+2. `COMM-CUSTNO` (customer number)
+3. `COMM-SCODE` (sort code)
+4. `COMM-ACCNO` (account number)
+5. `COMM-ACC-TYPE` (account type)
+6. `COMM-INT-RATE` (interest rate)
+7. `COMM-OPENED` (opened date)
+8. `COMM-OVERDRAFT` (overdraft limit)
+9. `COMM-LAST-STMT-DT` (last statement date)
+10. `COMM-NEXT-STMT-DT` (next statement date)
+11. `COMM-AVAIL-BAL` (available balance)
+12. `COMM-ACTUAL-BAL` (actual balance)
+
+No source evidence in INQACCCU output for separate account lifecycle status fields such as Active/Inactive/Closed.
+
+## 8. Date Handling
+
+Source date representations in this flow:
+
+1. DB2 columns are `DATE` (`ACCOUNT_OPENED`, `ACCOUNT_LAST_STATEMENT`, `ACCOUNT_NEXT_STATEMENT`) from `ACCDB2` declaration.
+2. Host variables are character `PIC X(10)` and receive DB2 date text form (yyyy-mm-dd representation).
+3. INQACCCU moves host date text into `DB2-DATE-REFORMAT` and builds commarea date fields by concatenating day + month + year.
+
+Result in commarea:
+
+- `COMM-OPENED`, `COMM-LAST-STMT-DT`, `COMM-NEXT-STMT-DT` are output as `DDMMYYYY` numeric text layout.
+
+If a modern representation is needed, it is an external transformation concern; legacy commarea format here is `DDMMYYYY`.
+
+## 9. Status and Failure Behavior
+
+Legacy status/control fields in commarea:
+
+- `COMM-SUCCESS`
+- `COMM-FAIL-CODE`
+- `CUSTOMER-FOUND`
+- `NUMBER-OF-ACCOUNTS`
+
+Failure code meanings confirmed in source:
+
+1. `COMM-FAIL-CODE = '1'`: customer validation / customer-not-found path
+2. `COMM-FAIL-CODE = '2'`: cursor open failure
+3. `COMM-FAIL-CODE = '3'`: cursor fetch failure
+4. `COMM-FAIL-CODE = '4'`: cursor close failure
+
+Additional observed behavior:
+
+- Program initializes `COMM-SUCCESS = 'N'`, `COMM-FAIL-CODE = '0'` at entry.
+- On SQL cursor failures (open/fetch/close), program sets failure code and performs rollback attempt.
+
+## 10. Processing Sequence Summary
+
+1. Initialize response status defaults.
+2. Set required sort code from fixed `SORTCODE` constant.
+3. Run `CUSTOMER-CHECK` (including reserved-number handling and INQCUST link).
+4. If customer check fails: fail code `1` and return.
+5. Open account cursor by customer + fixed sort code.
+6. Fetch rows until end-of-data, error, or 20 rows.
+7. Map each fetched row into `ACCOUNT-DETAILS` occurrence and convert dates to `DDMMYYYY`.
+8. Close cursor.
+9. On successful path, return with `COMM-SUCCESS = 'Y'`.
+
+## 11. Confirmed Constraints and Explicit Unknowns
+
+### 11.1 Confirmed Constraints
+
+- One inquiry input: customer number.
+- Internal fixed sort code: `987654`.
+- Maximum of 20 account rows returned.
+- Read-only cursor (`FOR FETCH ONLY`).
+- No explicit SQL ordering (`ORDER BY` absent).
+
+### 11.2 Explicit Unknowns (Not Claimed as Facts)
+
+- Physical table key constraints (PK/FK) are not declared in the copybook include shown; do not treat key assumptions as confirmed from this source alone.
+- Exact caller-side formatting/validation behavior before commarea population is outside this program.
+- Character-space trimming behavior for account text fields is not explicitly performed in this program logic.
