@@ -12,6 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
+        <cucumber.filter.tags></cucumber.filter.tags>
     </properties>
 
     <dependencyManagement>
@@ -97,6 +98,7 @@
                              examples and scenarios. -->
                         <configurationParameters>
                             cucumber.junit-platform.naming-strategy=long
+                            cucumber.filter.tags=${cucumber.filter.tags}
                         </configurationParameters>
                     </properties>
                 </configuration>

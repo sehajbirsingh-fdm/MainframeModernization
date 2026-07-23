@@ -18,5 +18,9 @@ import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PUBLISH_ENABLED
 )
 @ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.modernizemainframe")
 @ConfigurationParameter(key = PLUGIN_PUBLISH_ENABLED_PROPERTY_NAME, value = "true")
+/**
+ * Tag filtering is driven by Maven/JUnit platform configuration using
+ * the cucumber.filter.tags property (for example: -Dcucumber.filter.tags=@P1).
+ */
 public class RunCucumberTest {
 }

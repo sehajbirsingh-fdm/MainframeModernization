@@ -82,6 +82,14 @@ public class StepDefinitions {
                 .isEqualTo(expectedValue);
     }
 
+    @And("the response body lookupMode is {string}")
+    public void theResponseBodyLookupModeIs(String expectedValue) {
+        String actualValue = response.jsonPath().getString("lookupMode");
+        assertThat(actualValue)
+                .as("Expected lookupMode to be '%s' but got '%s'", expectedValue, actualValue)
+                .isEqualTo(expectedValue);
+    }
+
     @And("the response contains the latest customer")
     public void theResponseContainsTheLatestCustomer() {
         assertThat(response.getStatusCode())
