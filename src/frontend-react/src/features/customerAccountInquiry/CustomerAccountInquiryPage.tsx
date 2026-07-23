@@ -11,16 +11,18 @@ import { validateCustomerAccountInput } from './validation'
 function accountRow(account: AccountSummary) {
   return (
     <tr key={`${account.sortCode}-${account.accountNumber}`}>
+      <td>{account.eyecatcher}</td>
+      <td>{account.customerNumber}</td>
       <td>{account.accountNumber}</td>
       <td>{account.sortCode}</td>
       <td>{account.accountType}</td>
-      <td>{account.accountTypeDescription}</td>
-      <td>{account.availableBalanceCurrency} {account.availableBalance.toFixed(2)}</td>
-      <td>{account.actualBalanceCurrency} {account.actualBalance.toFixed(2)}</td>
+      <td>{account.openedDate}</td>
+      <td>{account.availableBalance.toFixed(2)}</td>
+      <td>{account.actualBalance.toFixed(2)}</td>
       <td>{account.interestRate.toFixed(2)}</td>
       <td>{account.overdraftLimit}</td>
-      <td>{account.lastStatementDate ?? '-'}</td>
-      <td>{account.nextStatementDate ?? '-'}</td>
+      <td>{account.lastStatementDate}</td>
+      <td>{account.nextStatementDate}</td>
     </tr>
   )
 }
@@ -57,7 +59,7 @@ export function CustomerAccountInquiryPage() {
       if (response.type === 'backend-error') {
         setError(response.error)
         setStatusCode(response.status)
-        setMessage(response.error.message)
+        setMessage(response.error.error.message)
         return
       }
 
@@ -85,7 +87,7 @@ export function CustomerAccountInquiryPage() {
     mutation.mutate(customerNumber)
   }
 
-  const accounts = result?.accounts?.accounts ?? []
+  const accounts = result?.accounts ?? []
 
   return (
     <main className="page">
@@ -141,34 +143,30 @@ export function CustomerAccountInquiryPage() {
         </section>
       ) : null}
 
-      {result?.customer ? (
+      {result ? (
         <section className="card" aria-labelledby="customer-summary-heading">
           <h2 id="customer-summary-heading">Customer Summary</h2>
           <dl className="kv-grid">
             <dt>Customer Number</dt>
-            <dd>{result.customer.customerNumber}</dd>
-            <dt>Customer Name</dt>
-            <dd>{result.customer.customerName}</dd>
-            <dt>Sort Code</dt>
-            <dd>{result.customer.sortCode}</dd>
-            <dt>Customer Type</dt>
-            <dd>{result.customer.customerType}</dd>
+            <dd>{result.customerNumber}</dd>
           </dl>
         </section>
       ) : null}
 
-      {result?.legacyStatus.success === 'Y' && result.accounts ? (
+      {result?.legacyStatus.success === 'Y' ? (
         <section className="card" aria-labelledby="accounts-heading">
-          <h2 id="accounts-heading">Accounts ({result.accounts.count})</h2>
+          <h2 id="accounts-heading">Accounts ({result.numberOfAccounts})</h2>
           {accounts.length > 0 ? (
             <div className="table-wrap">
               <table className="accounts-table">
                 <thead>
                   <tr>
+                    <th>Eyecatcher</th>
+                    <th>Customer Number</th>
                     <th>Account Number</th>
                     <th>Sort Code</th>
                     <th>Type</th>
-                    <th>Description</th>
+                    <th>Opened Date</th>
                     <th>Available Balance</th>
                     <th>Actual Balance</th>
                     <th>Interest Rate</th>
@@ -192,10 +190,10 @@ export function CustomerAccountInquiryPage() {
           <dl className="kv-grid">
             <dt>Status</dt>
             <dd>{statusCode ?? '-'}</dd>
-            <dt>Code</dt>
-            <dd>{error.code}</dd>
+            <dt>Type</dt>
+            <dd>{error.error.type}</dd>
             <dt>Message</dt>
-            <dd>{error.message}</dd>
+            <dd>{error.error.message}</dd>
           </dl>
         </section>
       ) : null}

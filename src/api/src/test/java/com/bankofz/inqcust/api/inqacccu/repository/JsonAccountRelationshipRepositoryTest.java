@@ -26,6 +26,7 @@ class JsonAccountRelationshipRepositoryTest {
                       {
                         \"accountNumber\": \"1000000001\",
                         \"sortCode\": \"123456\",
+                        "openedDate": 20200115,
                         \"accountType\": \"CHK\",
                         \"accountTypeDescription\": \"Checking Account\",
                         \"availableBalance\": 1520.45,

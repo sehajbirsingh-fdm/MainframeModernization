@@ -4,43 +4,41 @@ export interface LegacyStatus {
   customerFound: 'Y' | 'N'
 }
 
-export interface CustomerSummary {
-  customerNumber: string
-  customerName: string
-  sortCode: string
-  customerType: string
-}
-
 export interface AccountSummary {
-  accountNumber: string
+  eyecatcher: string
+  customerNumber: string
   sortCode: string
+  accountNumber: string
   accountType: string
-  accountTypeDescription: string
-  availableBalance: number
-  availableBalanceCurrency: string
-  actualBalance: number
-  actualBalanceCurrency: string
   interestRate: number
+  openedDate: string
   overdraftLimit: number
-  lastStatementDate: string | null
-  nextStatementDate: string | null
-}
-
-export interface AccountsList {
-  count: number
-  accounts: AccountSummary[]
+  lastStatementDate: string
+  nextStatementDate: string
+  availableBalance: number
+  actualBalance: number
 }
 
 export interface CustomerAccountInquiryResponse {
   legacyStatus: LegacyStatus
-  customer: CustomerSummary | null
-  accounts: AccountsList | null
+  customerNumber: string
+  numberOfAccounts: number
+  accounts: AccountSummary[]
+}
+
+export interface CustomerAccountValidationDetail {
+  field: string
+  reason: string
+}
+
+export interface CustomerAccountErrorPayload {
+  type: string
+  message: string
+  details?: CustomerAccountValidationDetail[]
 }
 
 export interface CustomerAccountError {
-  code: string
-  message: string
-  details?: Array<{ field: string; message: string }>
+  error: CustomerAccountErrorPayload
 }
 
 export type CustomerAccountInquiryResult =

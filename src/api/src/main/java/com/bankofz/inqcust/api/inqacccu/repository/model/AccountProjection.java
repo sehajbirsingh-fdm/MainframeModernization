@@ -6,7 +6,7 @@ public record AccountProjection(
         String accountNumber,
         String sortCode,
         String accountType,
-        String accountTypeDescription,
+        Integer openedDate,
         BigDecimal availableBalance,
         BigDecimal actualBalance,
         BigDecimal interestRate,

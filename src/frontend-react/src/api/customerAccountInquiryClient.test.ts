@@ -10,9 +10,10 @@ describe('inquireCustomerAccounts', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
         JSON.stringify({
-          legacyStatus: { success: 'Y', failCode: '0000', customerFound: 'Y' },
-          customer: { customerNumber: '0000000001', customerName: 'John Smith', sortCode: '123456', customerType: 'INDIVIDUAL' },
-          accounts: { count: 0, accounts: [] },
+          legacyStatus: { success: 'Y', failCode: '0', customerFound: 'Y' },
+          customerNumber: '0000000001',
+          numberOfAccounts: 0,
+          accounts: [],
         }),
         { status: 200, headers: { 'content-type': 'application/json' } },
       ),
@@ -28,7 +29,7 @@ describe('inquireCustomerAccounts', () => {
 
   it('returns backend error for 400/500 responses', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ code: 'ERR-001', message: 'Invalid customer number format', details: [] }), {
+      new Response(JSON.stringify({ error: { type: 'VALIDATION_ERROR', message: 'Validation failed', details: [] } }), {
         status: 400,
         headers: { 'content-type': 'application/json' },
       }),
@@ -39,7 +40,7 @@ describe('inquireCustomerAccounts', () => {
     expect(result.type).toBe('backend-error')
     if (result.type === 'backend-error') {
       expect(result.status).toBe(400)
-      expect(result.error.code).toBe('ERR-001')
+      expect(result.error.error.type).toBe('VALIDATION_ERROR')
     }
   })
 

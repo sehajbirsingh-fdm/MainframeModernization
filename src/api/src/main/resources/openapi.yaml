@@ -67,19 +67,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CustomerAccountRelationshipResponse'
+                $ref: '#/components/schemas/CustomerAccountInquiryResponse'
         '400':
           description: Validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InqacccuErrorResponse'
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '500':
           description: Internal processing error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InqacccuErrorResponse'
+                $ref: '#/components/schemas/InfrastructureErrorResponse'
 components:
   schemas:
     CustomerInquiryResponse:
@@ -194,18 +194,26 @@ components:
           type: string
         message:
           type: string
-    CustomerAccountRelationshipResponse:
+    CustomerAccountInquiryResponse:
       type: object
-      required: [legacyStatus]
+      required: [legacyStatus, customerNumber, numberOfAccounts, accounts]
       properties:
         legacyStatus:
           $ref: '#/components/schemas/InqacccuLegacyStatus'
-        customer:
-          $ref: '#/components/schemas/InqacccuCustomerSummary'
-          nullable: true
+        customerNumber:
+          type: string
+          minLength: 10
+          maxLength: 10
+          pattern: '^[0-9]{10}$'
+        numberOfAccounts:
+          type: integer
+          minimum: 0
+          maximum: 20
         accounts:
-          $ref: '#/components/schemas/InqacccuAccountsList'
-          nullable: true
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/InqacccuAccountSummary'
     InqacccuLegacyStatus:
       type: object
       required: [success, failCode, customerFound]
@@ -218,82 +226,103 @@ components:
         customerFound:
           type: string
           enum: [Y, N]
-    InqacccuCustomerSummary:
-      type: object
-      required: [customerNumber, customerName, sortCode, customerType]
-      properties:
-        customerNumber:
-          type: string
-          pattern: '^[0-9]{10}$'
-        customerName:
-          type: string
-        sortCode:
-          type: string
-          pattern: '^[0-9]{6}$'
-        customerType:
-          type: string
-    InqacccuAccountsList:
-      type: object
-      required: [count, accounts]
-      properties:
-        count:
-          type: integer
-          minimum: 0
-        accounts:
-          type: array
-          items:
-            $ref: '#/components/schemas/InqacccuAccountSummary'
     InqacccuAccountSummary:
       type: object
       required:
+        - eyecatcher
+        - customerNumber
         - accountNumber
         - sortCode
         - accountType
-        - accountTypeDescription
-        - availableBalance
-        - availableBalanceCurrency
-        - actualBalance
-        - actualBalanceCurrency
         - interestRate
+        - openedDate
         - overdraftLimit
+        - lastStatementDate
+        - nextStatementDate
+        - availableBalance
+        - actualBalance
       properties:
+        eyecatcher:
+          type: string
+        customerNumber:
+          type: string
+          minLength: 10
+          maxLength: 10
+          pattern: '^[0-9]{10}$'
         accountNumber:
           type: string
+          minLength: 8
+          maxLength: 8
+          pattern: '^[0-9]{8}$'
         sortCode:
           type: string
+          minLength: 6
+          maxLength: 6
+          pattern: '^[0-9]{6}$'
         accountType:
-          type: string
-        accountTypeDescription:
-          type: string
-        availableBalance:
-          type: number
-        availableBalanceCurrency:
-          type: string
-        actualBalance:
-          type: number
-        actualBalanceCurrency:
           type: string
         interestRate:
           type: number
+        openedDate:
+          type: string
+          format: date
         overdraftLimit:
-          type: integer
+          type: number
+          format: double
         lastStatementDate:
           type: string
           format: date
-          nullable: true
         nextStatementDate:
           type: string
           format: date
-          nullable: true
-    InqacccuErrorResponse:
+        availableBalance:
+          type: number
+          format: double
+        actualBalance:
+          type: number
+          format: double
+    ValidationErrorResponse:
       type: object
-      required: [code, message]
+      required: [error]
       properties:
-        code:
+        error:
+          $ref: '#/components/schemas/ValidationErrorPayload'
+    ValidationErrorPayload:
+      type: object
+      required: [type, message, details]
+      properties:
+        type:
           type: string
+          enum: [VALIDATION_ERROR]
         message:
           type: string
+          enum: [Validation failed]
         details:
           type: array
+          minItems: 1
           items:
-            $ref: '#/components/schemas/FieldErrorResponse'
+            $ref: '#/components/schemas/ValidationErrorDetail'
+    ValidationErrorDetail:
+      type: object
+      required: [field, reason]
+      properties:
+        field:
+          type: string
+        reason:
+          type: string
+    InfrastructureErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          $ref: '#/components/schemas/InfrastructureError'
+    InfrastructureError:
+      type: object
+      required: [type, message]
+      properties:
+        type:
+          type: string
+          enum: [INFRASTRUCTURE_ERROR]
+        message:
+          type: string
+          enum: [Service unavailable due to infrastructure failure]

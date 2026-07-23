@@ -50,9 +50,10 @@ async function safeParseError(response: Response): Promise<CustomerAccountError>
     return (await response.json()) as CustomerAccountError
   } catch {
     return {
-      code: 'ERR-005',
-      message: 'Internal processing error',
-      details: [],
+      error: {
+        type: 'INFRASTRUCTURE_ERROR',
+        message: 'Service unavailable due to infrastructure failure',
+      },
     }
   }
 }

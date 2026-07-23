@@ -1,8 +1,11 @@
 package com.bankofz.inqcust.api.inqacccu.domain;
 
+import java.util.List;
+
 public record AccountRelationshipResponse(
         LegacyStatus legacyStatus,
-        CustomerSummary customer,
-        AccountsList accounts
+        String customerNumber,
+        int numberOfAccounts,
+        List<AccountSummary> accounts
 ) {
 }

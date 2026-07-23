@@ -3,7 +3,7 @@
 **Document ID:** `traceability-matrix-inqacccu-001`  
 **Pipeline:** `mainframe_modernization`  
 **Purpose:** Map legacy artifacts through business rules, requirements, specification, and test cases  
-**Last Updated:** 2025  
+**Last Updated:** 2026-07-23  
 
 ---
 
@@ -13,40 +13,38 @@
 
 | Legacy Artifact         | Legacy Type          | Modern Component                     | Modern Type                     | Mapping Rationale                     |
 |-------------------------|----------------------|--------------------------------------|----------------------------------|---------------------------------------|
-| `cobol/INQACCCU.cbl`   | COBOL CICS Program    | `CustomerAccountsController`         | Spring Boot REST Controller      | CICS transaction → REST endpoint      |
-| `cobol/INQACCCU.cbl`   | CICS Online Inquiry    | `GET /api/v1/customers/{customerId}/accounts` | HTTP REST Endpoint               | Transaction processing → RESTful inquiry |
-| `cobol/INQACCCU.cbl`   | COBOL Program Logic    | `AccountInquiryService`             | Spring Service Layer             | Business logic encapsulation           |
+| `src/base/cics/cobol/INQACCCU.cbl`   | COBOL CICS Program    | `com.bankofz.inqcust.api.inqacccu.controller.AccountRelationshipController`         | Spring Boot REST Controller      | CICS inquiry entrypoint mapped to REST inquiry endpoint      |
+| `src/base/cics/cobol/INQACCCU.cbl`   | CICS Online Inquiry    | `GET /api/v1/customers/{customerNumber}/accounts` | HTTP REST Endpoint               | Transaction-style inquiry exposed as read-only HTTP GET |
+| `src/base/cics/cobol/INQACCCU.cbl`   | COBOL Program Logic    | `com.bankofz.inqcust.api.inqacccu.service.AccountRelationshipService`             | Spring Service Layer             | Business outcome orchestration in service layer           |
 
 ### 1.2 Copybook-to-DTO Mapping
 
 | Legacy Copybook         | Legacy Structure      | Modern Java Class                   | Field Mapping                    | Notes                                  |
 |-------------------------|----------------------|--------------------------------------|----------------------------------|----------------------------------------|
-| `copybooks/INQACCCUZ.cpy` | Communication Area   | `CustomerAccountsRequest`           | CUSTOMER-NUMBER → customerId     | Input binding                          |
-| `copybooks/INQACCCUZ.cpy` | Communication Area   | `CustomerAccountsResponse`          | CUSTOMER-FOUND → customerFound    | Output binding                         |
-| `copybooks/INQACCCUZ.cpy` | Communication Area   | `CustomerAccountsResponse`          | NUMBER-OF-ACCOUNTS → numberOfAccounts | Array size bound (0–20)              |
-| `copybooks/INQACCCUZ.cpy` | ACCOUNT-DETAILS (OCCURS 1 TO 20) | `AccountDetail[]`               | Repeating group → Java array      | Dynamic cardinality via `@Size(max=20)` |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-DATA structure | `AccountDetail`                    | Direct field mapping              | COBOL copybook → DTO                  |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-EYE-CATCHER   | `AccountDetail.eyeCatcher`        | PIC X(4) → String                | Validation: must equal "ACCT"         |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-CUST-NO       | `AccountDetail.customerNumber`    | PIC 9(10) → String               | Immutable, matches parent              |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-SORT-CODE     | `AccountDetail.sortCode`          | PIC 9(6) → String                | 6-digit numeric                        |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-NUMBER        | `AccountDetail.accountNumber`     | PIC 9(8) → String                | 8-digit numeric                        |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-TYPE          | `AccountDetail.accountType`       | PIC X(8) → String                | e.g., "CHECKING", "SAVINGS"           |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-INTEREST-RATE | `AccountDetail.interestRate`      | PIC 9(4)V99 → BigDecimal         | 2 decimal places (e.g., 3.45)         |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-OPENED        | `AccountDetail.accountOpened`     | PIC 9(8) → LocalDate             | Format YYYYMMDD                       |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-OVERDRAFT-LIMIT | `AccountDetail.overdraftLimit`   | PIC 9(8) → Long                  | Integer amount in cents               |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-LAST-STMT-DATE | `AccountDetail.lastStatementDate` | PIC 9(8) → LocalDate             | Format YYYYMMDD                       |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-NEXT-STMT-DATE | `AccountDetail.nextStatementDate` | PIC 9(8) → LocalDate             | Format YYYYMMDD                       |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-AVAILABLE-BALANCE | `AccountDetail.availableBalance` | PIC S9(10)V99 → BigDecimal       | Signed, 2 decimal places               |
-| `copybooks/ACCOUNT.cpy`  | ACCOUNT-ACTUAL-BALANCE | `AccountDetail.actualBalance`     | PIC S9(10)V99 → BigDecimal       | Signed, 2 decimal places               |
-| `copybooks/ACCDB2.cpy`   | SQL DECLARE ACCOUNT   | `AccountRepository`                | Mock repository interface         | POC in-memory; production adapter-ready |
+| `copybooks/INQACCCUZ.cpy` | Communication Area   | `com.bankofz.inqcust.api.inqacccu.controller.AccountRelationshipController`           | CUSTOMER-NUMBER → path variable `customerNumber`     | Input binding via `@PathVariable` + `@Pattern`                          |
+| `copybooks/INQACCCUZ.cpy` | Communication Area   | `com.bankofz.inqcust.api.inqacccu.domain.LegacyStatus`          | COMM-SUCCESS/COMM-FAIL-CODE/CUSTOMER-FOUND → `success`/`failCode`/`customerFound`    | Legacy status projection into API response                         |
+| `copybooks/INQACCCUZ.cpy` | Communication Area   | `com.bankofz.inqcust.api.inqacccu.domain.AccountsList`          | NUMBER-OF-ACCOUNTS → `count` | Count exposed with account collection              |
+| `copybooks/INQACCCUZ.cpy` | ACCOUNT-DETAILS (OCCURS 1 TO 20) | `com.bankofz.inqcust.api.inqacccu.domain.AccountSummary[]`               | Repeating group → JSON array in `accounts.accounts`      | Cardinality preserved by data and mapping |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-DATA structure | `com.bankofz.inqcust.api.inqacccu.domain.AccountSummary`                    | Selected account fields mapped for API output              | Mapped from `AccountProjection` via `AccountRelationshipMapper`                  |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-CUST-NO       | `com.bankofz.inqcust.api.inqacccu.domain.CustomerSummary.customerNumber`    | PIC 9(10) → String               | Leading zeroes preserved by string representation              |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-SORT-CODE     | `com.bankofz.inqcust.api.inqacccu.domain.CustomerSummary.sortCode` / `AccountSummary.sortCode`          | PIC 9(6) → String                | Returned from mock data repository                        |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-NUMBER        | `com.bankofz.inqcust.api.inqacccu.domain.AccountSummary.accountNumber`     | PIC 9(8) → String                | Returned as externally visible identifier                        |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-TYPE          | `com.bankofz.inqcust.api.inqacccu.domain.AccountSummary.accountType`       | PIC X(8) → String                | Account type plus description in runtime model           |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-INTEREST-RATE | `com.bankofz.inqcust.api.inqacccu.domain.AccountSummary.interestRate`      | packed numeric → BigDecimal         | Decimal interest rate retained         |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-OVERDRAFT-LIMIT | `com.bankofz.inqcust.api.inqacccu.domain.AccountSummary.overdraftLimit`   | numeric → Integer                  | Integer overdraft limit               |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-LAST-STMT-DATE | `com.bankofz.inqcust.api.inqacccu.domain.AccountSummary.lastStatementDate` | numeric `YYYYMMDD` → ISO date string             | Converted by `DateMapper`                       |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-NEXT-STMT-DATE | `com.bankofz.inqcust.api.inqacccu.domain.AccountSummary.nextStatementDate` | numeric `YYYYMMDD` → ISO date string             | Converted by `DateMapper`                       |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-AVAILABLE-BALANCE | `com.bankofz.inqcust.api.inqacccu.domain.AccountSummary.availableBalance` | signed numeric → BigDecimal       | Signed amount preserved               |
+| `copybooks/ACCOUNT.cpy`  | ACCOUNT-ACTUAL-BALANCE | `com.bankofz.inqcust.api.inqacccu.domain.AccountSummary.actualBalance`     | signed numeric → BigDecimal       | Signed amount preserved               |
+| `copybooks/ACCDB2.cpy`   | SQL DECLARE ACCOUNT   | `com.bankofz.inqcust.api.inqacccu.repository.AccountRelationshipRepository`                | `findByCustomerNumber(String)` abstraction         | Implemented with mock JSON adapter |
 
 ### 1.3 Data Store Access Mapping
 
 | Legacy Method            | Legacy Technology     | Modern Method                       | Modern Technology                | Migration Path                       |
 |-------------------------|----------------------|--------------------------------------|----------------------------------|--------------------------------------|
-| DLI Database Call       | CICS DLI             | `AccountRepository.findByCustomerId()` | Spring Data JPA (mock)          | Mock for POC; Spring Data adapters for production |
-| DB2 SQL Query           | COBOL EXEC SQL       | Service-layer query delegation       | Spring Data repositories         | Repository abstraction layer         |
-| No explicit caching     | Mainframe buffer pools | `@Cacheable` annotations            | Spring Cache Abstraction         | Future enhancement: Redis backing    |
+| DLI/DB2 read inquiry calls       | CICS/DB2             | `AccountRelationshipRepository.findByCustomerNumber()` | Repository interface + JSON adapter          | Mock for POC; adapter boundary retained for future integration |
+| COBOL data retrieval and output shaping           | COBOL program flow       | `AccountRelationshipService.inquire()` + `AccountRelationshipMapper`       | Spring service + mapper components         | Service orchestration and mapping separation         |
+| Static data for local verification     | Mainframe datasets / DB rows | `JsonAccountRelationshipRepository.readAll()`            | `ObjectMapper` over `mock-data/account-relationship-records.json`         | Deterministic mock data source for local/CI    |
 
 ---
 
@@ -56,38 +54,42 @@
 
 | Requirement ID | Requirement Description                                           | Spec Reference                          | Spec ID     | Implementation Component                | Test Case ID |
 |----------------|------------------------------------------------------------------|-----------------------------------------|-------------|-----------------------------------------|---------------|
-| FR-001         | The system must retrieve account records associated with a given customer number. | 3.1 Retrieve Account Records            | SPEC-3.1    | `CustomerAccountsRequest.customerId`    | TC-001-001   |
-| FR-001         | Accept 10-digit customer number                                   | 3.1 Input Validation                    | SPEC-3.1    | `CustomerAccountsRequest.customerId`    | TC-001-001   |
-| FR-001         | Validate customer number format (numeric only)                   | 3.1 Input Validation                    | SPEC-3.1.1  | `@Pattern(regexp="[0-9]{10}")` on customerId | TC-001-002   |
-| FR-002         | The system must return a success flag indicating whether the customer was found. | 3.1 Retrieve Account Records            | SPEC-3.1    | `CustomerAccountsResponse.customerFound` | TC-005-001   |
-| FR-002         | Query associated accounts (0–20)                                 | 3.2 Account Retrieval                    | SPEC-3.2    | `AccountInquiryService.findAccountsByCustomerId()` | TC-002-001   |
-| FR-002         | Return account details in response                                | 3.3 Response Payload                    | SPEC-3.3    | `CustomerAccountsResponse.accounts[]`   | TC-002-002   |
-| FR-003         | Enforce OAuth2 authentication                                     | 4.1 Security – Authentication           | SPEC-4.1    | `SecurityConfig` bean, `@EnableResourceServer` | TC-003-001   |
-| FR-003         | Validate JWT bearer token                                         | 4.1 Security – Authentication           | SPEC-4.1.1  | Spring Security `JwtDecoder` bean      | TC-003-002   |
-| FR-004         | Enforce role-based access control (RBAC)                         | 4.2 Security – Authorization            | SPEC-4.2    | `@PreAuthorize("hasRole('ACCOUNT_INQUIRY')")` | TC-004-001   |
-| FR-005         | Return `customerFound=true` if customer exists                   | 5.1 Success Response                    | SPEC-5.1    | `CustomerAccountsResponse.customerFound` | TC-005-001   |
-| FR-005         | Return empty accounts array if no customer                        | 5.2 No-Accounts Response                | SPEC-5.2    | `CustomerAccountsResponse.accounts` (empty list) | TC-005-002   |
-| FR-006         | Return HTTP 400 on invalid customer ID                            | 5.3 Error Responses                     | SPEC-5.3    | `@ExceptionHandler(MethodArgumentNotValidException.class)` | TC-006-001   |
-| FR-007         | Return HTTP 401 on missing/invalid JWT                           | 5.4 Authentication Error                | SPEC-5.4    | Spring Security authentication entry point | TC-007-001   |
-| FR-008         | Return HTTP 403 on insufficient role                             | 5.5 Authorization Error                 | SPEC-5.5    | Spring Security access denied handler   | TC-008-001   |
-| FR-009         | Populate correlation ID in all logs                              | 6.1 Observability – Logging             | SPEC-6.1    | `MDC.put("correlationId", UUID)` in filter | TC-009-001   |
-| FR-010         | Log request/response in structured JSON                          | 6.2 Observability – JSON Logging        | SPEC-6.2    | Logback `logstash-logback-encoder`     | TC-010-001   |
-| FR-011         | Export Prometheus metrics                                         | 6.3 Observability – Metrics             | SPEC-6.3    | Micrometer `MeterRegistry` bean        | TC-011-001   |
-| FR-012         | Support OpenTelemetry tracing hooks                               | 6.4 Observability – Tracing             | SPEC-6.4    | `io.opentelemetry:opentelemetry-api` instrumentation | TC-012-001   |
+| FR-001         | Accept a customer-number inquiry as the business inquiry key. | Request parameters + Validation rules            | AC-011    | `AccountRelationshipController.inquire(String customerNumber)` with `@Pattern("^[0-9]{10}$")`    | `AccountRelationshipControllerTest#shouldReturnBadRequestForInvalidCustomerNumber`; `InqacccuOpenApiConformanceTest#invalidInputShouldReturnValidationErrorShape`   |
+| FR-002         | Perform customer validation before account retrieval. | Business behavior (customer validation sequence)                    | AC-004    | No explicit INQCUST-equivalent validation adapter present in current implementation; repository query directly drives found/not-found outcome    | No automated evidence in current codebase   |
+| FR-003         | Treat reserved customer numbers 0000000000 and 9999999999 as customer-not-found outcomes. | Validation rules + Outcome behavior                    | AC-002, AC-003  | Behavior is represented as business not-found through not-found mapping (`LegacyStatus N/1001/N`) | `InqacccuOpenApiConformanceTest#businessNotFoundShouldReturn200WithLegacyStatusN`; `validation.test.ts#accepts 10-digit customer numbers including reserved values`   |
+| FR-004         | Derive sort code internally as fixed value 987654 and not from caller input. | Business behavior                    | AC-001, AC-013    | Endpoint does not accept sort code input; repository returns sort code from mock record; no explicit fixed-987654 derivation component | No automated evidence for fixed `987654` derivation in current codebase |
+| FR-005         | Retrieve customer-associated account data in read-only inquiry mode. | Business behavior                    | AC-001    | `AccountRelationshipRepository` + `JsonAccountRelationshipRepository` read-only lookup by customer number | `JsonAccountRelationshipRepositoryTest#shouldLoadRelationshipByCustomerNumber`; `InqacccuOpenApiConformanceTest#successPayloadShouldExposeRequiredShapes` |
+| FR-006         | Preserve customer-found with zero accounts as valid successful outcome. | Outcome behavior                    | AC-008    | Success envelope supports `accounts.count = 0` with empty accounts list | `CustomerAccountInquiryPage.test.tsx#supports subsequent inquiry update and shows latest result` |
+| FR-007         | Preserve maximum returned account count of 20. | Business behavior                    | AC-009    | No explicit cap logic in current repository/service; boundedness depends on data source | No automated evidence in current codebase |
+| FR-008         | Preserve end-of-data equivalent (SQLCODE +100) as normal completion. | Business behavior                    | AC-008    | No DB cursor semantics in JSON-backed implementation | No automated evidence in current codebase |
+| FR-009         | Preserve legacy status semantics including success/failure/customerFound and returned-account count. | Outcome behavior + Response contract                    | AC-001, AC-008    | `LegacyStatus`, `AccountsList`, `AccountRelationshipMapper` | `AccountRelationshipMapperTest#shouldMapProjectionToSuccessResponse`; `AccountRelationshipServiceTest#shouldReturnSuccessWhenRepositoryFindsCustomer`; `InqacccuOpenApiConformanceTest#successPayloadShouldExposeRequiredShapes` |
+| FR-010         | Preserve legacy failure-path distinctions including fail codes for retrieval stages. | Outcome behavior                    | AC-005, AC-006, AC-007    | Current mapper supports not-found (`1001`) and success (`0000`) only; retrieval-stage failCode 2/3/4 mappings are not implemented | No automated evidence in current codebase |
+| FR-011         | Preserve complete returned account information set. | Response contract supported account fields                    | AC-001    | Current `AccountSummary` exposes account number, sort code, type/description, balances, interest, overdraft, statement dates; fields such as eyecatcher/openedDate are not present in runtime DTO | `InqacccuOpenApiConformanceTest#successPayloadShouldExposeRequiredShapes`; `AccountRelationshipMapperTest#shouldMapProjectionToSuccessResponse` |
+| FR-012         | Preserve fixed-width identifier semantics with leading zeroes. | Request parameters + Frontend observable behavior                    | AC-013    | String-based identifiers in backend and frontend domain models (`customerNumber`, `accountNumber`) | `validation.test.ts#accepts 10-digit customer numbers including reserved values`; `CustomerAccountInquiryPage.test.tsx#renders success response with accounts`; `inqacccu.e2e.spec.ts#renders successful account inquiry through frontend and backend` |
+| FR-013         | Preserve legacy date semantics while exposing external date representation. | Date representation                    | AC-010    | `DateMapper` converts numeric `YYYYMMDD` to ISO `yyyy-MM-dd` in mapper | `AccountRelationshipMapperTest#shouldMapProjectionToSuccessResponse`; `InqacccuOpenApiConformanceTest#successPayloadShouldExposeRequiredShapes` |
+| FR-014         | Do not imply deterministic account ordering. | Business behavior                    | AC-012    | No sorting logic in service/repository; order reflects source data | No automated evidence in current codebase |
+| FR-015         | Provide a usable user-facing inquiry channel. | Frontend interaction scope                    | AC-001    | Route `/customer-accounts`, page `CustomerAccountInquiryPage`, nav registration in `App.tsx` | `CustomerAccountInquiryPage.test.tsx`; `inqacccu.e2e.spec.ts` |
+| FR-016         | Present associated account results when customer found with accounts. | Frontend observable behavior                    | AC-001    | Accounts table rendering in `CustomerAccountInquiryPage` | `CustomerAccountInquiryPage.test.tsx#renders success response with accounts`; `inqacccu.e2e.spec.ts#renders successful account inquiry through frontend and backend` |
+| FR-017         | Present distinct outcome when customer found with zero accounts. | Frontend observable behavior                    | AC-008    | UI message "No accounts found for this customer." in success state with count 0 | `CustomerAccountInquiryPage.test.tsx#supports subsequent inquiry update and shows latest result` |
+| FR-018         | Present distinct outcome when customer not found. | Frontend observable behavior                    | AC-002, AC-003    | Not-found outcome shown from business 200 payload | `CustomerAccountInquiryPage.test.tsx#renders not-found business outcome inside 200 payload`; `inqacccu.e2e.spec.ts#renders customer-not-found business outcome from backend response` |
+| FR-019         | Provide user-visible feedback for invalid inquiry input. | Frontend validation behavior                    | AC-011    | `validateCustomerAccountInput` and field-level error rendering | `validation.test.ts#rejects invalid values`; `CustomerAccountInquiryPage.test.tsx#shows validation error for malformed customer number` |
+| FR-020         | Present distinct outcome for non-business infrastructure failure. | Infrastructure failure behavior                    | AC-011 (error semantics in current runtime), HTTP 500 handling    | `AccountRelationshipExceptionHandler` (`ERR-005`) + frontend backend-error display | `AccountRelationshipControllerTest#shouldReturnInternalErrorForRepositoryFailure`; `CustomerAccountInquiryPage.test.tsx#renders backend 500 error response`; `customerAccountInquiryClient.test.ts#returns backend error for 400/500 responses` |
+| FR-021         | Preserve leading zeroes in visible identifiers across input/output presentation. | Frontend observable behavior                    | AC-013    | String input/output handling in API and UI types | `validation.test.ts#accepts 10-digit customer numbers including reserved values`; `inqacccu.e2e.spec.ts#supports subsequent inquiry and updates to latest completed result` |
+| FR-022         | Allow subsequent inquiries in same interaction flow. | Frontend observable behavior                    | AC-001    | Same-page re-submit flow in `CustomerAccountInquiryPage` | `CustomerAccountInquiryPage.test.tsx#supports subsequent inquiry update and shows latest result`; `inqacccu.e2e.spec.ts#supports subsequent inquiry and updates to latest completed result` |
 
 ### 2.2 Non-Functional Requirements Traceability
 
 | Requirement ID | Requirement Statement | Spec Section | Spec ID | Implementation Component | Test Case ID |
 |----------------|-----------------------|--------------|---------|--------------------------|---------------|
-| NFR-001        | All inputs strictly validated before processing | 3.1 Input Validation | SPEC-3.1 | Bean Validation (`@Valid`, `@NotBlank`, `@Pattern`) | TC-NFR-001 |
-| NFR-002        | Error responses in standardized JSON structure | 5.0 Response Format | SPEC-5.0 | `ApiErrorResponse` DTO | TC-NFR-002 |
-| NFR-003        | TLS 1.2+ transport encryption | 4.3 Transport Security | SPEC-4.3 | Spring Boot server.ssl.enabled, keystore config | TC-NFR-003 |
-| NFR-004        | Secrets never committed to source control | 4.4 Secrets Management | SPEC-4.4 | Environment variables, Spring Cloud Config | TC-NFR-004 |
-| NFR-005        | No live CICS/DB2 connection in POC | 2.0 Scope | SPEC-2.0 | Mock `AccountRepository` implementation | TC-NFR-005 |
-| NFR-006        | Request latency < 200ms (p95) | 6.3 Performance | SPEC-6.3 | Micrometer timer on endpoint | TC-NFR-006 |
-| NFR-007        | Error rate < 1% in steady state | 6.3 Performance | SPEC-6.3 | Prometheus alert rules | TC-NFR-007 |
-| NFR-008        | Support up to 100 concurrent requests | 6.3 Scalability | SPEC-6.3 | Load testing via JMeter | TC-NFR-008 |
-| NFR-009        | Database response time tracked | 6.3 Performance | SPEC-6.3 | Repository layer metrics instrumentation | TC-NFR-009 |
+| NFR-001        | All inputs strictly validated before processing | Validation rules | AC-011 | `@Pattern` validation on controller path variable plus frontend validation helper | `AccountRelationshipControllerTest#shouldReturnBadRequestForInvalidCustomerNumber`; `validation.test.ts#rejects invalid values` |
+| NFR-002        | Error responses in standardized JSON structure | Error responses | AC-011 | `ApiError` / `ValidationError` payloads from `AccountRelationshipExceptionHandler` | `InqacccuOpenApiConformanceTest#invalidInputShouldReturnValidationErrorShape`; `AccountRelationshipControllerTest#shouldReturnInternalErrorForRepositoryFailure` |
+| NFR-003        | No live CICS/DB2 connection in POC | Scope | AC-001 | `JsonAccountRelationshipRepository` over mock JSON data | `JsonAccountRelationshipRepositoryTest#shouldLoadRelationshipByCustomerNumber` |
+| NFR-004        | Frozen feature contract is preserved while runtime OpenAPI is implementation-facing | Contract conformance | AC-001, AC-011 | Frozen contract in `specs/.../contracts/openapi.yaml`; runtime spec in `src/api/src/main/resources/openapi.yaml` | `InqacccuOpenApiConformanceTest#contractFileShouldContainRequiredPathAndStatuses` |
+| NFR-005        | Backend/frontend integration path is executable in local development | Frontend interaction scope | AC-001 | `/customer-accounts` frontend route and API client call to `/api/v1/customers/{customerNumber}/accounts` | `inqacccu.e2e.spec.ts#renders successful account inquiry through frontend and backend`; `customerAccountInquiryClient.test.ts#returns success payload for 200 response` |
+| NFR-006        | Request timeout handling is user-visible in frontend | Frontend observable behavior | AC-011 (error handling behavior) | AbortController timeout path in `inquireCustomerAccounts` | `customerAccountInquiryClient.test.ts#returns timeout on aborted requests` |
+| NFR-007        | Network failure handling is user-visible in frontend | Frontend observable behavior | AC-011 (error handling behavior) | Network-error branch in `inquireCustomerAccounts` | `customerAccountInquiryClient.test.ts#returns network error on transport failure` |
+| NFR-008        | Local builds and automated suites execute successfully | Test execution evidence | AC-001 | Maven/Vitest/Playwright suites recorded in implementation addendum | Evidence listed in Section 5.4 and 5.5 |
+| NFR-009        | Security behavior is inherited from existing module policy (no INQACCCU-specific policy introduced) | Test-spec scope | AC-001 | Controller tests import shared INQACC security components with filters disabled for endpoint behavior testing | `AccountRelationshipControllerTest` |
 
 ---
 
@@ -97,10 +99,13 @@
 
 | Rule ID | Rule Description                                                                 | Test Case ID |
 |---------|----------------------------------------------------------------------------------|---------------|
-| BR-001  | The system must retrieve account records associated with a given customer number. | TC-001-001   |
-| BR-002  | The system must return a success flag indicating whether the customer was found.  | TC-005-001   |
-| BR-003  | The system must validate the format of the customer number.                      | TC-001-002   |
-| BR-004  | The system must ensure that all data returned to the client is sanitized.        | TC-004       |
+| BR-001  | Inquiry is read-only and returns account relationship records by customer number. | `JsonAccountRelationshipRepositoryTest#shouldLoadRelationshipByCustomerNumber`   |
+| BR-003  | Customer number format is digits-only and exactly 10 characters.  | `AccountRelationshipControllerTest#shouldReturnBadRequestForInvalidCustomerNumber`; `validation.test.ts#rejects invalid values`   |
+| BR-008  | Customer-not-found maps to legacy not-found status semantics.                      | `InqacccuOpenApiConformanceTest#businessNotFoundShouldReturn200WithLegacyStatusN`; `AccountRelationshipMapperTest#shouldMapNotFoundOutcome`   |
+| BR-009  | Valid customer with zero accounts remains a successful business outcome.        | `CustomerAccountInquiryPage.test.tsx#supports subsequent inquiry update and shows latest result`       |
+| BR-010  | Valid customer with one or more accounts maps to success status and account list.        | `InqacccuOpenApiConformanceTest#successPayloadShouldExposeRequiredShapes`; `AccountRelationshipServiceTest#shouldReturnSuccessWhenRepositoryFindsCustomer`       |
+| BR-013  | Account statement dates are converted into external API date format.        | `AccountRelationshipMapperTest#shouldMapProjectionToSuccessResponse`       |
+| BR-016  | No explicit DB cursor end-of-data path exists in JSON-backed implementation.        | No automated evidence in current codebase       |
 
 ---
 
@@ -110,18 +115,24 @@
 
 | Test Case ID | Test Name | Related Rule(s) | Related Requirement(s) | Class Under Test | Assertion(s) | Status |
 |---------------|-----------|------------------|------------------------|------------------|---------------|--------|
-| TC-001-001    | Valid 10-digit customer ID accepted | BR-001 | FR-001 | `CustomerAccountsRequest` | `@NotBlank`, `@Pattern` validation passes | ✓ READY |
-| TC-001-002    | Non-numeric customer ID rejected | BR-003 | FR-001 | `CustomerAccountsRequest` | `ConstraintViolationException` raised | ✓ READY |
-| TC-002-001    | findAccountsByCustomerId returns list | BR-002 | FR-002 | `AccountInquiryService` | `List<AccountDetail>` not null, size ≤ 20 | ✓ READY |
-| TC-002-002    | Response payload contains all required fields | BR-006 | FR-002 | `CustomerAccountsResponse` | `eyeCatcher`, `accountNumber`, `sortCode`, `interestRate`, `balances` present | ✓ READY |
-| TC-003-001    | JWT bearer token required for access | BR-008 | FR-003 | `SecurityConfig` | 401 Unauthorized without token | ✓ READY |
-| TC-003-002    | Invalid JWT rejected | BR-008 | FR-003 | `JwtDecoder` | `JwtException` raised | ✓ READY |
-| TC-004-001    | ACCOUNT_INQUIRY role required | BR-009 | FR-004 | `AccountInquiryController` | 403 Forbidden without role | ✓ READY |
-| TC-005-001    | customerFound=true when customer exists | BR-001 | FR-005 | `CustomerAccountsResponse` | `customerFound` == true | ✓ READY |
-| TC-005-002    | Empty accounts array when customer not found | BR-001 | FR-005 | `CustomerAccountsResponse` | `accounts.size()` == 0, `customerFound` == false | ✓ READY |
-| TC-006-001    | 400 Bad Request on invalid input | BR-003, BR-005 | FR-006 | `GlobalExceptionHandler` | HTTP 400, error message in body | ✓ READY |
-| TC-007-001    | 401 Unauthorized on missing JWT | BR-008 | FR-007 | `AuthenticationEntryPoint` | HTTP 401, `WWW-Authenticate` header | ✓ READY |
-| TC-008-001    | 403 Forbidden on insufficient role | BR-009 | FR-008 | `AccountInquiryController` | HTTP 403, error message in body | ✓ READY |
+| TC-022-001    | Contract path and statuses present in frozen contract | BR-001 | FR-005, FR-009 | `InqacccuOpenApiConformanceTest` | Contract file contains `/api/v1/customers/{customerNumber}/accounts` and 200/400/500 response families | PASS |
+| TC-022-002    | Success payload shape conformance | BR-010, BR-013 | FR-009, FR-011, FR-013 | `InqacccuOpenApiConformanceTest` | 200 payload includes legacy status, customer summary, account list, and ISO date values | PASS |
+| TC-022-003    | Business not-found outcome over HTTP 200 | BR-008 | FR-003, FR-018 | `InqacccuOpenApiConformanceTest` | Not-found request returns `success=N`, `failCode=1001`, null customer/accounts | PASS |
+| TC-022-004    | Invalid input error shape | BR-003 | FR-001, FR-019 | `InqacccuOpenApiConformanceTest` | Invalid customer number returns HTTP 400 with `ERR-001` validation payload | PASS |
+| TC-024-001    | Controller success response | BR-010 | FR-005, FR-016 | `AccountRelationshipControllerTest` | 200 response contains expected status and summary fields | PASS |
+| TC-024-002    | Controller bad request response | BR-003 | FR-001, FR-019 | `AccountRelationshipControllerTest` | Invalid customer number returns HTTP 400 and `ERR-001` | PASS |
+| TC-024-003    | Controller infrastructure error response | BR-001 | FR-020 | `AccountRelationshipControllerTest` | Repository failure surfaced as HTTP 500 with `ERR-005` | PASS |
+| TC-023-001    | Repository JSON lookup by customer number | BR-001 | FR-005 | `JsonAccountRelationshipRepositoryTest` | Repository loads mock-data record and returns matching account projection | PASS |
+| TC-022-005    | Service success orchestration | BR-010 | FR-005, FR-009 | `AccountRelationshipServiceTest` | Repository hit maps to success legacy status and non-zero account count | PASS |
+| TC-022-006    | Service not-found orchestration | BR-008 | FR-003, FR-009 | `AccountRelationshipServiceTest` | Repository miss maps to not-found legacy status/fail code | PASS |
+| TC-022-007    | Mapper success projection mapping | BR-010, BR-013 | FR-009, FR-011, FR-013 | `AccountRelationshipMapperTest` | Mapper trims fields, preserves identifiers, converts statement dates | PASS |
+| TC-022-008    | Mapper not-found mapping | BR-008 | FR-003, FR-009 | `AccountRelationshipMapperTest` | Mapper emits not-found legacy status and null customer/accounts | PASS |
+| TC-025-001    | Frontend input validation feedback | BR-003 | FR-019 | `validation.test.ts`, `CustomerAccountInquiryPage.test.tsx` | Invalid input shows field-level message and blocks submission flow | PASS |
+| TC-026-001    | Frontend API client success and error handling | BR-001 | FR-015, FR-020 | `customerAccountInquiryClient.test.ts` | Handles 200, 400/500, timeout, and network-failure result branches | PASS |
+| TC-025-002    | Frontend result presentation | BR-009, BR-010 | FR-016, FR-017, FR-018 | `CustomerAccountInquiryPage.test.tsx` | Renders success, zero-account, not-found, and backend error states | PASS |
+| TC-027-001    | Browser E2E integrated happy path | BR-010 | FR-015, FR-016 | `inqacccu.e2e.spec.ts` | End-to-end flow renders successful inquiry with customer and accounts | PASS |
+| TC-027-002    | Browser E2E subsequent inquiry | BR-001 | FR-022 | `inqacccu.e2e.spec.ts` | Updated input and resubmission renders latest completed result | PASS |
+| TC-027-003    | Browser E2E customer-not-found path | BR-008 | FR-018 | `inqacccu.e2e.spec.ts` | End-to-end flow renders distinct not-found outcome | PASS |
 
 ---
 

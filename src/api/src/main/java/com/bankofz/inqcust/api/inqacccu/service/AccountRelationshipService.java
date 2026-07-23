@@ -21,6 +21,6 @@ public class AccountRelationshipService {
     public AccountRelationshipResponse inquire(String customerNumber) {
         return repository.findByCustomerNumber(customerNumber)
                 .map(mapper::toSuccessResponse)
-                .orElseGet(mapper::toNotFoundResponse);
+                .orElseGet(() -> mapper.toNotFoundResponse(customerNumber));
     }
 }

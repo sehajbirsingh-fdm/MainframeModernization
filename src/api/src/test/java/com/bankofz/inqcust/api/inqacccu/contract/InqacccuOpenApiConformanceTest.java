@@ -42,11 +42,14 @@ class InqacccuOpenApiConformanceTest {
         mockMvc.perform(get("/api/v1/customers/0000000001/accounts"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.legacyStatus.success").value("Y"))
-                .andExpect(jsonPath("$.legacyStatus.failCode").value("0000"))
-                .andExpect(jsonPath("$.customer.customerNumber").value("0000000001"))
-                .andExpect(jsonPath("$.accounts.count").value(2))
-                .andExpect(jsonPath("$.accounts.accounts[0].accountNumber").isNotEmpty())
-                .andExpect(jsonPath("$.accounts.accounts[0].lastStatementDate").value("2025-12-31"));
+                .andExpect(jsonPath("$.legacyStatus.failCode").value("0"))
+                .andExpect(jsonPath("$.customerNumber").value("0000000001"))
+                .andExpect(jsonPath("$.numberOfAccounts").value(2))
+                .andExpect(jsonPath("$.accounts[0].eyecatcher").value("ACCT"))
+                .andExpect(jsonPath("$.accounts[0].customerNumber").value("0000000001"))
+                .andExpect(jsonPath("$.accounts[0].accountNumber").isNotEmpty())
+                .andExpect(jsonPath("$.accounts[0].openedDate").isNotEmpty())
+                .andExpect(jsonPath("$.accounts[0].lastStatementDate").value("2025-12-31"));
     }
 
     @Test
@@ -54,16 +57,52 @@ class InqacccuOpenApiConformanceTest {
         mockMvc.perform(get("/api/v1/customers/0000000999/accounts"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.legacyStatus.success").value("N"))
-                .andExpect(jsonPath("$.legacyStatus.failCode").value("1001"))
-            .andExpect(jsonPath("$.customer").isEmpty())
-            .andExpect(jsonPath("$.accounts").isEmpty());
+                .andExpect(jsonPath("$.legacyStatus.failCode").value("1"))
+                .andExpect(jsonPath("$.customerNumber").value("0000000999"))
+                .andExpect(jsonPath("$.numberOfAccounts").value(0))
+                .andExpect(jsonPath("$.accounts").isArray())
+                .andExpect(jsonPath("$.accounts").isEmpty());
     }
 
     @Test
     void invalidInputShouldReturnValidationErrorShape() throws Exception {
         mockMvc.perform(get("/api/v1/customers/ABC/accounts"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("ERR-001"))
-                .andExpect(jsonPath("$.message").value("Invalid customer number format"));
-    }
+            .andExpect(jsonPath("$.error.type").value("VALIDATION_ERROR"))
+            .andExpect(jsonPath("$.error.message").value("Validation failed"))
+            .andExpect(jsonPath("$.error.details[0].field").value("customerNumber"))
+            .andExpect(jsonPath("$.error.details[0].reason").exists());
+        }
+
+        @Test
+        void reservedCustomerNumbersShouldFollowCustomerNotFoundBusinessOutcome() throws Exception {
+        mockMvc.perform(get("/api/v1/customers/0000000000/accounts"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.legacyStatus.success").value("N"))
+            .andExpect(jsonPath("$.legacyStatus.failCode").value("1"))
+            .andExpect(jsonPath("$.customerNumber").value("0000000000"))
+            .andExpect(jsonPath("$.numberOfAccounts").value(0));
+
+        mockMvc.perform(get("/api/v1/customers/9999999999/accounts"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.legacyStatus.success").value("N"))
+            .andExpect(jsonPath("$.legacyStatus.failCode").value("1"))
+            .andExpect(jsonPath("$.customerNumber").value("9999999999"))
+            .andExpect(jsonPath("$.numberOfAccounts").value(0));
+        }
+
+        @Test
+        void pathValidationShouldRejectNonTenDigitAndWhitespaceValues() throws Exception {
+        mockMvc.perform(get("/api/v1/customers/123456789/accounts"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.type").value("VALIDATION_ERROR"));
+
+        mockMvc.perform(get("/api/v1/customers/12345678901/accounts"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error.type").value("VALIDATION_ERROR"));
+
+        mockMvc.perform(get("/api/v1/customers/%200000000001/accounts"))
+            .andExpect(status().isBadRequest());
+        }
+
 }

@@ -2,8 +2,6 @@ package com.bankofz.inqcust.api.inqacccu.controller;
 
 import com.bankofz.inqcust.api.inqacccu.domain.AccountRelationshipResponse;
 import com.bankofz.inqcust.api.inqacccu.domain.AccountSummary;
-import com.bankofz.inqcust.api.inqacccu.domain.AccountsList;
-import com.bankofz.inqcust.api.inqacccu.domain.CustomerSummary;
 import com.bankofz.inqcust.api.inqacccu.domain.LegacyStatus;
 import com.bankofz.inqcust.api.inqacccu.exception.RepositoryUnavailableException;
 import com.bankofz.inqcust.api.inqacccu.service.AccountRelationshipService;
@@ -48,25 +46,23 @@ class AccountRelationshipControllerTest {
     @Test
     void shouldReturnSuccessPayload() throws Exception {
         AccountRelationshipResponse response = new AccountRelationshipResponse(
-                new LegacyStatus("Y", "0000", "Y"),
-                new CustomerSummary("0000000001", "John Smith", "123456", "INDIVIDUAL"),
-                new AccountsList(
-                        1,
-                        List.of(new AccountSummary(
-                                "1000000001",
-                                "123456",
-                                "CHK",
-                                "Checking Account",
-                                new BigDecimal("1520.45"),
-                                "GBP",
-                                new BigDecimal("1498.12"),
-                                "GBP",
-                                new BigDecimal("0.50"),
-                                500,
-                                "2025-12-31",
-                                "2026-01-31"
-                        ))
-                )
+                new LegacyStatus("Y", "0", "Y"),
+                "0000000001",
+                1,
+                List.of(new AccountSummary(
+                        "ACCT",
+                        "0000000001",
+                        "123456",
+                        "1000000001",
+                        "CHK",
+                        new BigDecimal("0.50"),
+                        "2020-01-15",
+                        500,
+                        "2025-12-31",
+                        "2026-01-31",
+                        new BigDecimal("1520.45"),
+                        new BigDecimal("1498.12")
+                ))
         );
 
         when(service.inquire("0000000001")).thenReturn(response);
@@ -74,16 +70,19 @@ class AccountRelationshipControllerTest {
         mockMvc.perform(get("/api/v1/customers/0000000001/accounts").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.legacyStatus.success").value("Y"))
-                .andExpect(jsonPath("$.legacyStatus.failCode").value("0000"))
-                .andExpect(jsonPath("$.customer.customerName").value("John Smith"))
-                .andExpect(jsonPath("$.accounts.count").value(1));
+                .andExpect(jsonPath("$.legacyStatus.failCode").value("0"))
+                .andExpect(jsonPath("$.customerNumber").value("0000000001"))
+                .andExpect(jsonPath("$.numberOfAccounts").value(1));
     }
 
     @Test
     void shouldReturnBadRequestForInvalidCustomerNumber() throws Exception {
         mockMvc.perform(get("/api/v1/customers/ABC/accounts").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("ERR-001"));
+                .andExpect(jsonPath("$.error.type").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                .andExpect(jsonPath("$.error.details[0].field").value("customerNumber"))
+                .andExpect(jsonPath("$.error.details[0].reason").exists());
     }
 
     @Test
@@ -92,7 +91,7 @@ class AccountRelationshipControllerTest {
 
         mockMvc.perform(get("/api/v1/customers/0000000001/accounts").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.code").value("ERR-005"))
-                .andExpect(jsonPath("$.message").value("Internal processing error"));
+                .andExpect(jsonPath("$.error.type").value("INFRASTRUCTURE_ERROR"))
+                .andExpect(jsonPath("$.error.message").value("Service unavailable due to infrastructure failure"));
     }
 }

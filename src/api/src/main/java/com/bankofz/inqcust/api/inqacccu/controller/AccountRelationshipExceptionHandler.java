@@ -25,19 +25,31 @@ public class AccountRelationshipExceptionHandler {
                 .toList();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiError("ERR-001", "Invalid customer number format", details));
+            .body(new ApiError(new ApiError.ErrorPayload(
+                "VALIDATION_ERROR",
+                "Validation failed",
+                details
+            )));
     }
 
     @ExceptionHandler(RepositoryUnavailableException.class)
     public ResponseEntity<ApiError> handleRepositoryUnavailable(RepositoryUnavailableException exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiError("ERR-005", "Internal processing error", List.of()));
+            .body(new ApiError(new ApiError.ErrorPayload(
+                "INFRASTRUCTURE_ERROR",
+                "Service unavailable due to infrastructure failure",
+                null
+            )));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiError("ERR-005", "Internal processing error", List.of()));
+            .body(new ApiError(new ApiError.ErrorPayload(
+                "INFRASTRUCTURE_ERROR",
+                "Service unavailable due to infrastructure failure",
+                null
+            )));
     }
 
     private ValidationError toValidationError(ConstraintViolation<?> violation) {

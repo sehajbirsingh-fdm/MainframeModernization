@@ -29,7 +29,7 @@ class AccountRelationshipServiceTest {
                         "1000000001",
                         "123456",
                         "CHK",
-                        "Checking Account",
+                    20200115,
                         new BigDecimal("100.00"),
                         new BigDecimal("90.00"),
                         new BigDecimal("0.50"),
@@ -44,7 +44,8 @@ class AccountRelationshipServiceTest {
         AccountRelationshipResponse response = service.inquire("0000000001");
 
         assertThat(response.legacyStatus().success()).isEqualTo("Y");
-        assertThat(response.accounts().count()).isEqualTo(1);
+        assertThat(response.numberOfAccounts()).isEqualTo(1);
+        assertThat(response.accounts()).hasSize(1);
     }
 
     @Test
@@ -54,6 +55,9 @@ class AccountRelationshipServiceTest {
         AccountRelationshipResponse response = service.inquire("0000000099");
 
         assertThat(response.legacyStatus().success()).isEqualTo("N");
-        assertThat(response.legacyStatus().failCode()).isEqualTo("1001");
+        assertThat(response.legacyStatus().failCode()).isEqualTo("1");
+        assertThat(response.customerNumber()).isEqualTo("0000000099");
+        assertThat(response.numberOfAccounts()).isZero();
+        assertThat(response.accounts()).isEmpty();
     }
 }

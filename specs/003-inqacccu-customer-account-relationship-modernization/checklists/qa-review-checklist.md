@@ -3,8 +3,8 @@
 **Document ID:** `qa-review-checklist-inqacccu-001`  
 **Pipeline:** `mainframe_modernization`  
 **Target System:** INQACCCU Customer Account Inquiry REST API  
-**Generated:** 2025  
-**Status:** Implementation-Ready  
+**Generated:** 2026-07-23  
+**Status:** Post-Implementation QA Review Completed  
 
 ---
 
@@ -14,22 +14,22 @@
 
 | REQ ID | Requirement Title | Artifact Source | Verification Method | Status | Notes |
 |--------|-------------------|-----------------|---------------------|--------|-------|
-| REQ-FUNC-001 | Accept 10-digit customer number via REST endpoint | spec.md, intended-system.md | Unit test + Integration test | ⚠️ PLANNED | Validate path parameter binding, numeric constraint enforcement |
-| REQ-FUNC-002 | Return 0–20 account records for valid customer | spec.md, business-rules.md (BR001) | Integration test + Mock repository verification | ⚠️ PLANNED | Confirm array size bounds; test boundary cases (0, 1, 20 accounts) |
-| REQ-FUNC-003 | Return account details: account number, sort code, balance, interest rate, statement date | spec.md, mapping-matrix.md | Schema validation test against OpenAPI 3.0.3 | ⚠️ PLANNED | Verify JSON payload matches `AccountDetail` DTO structure |
-| REQ-FUNC-004 | Return customer not found indicator (`customerFound: false`, `numberOfAccounts: 0`) | spec.md, business-rules.md (BR001) | Unit test: invalid customer lookup | ⚠️ PLANNED | Test with non-existent customer ID; confirm error semantics preserved |
-| REQ-FUNC-005 | Preserve legacy observable behavior as default path | intended-system.md, plan.md | Regression test against legacy COBOL output samples | ⚠️ PLANNED | Compare REST JSON response with equivalent legacy CICS output |
-| REQ-ARCH-001 | Backend Stack: Java 21, Spring Boot 3.3.x, Maven 3.9+ | system-intent.md, plan.md | Build artifact verification; JVM version check | ⚠️ PLANNED | Confirm POM declares correct versions; verify Maven 3.9+ used |
-| REQ-ARCH-002 | Frontend Stack: React 18.x, TypeScript 5.x, Vite 5.x, Node.js 20 LTS | system-intent.md | package.json version audit | ⚠️ PLANNED | Lock dependency versions; verify Node 20 in CI/CD environment |
-| REQ-SEC-001 | OAuth2 Resource Server with JWT bearer token validation | spec.md, business-rules.md (BR005) | Security integration test; token format validation | ⚠️ PLANNED | Test valid/invalid/expired JWT; verify `@Secured` annotations on endpoints |
-| REQ-SEC-002 | Role-based access control (RBAC) for customer-account endpoints | spec.md, business-rules.md (BR005) | Authorization test matrix (multiple roles) | ⚠️ PLANNED | Verify insufficient role returns `403 Forbidden`; admin role returns `200 OK` |
-| REQ-SEC-003 | Input validation: strict 10-digit customer number format | spec.md, business-rules.md (BR003) | Boundary test: non-numeric, length != 10, null, empty string | ⚠️ PLANNED | Confirm `400 Bad Request` for each invalid case |
-| REQ-SEC-004 | TLS 1.2+ transport security | system-intent.md | SSL/TLS configuration audit; security headers validation | ⚠️ PLANNED | Verify `Strict-Transport-Security`, `X-Content-Type-Options` headers present |
-| REQ-SEC-005 | Secrets handling via environment variables or secret manager | system-intent.md, business-rules.md (BR006) | Secret injection test; source code audit for hardcoded values | ⚠️ PLANNED | Verify no credentials in `application.properties`, POM, or source files |
-| REQ-OBS-001 | Structured JSON logging with correlation ID per request | spec.md, requirements.md (NFR-007) | Log output format validation; MDC correlation ID propagation test | ⚠️ PLANNED | Parse logs as JSON; verify `correlationId` field present and unique per request |
-| REQ-OBS-002 | OpenTelemetry-ready tracing instrumentation | spec.md, requirements.md (NFR-009) | Trace exporter configuration test; span creation verification | ⚠️ PLANNED | Confirm `spring-boot-starter-actuator` and OpenTelemetry SDK configured |
-| REQ-PERSIST-001 | Mock repository layer for POC (no live DB2 or CICS) | intended-system.md, tasks.md (TASK-002) | Mock data verification; repository interface test | ⚠️ PLANNED | Verify `@Repository` marked as `@Mock` or in-memory implementation |
-| REQ-API-001 | REST API conforms to OpenAPI 3.0.3 specification | openapi.yaml, spec.md | OpenAPI validator test; Swagger UI schema generation | ⚠️ PLANNED | Run Swagger Codegen validation; verify all endpoints and models documented |
+| REQ-FUNC-001 | Accept 10-digit customer number via REST endpoint | requirements.md, spec.md | Automated test evidence + code review | PASS | Backend regex validation and 400 behavior verified by `AccountRelationshipControllerTest#shouldReturnBadRequestForInvalidCustomerNumber` and `InqacccuOpenApiConformanceTest#invalidInputShouldReturnValidationErrorShape`; frontend validation evidence in `validation.test.ts`. |
+| REQ-FUNC-002 | Return 0-20 account records for valid customer | requirements.md, spec.md, tasks.md | Automated test evidence + mock data review | PARTIAL | Valid customer account retrieval is verified (`InqacccuOpenApiConformanceTest#successPayloadShouldExposeRequiredShapes`, repository/service/page/E2E tests). No automated 20-record boundary test evidence. |
+| REQ-FUNC-003 | Return account details: account number, sort code, balance, interest rate, statement date | spec.md, contracts/openapi.yaml | Automated test evidence + DTO review | PARTIAL | Implemented `AccountSummary` includes account number/sort code/balances/interest/statement dates; however runtime shape differs from frozen contract field set (e.g., frozen `openedDate`/`eyecatcher` vs runtime model). |
+| REQ-FUNC-004 | Return customer not found indicator (`customerFound: false`, `numberOfAccounts: 0`) | requirements.md, spec.md | Automated test evidence | PARTIAL | Business not-found behavior is verified (`legacyStatus.customerFound = N`, HTTP 200) by backend/frontend/E2E tests for `0000000999`; runtime shape uses `customer: null` and `accounts: null` rather than frozen `numberOfAccounts`+empty array. |
+| REQ-FUNC-005 | Preserve legacy observable behavior as default path | requirements.md, spec.md, plan.md | Automated tests + manual legacy comparison | MANUAL VERIFICATION REQUIRED | Automated tests validate implemented behavior branches, but no executed legacy COBOL output comparison evidence is present in current QA artifacts. |
+| REQ-ARCH-001 | Backend Stack: Java 21, Spring Boot 3.3.x, Maven 3.9+ | plan.md, pom.xml | Configuration review | PARTIAL | Java 21 is configured and Spring Boot 3.x is used (`3.5.3`). Pre-checklist `3.3.x` assumption is outdated. Maven runtime version was not validated in this documentation pass. |
+| REQ-ARCH-002 | Frontend Stack: React 18.x, TypeScript 5.x, Vite 5.x, Node.js 20 LTS | plan.md, package.json | Configuration review | PARTIAL | Implemented versions are React 19.x, TypeScript 6.x, Vite 8.x. Node.js runtime version evidence is not captured in this QA artifact. |
+| REQ-SEC-001 | OAuth2 Resource Server with JWT bearer token validation | requirements.md, spec.md, test-spec.md | Scope check | NOT APPLICABLE | Frozen INQACCCU requirements/spec do not define OAuth2/JWT as feature acceptance criteria for `/api/v1/customers/{customerNumber}/accounts`. |
+| REQ-SEC-002 | Role-based access control (RBAC) for customer-account endpoints | requirements.md, spec.md, test-spec.md | Scope check | NOT APPLICABLE | RBAC requirement is not present in frozen INQACCCU feature artifacts for this endpoint. |
+| REQ-SEC-003 | Input validation: strict 10-digit customer number format | requirements.md, spec.md | Automated test evidence | PARTIAL | Non-numeric invalid case is verified in backend/frontend tests; explicit backend coverage for null/empty/length 9/11 is not evidenced in current automated suite. |
+| REQ-SEC-004 | TLS 1.2+ transport security | requirements.md, spec.md, test-spec.md | Scope check | NOT APPLICABLE | Deployment transport-hardening is out of scope for frozen INQACCCU feature implementation review. |
+| REQ-SEC-005 | Secrets handling via environment variables or secret manager | requirements.md, spec.md, tasks.md | Scope check | NOT APPLICABLE | DB startup secret-management controls are not part of frozen INQACCCU feature acceptance criteria in this POC scope. |
+| REQ-OBS-001 | Structured JSON logging with correlation ID per request | requirements.md, spec.md, plan.md | Evidence review | MANUAL VERIFICATION REQUIRED | No INQACCCU automated evidence captured for correlation ID propagation or structured JSON logs in this pass. |
+| REQ-OBS-002 | OpenTelemetry-ready tracing instrumentation | requirements.md, spec.md, test-spec.md | Scope check | NOT APPLICABLE | OpenTelemetry readiness is not a frozen INQACCCU feature requirement. |
+| REQ-PERSIST-001 | Mock repository layer for POC (no live DB2 or CICS) | requirements.md, plan.md, tasks.md | Automated test + code/config review | PASS | `JsonAccountRelationshipRepository` uses `mock-data/account-relationship-records.json`; verified by `JsonAccountRelationshipRepositoryTest` and runtime property `app.inqacccu.mock-data.path`. |
+| REQ-API-001 | REST API conforms to OpenAPI 3.0.3 specification | contracts/openapi.yaml, runtime openapi.yaml, spec.md | Contract and runtime comparison + automated test evidence | FAIL | Contract path/statuses are validated by `InqacccuOpenApiConformanceTest`, but response schema/field shape drift exists between frozen contract and runtime implementation (documented mismatch). |
 
 ---
 
@@ -37,20 +37,20 @@
 
 | NFR ID | NFR Title | Acceptance Criteria | Verification Method | Status | Notes |
 |--------|-----------|---------------------|---------------------|--------|-------|
-| NFR-001 | Performance: Response time ≤ 200ms (p95) for customer inquiry | Latency measurement under normal load | Load test: 100 concurrent requests; measure p95 latency | ⚠️ PLANNED | Use JMeter or Gatling; establish baseline after Phase 1 |
-| NFR-002 | Availability: 99.9% uptime SLA in production | Uptime monitoring and incident tracking | Synthetic monitoring; track downtime minutes per month | ⚠️ PLANNED | Configure health check endpoint; integrate with monitoring platform |
-| NFR-003 | Scalability: Horizontal scaling via container orchestration | Auto-scaling policy definition | Kubernetes deployment test; verify pod replica scaling | ⚠️ PLANNED | Test HPA trigger thresholds (CPU, memory); confirm stateless design |
-| NFR-004 | Data Consistency: Account list returned is point-in-time snapshot | Transactional query semantics | Mock repository transaction test; verify snapshot isolation | ⚠️ PLANNED | Confirm no phantom reads; document consistency model |
-| NFR-005 | Backward Compatibility: API versioning strategy (v1 baseline) | URL path includes version; deprecation headers | Versioning test: v1 and v2 endpoints coexist; verify deprecation warning | ⚠️ PLANNED | Add `Deprecated: true` in OpenAPI spec for deprecated endpoints |
-| NFR-006 | Security: No sensitive data (passwords, tokens, PII) in logs | Log sanitization configuration | Log content audit; verify masking filters applied | ⚠️ PLANNED | Use Logback regex filter to redact PII; test with sample customer data |
-| NFR-007 | Observability: Structured JSON logging with correlation ID | All logs include ISO 8601 timestamp, level, logger name, message, correlation ID | Log parser validation; JSON schema compliance test | ⚠️ PLANNED | Verify Logstash compatibility; test with ELK stack |
-| NFR-008 | Metrics: Prometheus-compatible metrics export | Metrics endpoint at `/actuator/metrics`; latency, error rate, custom metrics | Metrics scrape test; Prometheus YAML validation | ⚠️ PLANNED | Verify histogram buckets and gauge registrations |
-| NFR-009 | Tracing: OpenTelemetry instrumentation ready | Spans exported via OTLP or compatible exporter; trace propagation across services | Trace verification test; Jaeger/Zipkin UI inspection | ⚠️ PLANNED | Configure OTEL_EXPORTER_OTLP_ENDPOINT; test trace sampling rate |
-| NFR-010 | Correlation ID: UUID v4 format; propagated to downstream calls | Correlation ID header format validation; header propagation across services | Header propagation test; downstream system log correlation | ⚠️ PLANNED | Verify `X-Correlation-ID` header preserved in outbound HTTP calls |
-| NFR-011 | Error Handling: Standardized JSON error response structure | All errors return `{ code, message, details, correlationId }` | Error response schema validation test | ⚠️ PLANNED | Test error scenarios: 400, 401, 403, 404, 500; verify JSON compliance |
-| NFR-012 | Accessibility (Frontend): WCAG 2.1 AA compliance | React UI component accessibility audit | Axe accessibility test; keyboard navigation verification | ⚠️ PLANNED | Automate accessibility scanning in CI/CD; manual screen reader testing |
-| NFR-013 | Code Quality: Minimum 80% code coverage for backend | JUnit 5 test suite coverage report | Jacoco coverage report generation and validation | ⚠️ PLANNED | Set Maven build failure gate at < 80% coverage |
-| NFR-014 | Documentation: API documentation auto-generated from OpenAPI | Swagger UI available at `/swagger-ui.html` | Swagger UI endpoint availability test | ⚠️ PLANNED | Verify Spring Doc integration; test endpoint discovery |
+| NFR-001 | Performance: Response time <= 200ms (p95) for customer inquiry | Latency measurement under normal load | Load test evidence review | MANUAL VERIFICATION REQUIRED | No executed load/perf results are present in current automated evidence set. |
+| NFR-002 | Availability: 99.9% uptime SLA in production | Uptime monitoring and incident tracking | Scope check | NOT APPLICABLE | Production SLA monitoring is outside frozen INQACCCU feature scope for this documentation pass. |
+| NFR-003 | Scalability: Horizontal scaling via container orchestration | Auto-scaling policy definition | Scope check | NOT APPLICABLE | Kubernetes/HPA concerns are out-of-scope production controls for the feature checklist. |
+| NFR-004 | Data Consistency: Account list returned is point-in-time snapshot | Transactional query semantics | Evidence review | MANUAL VERIFICATION REQUIRED | INQACCCU uses JSON mock repository; no transactional/snapshot verification evidence exists. |
+| NFR-005 | Backward Compatibility: API versioning strategy (v1 baseline) | URL path includes version; deprecation headers | Contract and route review | PARTIAL | Versioned path `/api/v1/...` is implemented; no v2 coexistence/deprecation-header evidence exists. |
+| NFR-006 | Security: No sensitive data (passwords, tokens, PII) in logs | Log sanitization configuration | Scope and evidence review | MANUAL VERIFICATION REQUIRED | No executed log-sanitization audit evidence captured in current test artifacts. |
+| NFR-007 | Observability: Structured JSON logging with correlation ID | All logs include ISO 8601 timestamp, level, logger name, message, correlation ID | Evidence review | MANUAL VERIFICATION REQUIRED | No automated INQACCCU evidence for structured logging/correlation ID propagation. |
+| NFR-008 | Metrics: Prometheus-compatible metrics export | Metrics endpoint at `/actuator/metrics`; latency, error rate, custom metrics | Scope and config review | NOT APPLICABLE | Prometheus-specific export/metrics controls are not frozen INQACCCU feature requirements. |
+| NFR-009 | Tracing: OpenTelemetry instrumentation ready | Spans exported via OTLP or compatible exporter; trace propagation across services | Scope check | NOT APPLICABLE | OpenTelemetry tracing readiness is outside frozen INQACCCU feature requirements. |
+| NFR-010 | Correlation ID: UUID v4 format; propagated to downstream calls | Correlation ID header format validation; header propagation across services | Evidence review | MANUAL VERIFICATION REQUIRED | No captured evidence for `X-Correlation-ID` generation/propagation in INQACCCU flow. |
+| NFR-011 | Error Handling: Standardized JSON error response structure | All errors return `{ code, message, details, correlationId }` | Automated test evidence + schema review | FAIL | Implemented INQACCCU errors return `{code,message,details}` without `correlationId`; 400/500 verified, 401/403/404 not part of endpoint behavior. |
+| NFR-012 | Accessibility (Frontend): WCAG 2.1 AA compliance | React UI component accessibility audit | Evidence review | MANUAL VERIFICATION REQUIRED | No automated accessibility evidence (Axe/screen-reader audit) is present. |
+| NFR-013 | Code Quality: Minimum 80% code coverage for backend | JUnit 5 test suite coverage report | Coverage report review | MANUAL VERIFICATION REQUIRED | No Jacoco coverage report evidence captured in this documentation-only pass. |
+| NFR-014 | Documentation: API documentation auto-generated from OpenAPI | Swagger UI available at `/swagger-ui.html` | Manual runtime verification | MANUAL VERIFICATION REQUIRED | Springdoc dependency exists, but Swagger endpoint availability was not executed/verified in this pass. |
 
 ---
 
@@ -60,19 +60,19 @@
 
 | BR ID | Business Rule | Trigger Condition | Expected Output | Test Type | Test Case ID | Status | Notes |
 |-------|---------------|--------------------|-----------------|-----------|--------------|--------|-------|
-| BR001 | Customer Inquiry Acceptance Rule | Valid 10-digit customer number | CUSTOMER-FOUND = 'Y'; NUMBER-OF-ACCOUNTS = 0–20; ACCOUNT-DETAILS array | Unit + Integration | TC-BR001-001 | ⚠️ PLANNED | Test with customer ID `0123456789` (valid); verify `customerFound: true` |
-| BR001 | Customer Inquiry Acceptance Rule | Invalid/missing customer number | CUSTOMER-FOUND = 'N'; NUMBER-OF-ACCOUNTS = 0 | Unit | TC-BR001-002 | ⚠️ PLANNED | Test with `null`, empty string, non-numeric, length != 10 |
-| BR002 | Account Balance Retrieval Rule | Valid customer with N accounts (0 ≤ N ≤ 20) | Return all N account records with complete details | Integration | TC-BR002-001 | ⚠️ PLANNED | Test edge cases: 0 accounts, 1 account, 20 accounts (boundary) |
-| BR002 | Account Balance Retrieval Rule | Valid customer with > 20 accounts | Return only first 20 accounts; log warning | Integration | TC-BR002-002 | ⚠️ PLANNED | Mock repository to return 25 accounts; verify truncation to 20 |
-| BR003 | Input Validation Strictness Rule | Non-numeric customer ID | Return `400 Bad Request` with error message | Unit | TC-BR003-001 | ⚠️ PLANNED | Test with `ABC1234567`, `012345678A` |
-| BR003 | Input Validation Strictness Rule | Customer ID length != 10 | Return `400 Bad Request` | Unit | TC-BR003-002 | ⚠️ PLANNED | Test lengths: 9, 11 digits |
-| BR003 | Input Validation Strictness Rule | Leading/trailing whitespace in customer ID | Reject input; no padding/trimming | Unit | TC-BR003-003 | ⚠️ PLANNED | Verify strictness: legacy COBOL-like padding behavior NOT applied |
-| BR004 | Account Status Preservation Rule | Query returns all account statuses (Active, Inactive, Closed) | Return all accounts regardless of status | Integration | TC-BR004-001 | ⚠️ PLANNED | Mock repository returns mixed status accounts; verify all returned |
-| BR005 | OAuth2 Authorization Rule | Valid JWT with required role | Allow request; return `200 OK` with account data | Integration | TC-BR005-001 | ⚠️ PLANNED | Test with valid JWT issued by test OAuth2 provider |
-| BR005 | OAuth2 Authorization Rule | Valid JWT with insufficient role | Deny request; return `403 Forbidden` | Integration | TC-BR005-002 | ⚠️ PLANNED | Test with valid JWT but missing `customer-inquirer` role |
-| BR005 | OAuth2 Authorization Rule | Missing or invalid JWT | Deny request; return `401 Unauthorized` | Unit | TC-BR005-003 | ⚠️ PLANNED | Test with no Authorization header, invalid token, expired token |
-| BR006 | Secrets Handling Rule | Database credentials required at startup | Secrets injected via environment variable or secret manager; never hardcoded | Unit | TC-BR006-001 | ⚠️ PLANNED | Source code audit: grep for password patterns; CI/CD secret scanner |
-| BR006 | Secrets Handling Rule | Missing required secret at startup | Application fails to start; logs clear error message (no secret leak in logs) | Unit | TC-BR006-002 | ⚠️ PLANNED | Set missing env var; verify startup error; audit log for credential exposure |
+| BR001 | Customer Inquiry Acceptance Rule | Valid 10-digit customer number | `legacyStatus.customerFound='Y'`; accounts returned in implemented shape | Unit + Integration | TC-BR001-001 | PASS | Verified by `InqacccuOpenApiConformanceTest#successPayloadShouldExposeRequiredShapes`, `AccountRelationshipControllerTest#shouldReturnSuccessPayload`, and Playwright success flow. |
+| BR001 | Customer Inquiry Acceptance Rule | Invalid/missing customer number | Validation failure is distinct from business not-found | Unit | TC-BR001-002 | PARTIAL | Non-numeric invalid path verified (400) in backend/frontend tests; missing/null and all length variants not explicitly evidenced. |
+| BR002 | Account Balance Retrieval Rule | Valid customer with N accounts (0 <= N <= 20) | Return N account records from mock repository relationship payload | Integration | TC-BR002-001 | PARTIAL | Retrieval for valid customers is verified (N=1/N=2 examples); no automated boundary evidence for N=20. |
+| BR002 | Account Balance Retrieval Rule | Valid customer with > 20 accounts | Return capped 20 accounts | Integration | TC-BR002-002 | FAIL | No implemented cap logic or >20 automated test evidence in current INQACCCU suite. |
+| BR003 | Input Validation Strictness Rule | Non-numeric customer ID | Return `400 Bad Request` with validation error payload | Unit | TC-BR003-001 | PASS | Verified by `AccountRelationshipControllerTest#shouldReturnBadRequestForInvalidCustomerNumber` and `InqacccuOpenApiConformanceTest#invalidInputShouldReturnValidationErrorShape`. |
+| BR003 | Input Validation Strictness Rule | Customer ID length != 10 | Return `400 Bad Request` | Unit | TC-BR003-002 | PARTIAL | Regex rule implies rejection; explicit backend automated tests for 9/11-digit cases are not present. |
+| BR003 | Input Validation Strictness Rule | Leading/trailing whitespace in customer ID | Reject invalid formatting | Unit | TC-BR003-003 | MANUAL VERIFICATION REQUIRED | No explicit automated whitespace case evidence captured in backend tests. |
+| BR004 | Account Status Preservation Rule | Query returns all account statuses (Active, Inactive, Closed) | Return all accounts regardless of status | Integration | TC-BR004-001 | NOT APPLICABLE | Account status is not part of frozen INQACCCU contract/implemented DTO for this feature path. |
+| BR005 | OAuth2 Authorization Rule | Valid JWT with required role | Authorization enforced at endpoint | Integration | TC-BR005-001 | NOT APPLICABLE | OAuth2/JWT/RBAC is not a frozen INQACCCU feature requirement for this endpoint. |
+| BR005 | OAuth2 Authorization Rule | Valid JWT with insufficient role | Return 403 | Integration | TC-BR005-002 | NOT APPLICABLE | Out-of-scope for frozen INQACCCU feature acceptance artifacts. |
+| BR005 | OAuth2 Authorization Rule | Missing or invalid JWT | Return 401 | Unit | TC-BR005-003 | NOT APPLICABLE | Out-of-scope for frozen INQACCCU feature acceptance artifacts. |
+| BR006 | Secrets Handling Rule | Database credentials required at startup | Secrets handling controls | Unit | TC-BR006-001 | NOT APPLICABLE | Startup secret-management controls are outside frozen INQACCCU feature QA scope for this POC. |
+| BR006 | Secrets Handling Rule | Missing required secret at startup | Startup failure behavior | Unit | TC-BR006-002 | NOT APPLICABLE | Out-of-scope production/control-plane concern for this feature checklist. |
 
 ---
 
@@ -82,13 +82,22 @@
 
 | Legacy Copybook | Legacy Field | Type/Length | Modern Java DTO | Modern Type | Mapping Test | Status | Notes |
 |-----------------|--------------|-------------|-----------------|-------------|--------------|--------|-------|
-| INQACCCUZ.cpy | CUSTOMER-NUMBER | PIC 9(10) | `CustomerAccountsResponse.customerId` | `String` | String format; no leading zeros lost | ⚠️ PLANNED | Test: `0000000001` → `"0000000001"` (preserve zeros) |
-| INQACCCUZ.cpy | CUSTOMER-FOUND | PIC X ('Y'/'N') | `CustomerAccountsResponse.customerFound` | `Boolean` | Y → true; N → false | ⚠️ PLANNED | Test both Y and N cases |
-| INQACCCUZ.cpy | NUMBER-OF-ACCOUNTS | S9(8) BINARY | `CustomerAccountsResponse.numberOfAccounts` | `Integer` | Range: 0–20 (validate upper bound) | ⚠️ PLANNED | Test boundary: 0, 1, 20; reject > 20 |
-| ACCOUNT.cpy | ACCOUNT-NUMBER | PIC 9(8) | `AccountDetail.accountNumber` | `String` | Preserve leading zeros | ⚠️ PLANNED | Test: `00012345` → `"00012345"` |
-| ACCOUNT.cpy | SORT-CODE | PIC 9(6) | `AccountDetail.sortCode` | `String` | Numeric string, no transformation | ⚠️ PLANNED | Test: `123456` → `"123456"` |
-| ACCOUNT.cpy | ACCOUNT-BALANCE | PIC S9(13)V99 COMP-3 | `AccountDetail.balance` | `BigDecimal` | Preserve precision; scale = 2 | ⚠️ PLANNED | Test: `1234567890123.45` maintains 2 decimal places |
-| ACCOUNT.cpy | INTEREST-RATE | PIC 9(3)V99 COMP-3 | `AccountDetail.interestRate` | `BigDecimal` | Preserve scale; scale = 2 | ⚠️ PLANNED | Test: `5.25` → `5.25` |
-| ACCOUNT.cpy | STATEMENT-DATE | PIC 9(8) (YYYYMMDD) | `AccountDetail.statementDate` | `LocalDate` | ISO 8601 format in JSON | ⚠️ PLANNED | Test: `20250115` → `"2025-01-15"` |
-| ACCOUNT.cpy | ACCOUNT-STATUS | PIC X(8) | `AccountDetail.status` | `String` (enum: ACTIVE, INACTIVE, CLOSED) | Case normalization | ⚠️ PLANNED | Test: `ACTIVE  ` (with padding) → `"ACTIVE"` |
-| ACCDB2.cpy | EYE-CATCHER | PIC X(4) ('ACCT') | `AccountDetail.eyeCatcher` | `String` | Literal value validation |
+| INQACCCUZ.cpy | CUSTOMER-NUMBER | PIC 9(10) | `AccountRelationshipResponse.customer.customerNumber` | `String` | String format; leading zero preservation | PASS | `AccountRelationshipMapperTest` and `InqacccuOpenApiConformanceTest` verify string customer number preservation (`0000000001`). |
+| INQACCCUZ.cpy | CUSTOMER-FOUND | PIC X ('Y'/'N') | `AccountRelationshipResponse.legacyStatus.customerFound` | `String ('Y'/'N')` | Y/N preservation | PASS | Implemented as Y/N status semantics; verified in not-found and success tests across backend/frontend. |
+| INQACCCUZ.cpy | NUMBER-OF-ACCOUNTS | S9(8) BINARY | `AccountRelationshipResponse.accounts.count` | `Integer` | Count alignment with returned list | PARTIAL | Count is computed and asserted in tests, but frozen contract expects top-level `numberOfAccounts` (runtime shape drift). |
+| ACCOUNT.cpy | ACCOUNT-NUMBER | PIC 9(8) | `AccountSummary.accountNumber` | `String` | Identifier preservation | PARTIAL | Returned and asserted in backend/frontend/E2E tests; explicit dedicated leading-zero account-number test case is not present. |
+| ACCOUNT.cpy | SORT-CODE | PIC 9(6) | `AccountSummary.sortCode` | `String` | Numeric string mapping | PASS | Verified in mock data and frontend/backend assertions. |
+| ACCOUNT.cpy | ACCOUNT-BALANCE | PIC S9(13)V99 COMP-3 | `AccountSummary.availableBalance` + `AccountSummary.actualBalance` | `BigDecimal` | Decimal precision mapping | PASS | Mapper and payload tests verify decimal values are retained in JSON payload. |
+| ACCOUNT.cpy | INTEREST-RATE | PIC 9(3)V99 COMP-3 | `AccountSummary.interestRate` | `BigDecimal` | Decimal scale preservation | PASS | Verified in mapper/controller/frontend payload assertions. |
+| ACCOUNT.cpy | STATEMENT-DATE | PIC 9(8) (YYYYMMDD) | `AccountSummary.lastStatementDate` / `nextStatementDate` | `String (ISO yyyy-MM-dd)` | Numeric-to-ISO conversion | PASS | Verified by `AccountRelationshipMapperTest` and `InqacccuOpenApiConformanceTest` date assertions. |
+| ACCOUNT.cpy | ACCOUNT-STATUS | PIC X(8) | Not implemented in runtime INQACCCU DTO | N/A | Scope validation | NOT APPLICABLE | Account status field is not part of frozen INQACCCU response contract for this feature implementation. |
+| ACCDB2.cpy | EYE-CATCHER | PIC X(4) ('ACCT') | Not present in runtime `InqacccuAccountSummary` / `AccountSummary` | Missing | Contract-field parity check | FAIL | Frozen contract includes `eyecatcher`; runtime openapi/DTO and automated payload tests do not include this field. |
+
+---
+
+## 4. QA Review Outcome Snapshot
+
+- Automated verification completed: backend contract/controller/service/repository/mapper tests, frontend API client/validation/page tests, and Playwright INQACCCU E2E tests.
+- Manual smoke testing still required: whitespace/length-edge validation variants, runtime Swagger endpoint check, explicit log/correlation verification, and legacy-output comparison.
+- No implementation evidence currently captured: 20-account boundary behavior, performance/load results, accessibility audit, coverage-threshold report.
+- Out-of-scope production concerns (marked NOT APPLICABLE): OAuth2/JWT/RBAC controls for INQACCCU endpoint, TLS deployment hardening, Kubernetes/HPA/SLA/Prometheus/OpenTelemetry production operations.
