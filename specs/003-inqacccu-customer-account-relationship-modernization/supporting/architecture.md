@@ -8,6 +8,7 @@ Define the high-level system boundaries and responsibilities needed to deliver t
 
 - Legacy source behavior is authoritative for business semantics.
 - Frozen supporting artifacts define the approved modernization intent and preserved behavior baseline.
+- Approved feature scope includes both backend inquiry API behavior and the existing frontend user channel behavior.
 - This architecture is intentionally high-level and does not define implementation structure, technology products, deployment topology, or task sequencing.
 
 ## Confirmed Constraints
@@ -27,23 +28,36 @@ Define the high-level system boundaries and responsibilities needed to deliver t
 
 The intended system has these major boundaries:
 
-1. External inquiry interface boundary
+1. Frontend interaction boundary
+- Provides the user-facing inquiry experience for entering customer number values and viewing inquiry outcomes.
+- Communicates with the backend inquiry API over HTTP.
+- Serves as a usable demonstration channel for legacy-equivalent inquiry behavior without adding non-legacy business capabilities.
+
+2. External inquiry interface boundary
 - Accepts inquiry requests and returns inquiry outcomes.
 
-2. Inquiry orchestration boundary
+3. Inquiry orchestration boundary
 - Coordinates validation, retrieval, transformation, and outcome mapping.
 
-3. Customer-validation capability boundary
+4. Customer-validation capability boundary
 - Provides customer-existence validation equivalent to legacy INQCUST behavior.
 
-4. Account-data access boundary
+5. Account-data access boundary
 - Provides read-only account retrieval for validated customer context and internally derived sort code.
 
-5. Transformation and representation boundary
+6. Transformation and representation boundary
 - Preserves legacy data semantics while producing external representations.
 
-6. Status and error outcome boundary
+7. Status and error outcome boundary
 - Preserves distinct legacy outcome states and failure semantics.
+
+## Frontend Technology Context
+
+- The existing frontend channel in this repository is the established `src/frontend-react` web application stack used by completed Features 001/002.
+- The frontend stack is React + TypeScript + Vite using repository-configured versions and conventions.
+- The frontend uses HTTP API calls to invoke inquiry behavior and render returned outcomes.
+- Frontend technology choice is treated as an existing channel concern and does not change backend business semantics.
+- Frontend interaction remains centered on standard inquiry submission and outcome presentation rather than feature-specific inquiry workflows.
 
 ## Logical Components and Responsibilities
 
@@ -86,12 +100,15 @@ The intended system has these major boundaries:
 
 ## High-Level Inquiry Flow
 
-1. Receive customer-number inquiry.
-2. Validate customer using customer-validation capability.
-3. If validation fails, return preserved not-found/failure outcome.
-4. If validation succeeds, retrieve accounts through read-only data-access boundary using internal sort code.
-5. Transform retrieved data while preserving identifier and date semantics.
-6. Map final business status/outcome and return response.
+1. User enters a customer-number inquiry in the frontend interaction boundary.
+2. Frontend sends inquiry request to the external inquiry interface boundary.
+3. Validate customer using customer-validation capability.
+4. If validation fails, return preserved not-found/failure outcome.
+5. If validation succeeds, retrieve accounts through read-only data-access boundary using internal sort code.
+6. Transform retrieved data while preserving identifier and date semantics.
+7. Map final business status/outcome and return response.
+8. Frontend presents returned outcome to the user without altering preserved business semantics.
+9. For subsequent inquiries, the user updates inquiry input and submits another request through the same interaction flow.
 
 ## Data and Transformation Boundaries
 
@@ -129,6 +146,7 @@ This document does not finalize protocol-level status codes, envelope schemas, o
 - Input quality controls at the interface boundary.
 - Consistent operational visibility and diagnosability.
 - Consistent error propagation and outcome mapping across boundaries.
+- Consistent frontend-to-backend interaction behavior for inquiry submission and outcome presentation.
 
 Tooling, platforms, and product-specific implementations for these concerns are outside this architecture baseline.
 

@@ -6,7 +6,10 @@ Define the intended modernized system for INQACCCU at a business/system level wh
 
 ## Intended System Statement
 
-The intended system is a modern inquiry capability that accepts a customer-number inquiry and returns the same business outcome currently produced by INQACCCU, with equivalent status signaling and account data semantics.
+The intended system is a modern inquiry capability that includes the existing frontend application and backend inquiry API. Together they accept a customer-number inquiry and return the same business outcome currently produced by INQACCCU, with equivalent status signaling and account data semantics.
+
+The frontend acts as the user-facing inquiry channel and interacts with the backend API to submit inquiries and present inquiry outcomes.
+The frontend is a usable demonstration channel for the preserved legacy inquiry capability and does not introduce new business functionality or non-legacy inquiry modes.
 
 ## Preserved Legacy Business Behavior
 
@@ -69,6 +72,14 @@ The intended system is a modern inquiry capability that accepts a customer-numbe
 - Provide a modern interface channel for the same inquiry business capability.
 - Improve maintainability and clarity by separating business behavior from presentation concerns.
 - Preserve legacy behavior as the baseline, while allowing future approved enhancements to be considered explicitly.
+
+## User-Channel Scope
+
+- The approved modernization scope includes both:
+  - backend inquiry API behavior
+  - existing frontend user interaction behavior for inquiry submission and outcome display
+- Frontend-visible outcomes are consistent with the preserved backend business semantics.
+- Users can perform additional inquiries by updating inquiry input and submitting another request through normal inquiry interaction.
 
 ## Scope Boundaries
 

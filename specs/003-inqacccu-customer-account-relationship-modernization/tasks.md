@@ -1,82 +1,70 @@
 # Tasks: INQACCCU Customer-Account Relationship Modernization
 
-**Input**: Design documents from /specs/003-inqacccu-customer-account-relationship-modernization/
-**Prerequisites**: plan.md (required), spec.md (required), contracts/ (available)
+## Phase 1: Setup Tasks
 
-## Phase 1: Setup
+| Task ID | Title | Description | Dependencies | Acceptance / Done Criteria |
+|---|---|---|---|---|
+| T001 | Establish feature implementation skeleton | Create INQACCCU-specific backend and frontend feature scaffolding in existing modules without creating new applications. | None | Backend package/file skeleton and frontend feature folder structure exist in existing modules; project builds still resolve. |
+| T002 | Wire feature routing and module registration | Register INQACCCU backend endpoint wiring and frontend route/menu entry points in current app shells. | T001 | Backend route is discoverable by Spring mapping; frontend route is reachable from app navigation and loads feature page shell. |
+| T003 | Align runtime configuration for local integration | Add or update feature configuration keys for backend runtime and frontend API base/proxy usage in existing config locations. | T001 | Backend starts with feature config in local mode; frontend calls resolve to backend through configured base URL/proxy path. |
 
-Purpose: Create standard placeholder task-planning scaffolding for Feature 003.
+## Phase 2: Backend Tasks
 
-- [ ] T001 Initialize placeholder task notes in specs/003-inqacccu-customer-account-relationship-modernization/supporting/tasks-notes.md
-- [ ] T002 [P] Create placeholder task assumptions list in specs/003-inqacccu-customer-account-relationship-modernization/supporting/task-assumptions.md
+| Task ID | Title | Description | Dependencies | Acceptance / Done Criteria |
+|---|---|---|---|---|
+| T004 | Implement INQACCCU API/domain response models | Create backend response and error model classes for customer-account inquiry aligned to frozen contract fields and naming. | T001 | Model classes compile; fields/types align to frozen contract structures used by controller/service mappings. |
+| T005 | Implement customerNumber request validation path | Implement path-parameter validation and validation-error translation for INQACCCU endpoint inputs. | T004 | Invalid customerNumber inputs return standardized validation error payload; valid-format reserved values continue through business path. |
+| T006 | Implement customer validation capability adapter | Implement service/repository boundary for customer validation before account retrieval, reusing INQCUST-equivalent behavior. | T004 | Customer validation dependency is invoked before account retrieval in orchestration flow; adapter is unit-testable. |
+| T007 | Implement account retrieval repository and query flow | Implement read-only account retrieval by validated customer number and internally derived sort code using repository abstraction. | T006 | Retrieval path returns account rows through abstraction, enforces read-only behavior, and supports bounded return volume. |
+| T008 | Implement legacy-to-contract account/date mapping | Implement mapping/conversion logic for account fields, identifier preservation, and date conversion to external representation. | T007 | Mapper output contains all required account fields with correct external date representation and identifier preservation. |
+| T009 | Implement legacy status and outcome mapping | Implement backend outcome mapping for success, not-found, and retrieval-stage failCode paths into business response envelope. | T006, T007, T008 | Response builder maps statuses/failCodes consistently for all supported business outcomes. |
+| T010 | Implement INQACCCU orchestration service | Implement end-to-end service flow: validate customer, retrieve accounts, map outcomes, and return contract response. | T005, T006, T007, T008, T009 | Service composes complete inquiry response and handles retrieval/open/fetch/close failure mapping paths. |
+| T011 | Implement INQACCCU controller endpoint | Implement GET /api/v1/customers/{customerNumber}/accounts controller method and integrate with orchestration service. | T010 | Endpoint returns application/json business/error payloads with expected status code handling and schema shape. |
+| T012 | Enforce runtime API conformance to frozen OpenAPI contract | Implement and verify runtime endpoint/request/response conformance against the frozen INQACCCU OpenAPI contract used as the authoritative reference. | T011 | Runtime INQACCCU API implementation conforms to frozen path, parameter, response schema, and example expectations. |
 
-## Phase 2: Foundational
+## Phase 3: Frontend Tasks
 
-Purpose: Establish generic shared placeholders used by all user stories.
+| Task ID | Title | Description | Dependencies | Acceptance / Done Criteria |
+|---|---|---|---|---|
+| T013 | Implement frontend domain types for INQACCCU | Add frontend types/interfaces for business and error responses used by INQACCCU inquiry flow. | T004 | Frontend type definitions compile and align to backend response/error payloads consumed by UI. |
+| T014 | Implement INQACCCU API client | Add frontend API client function for INQACCCU endpoint invocation and normalized response/error handling. | T013, T011 | Client submits customer-number inquiry to INQACCCU endpoint and returns typed success/validation/infrastructure outcomes. |
+| T015 | Implement frontend input validation logic | Implement customer-number validation logic and user feedback behavior in feature form handling. | T013 | Validation behavior blocks invalid submit attempts and presents actionable field-level feedback. |
+| T016 | Implement INQACCCU inquiry page UI | Build/extend inquiry page in existing frontend module for input, submit action, loading indicator, and outcome rendering. | T014, T015 | Page renders inquiry form and displays returned outcomes for accounts, zero accounts, not found, and retrieval/infrastructure errors. |
+| T017 | Implement account result presentation componentization | Implement UI sections/table/cards for rendering returned account records and summary fields from inquiry responses. | T016 | All returned account fields are rendered from API payload with stable formatting and preserved identifiers. |
+| T018 | Implement subsequent inquiry interaction flow | Implement inquiry-page interaction where users update inquiry input and submit another request, and the UI displays the newly completed inquiry result. | T016 | Users can submit additional inquiries in same page flow and UI reflects latest completed response without stale state leakage. |
 
-- [ ] T003 Create placeholder domain glossary in specs/003-inqacccu-customer-account-relationship-modernization/supporting/domain-glossary.md
-- [ ] T004 [P] Create placeholder status-outcome mapping notes in specs/003-inqacccu-customer-account-relationship-modernization/supporting/status-outcome-placeholder.md
-- [ ] T005 Create placeholder input-normalization notes in specs/003-inqacccu-customer-account-relationship-modernization/supporting/input-normalization-placeholder.md
+## Phase 4: Integration Tasks
 
-## Phase 3: User Story 1 - Retrieve accounts linked to a customer (Priority P1)
+| Task ID | Title | Description | Dependencies | Acceptance / Done Criteria |
+|---|---|---|---|---|
+| T019 | Integrate frontend route with application navigation | Connect INQACCCU inquiry page into existing frontend route map and app navigation entry points. | T016 | Feature route is reachable through configured navigation and direct route access. |
+| T020 | Integrate frontend-backend request path in local runtime | Validate and adjust frontend API base/proxy configuration and backend CORS/runtime settings for local integrated execution. | T003, T014, T019 | Local run supports successful browser-to-backend requests for INQACCCU without manual request rewrites. |
+| T021 | Integrate mock data and adapter behavior for scenario coverage | Ensure backend adapters/mock data paths support required inquiry outcome scenarios used by feature and tests. | T007, T009, T010 | Controlled test scenarios are available for all supported inquiry outcomes and failCode paths. |
 
-Goal: Capture a placeholder implementation path for successful relationship inquiry.
+## Phase 5: Testing Tasks
 
-Independent Test Criteria:
-- A placeholder verification artifact exists for successful inquiry behavior.
-- Placeholder references align to Scenario 1 in spec.md without adding design detail.
+| Task ID | Title | Description | Dependencies | Acceptance / Done Criteria |
+|---|---|---|---|---|
+| T022 | Add backend unit tests for orchestration and mapping | Implement unit tests for service orchestration, status/failCode mapping, count bounds, and mapping transformations. | T010 | Unit test suite covers major orchestration branches and mapping outputs; tests pass in CI/local execution. |
+| T023 | Add backend repository/adapter tests | Implement tests for retrieval behavior, row-cap enforcement, read-only path handling, and end-of-data behavior. | T007, T021 | Repository tests verify bounded retrieval and non-error end-of-data handling; tests pass consistently. |
+| T024 | Add backend controller and exception-handler tests | Implement controller tests for success/business outcomes and validation/infrastructure error responses. | T011 | Controller tests verify response status/content types/schema structure across supported response classes. |
+| T025 | Add frontend validation and page behavior tests | Implement frontend tests for input validation, loading behavior, and inquiry outcome rendering paths. | T016, T018 | Frontend tests pass for invalid input, success rendering, zero-account rendering, not-found, and error presentation. |
+| T026 | Add frontend API client tests | Implement tests for client request path, response parsing, and normalized error handling. | T014 | API client tests pass for success, validation, and infrastructure/network failure handling. |
+| T027 | Add integrated backend-frontend flow tests | Implement integration/E2E tests to verify user inquiry flow from frontend submit through backend response presentation. | T020, T022, T024, T025, T026 | Integrated test run validates end-to-end inquiry behavior and passes in local/CI pipeline. |
+| T028 | Add contract conformance verification tests | Implement automated checks that backend responses conform to frozen OpenAPI schemas for INQACCCU endpoint. | T012, T024 | Contract verification passes for response families used by INQACCCU endpoint. |
 
-- [ ] T006 [US1] Create US1 placeholder implementation notes in specs/003-inqacccu-customer-account-relationship-modernization/supporting/us1-implementation-placeholder.md
-- [ ] T007 [P] [US1] Add US1 placeholder contract notes in specs/003-inqacccu-customer-account-relationship-modernization/contracts/openapi.yaml
-- [ ] T008 [US1] Create US1 placeholder verification checklist in specs/003-inqacccu-customer-account-relationship-modernization/checklists/us1-verification.md
+## Phase 6: Documentation Tasks
 
-## Phase 4: User Story 2 - Handle customer with no linked accounts (Priority P2)
+| Task ID | Title | Description | Dependencies | Acceptance / Done Criteria |
+|---|---|---|---|---|
+| T029 | Update backend module documentation | Update src/api module documentation for INQACCCU endpoint usage, configuration, and test/run instructions. | T011, T024 | Backend docs include INQACCCU endpoint/runtime/test details and are accurate for local execution. |
+| T030 | Update frontend module documentation | Update src/frontend-react documentation for INQACCCU route usage, API integration configuration, and test/run instructions. | T019, T025 | Frontend docs include INQACCCU feature route and execution instructions aligned to implemented flow. |
+| T031 | Update feature quickstart and traceability references | Update feature quickstart/supporting references to point to implemented backend/frontend execution and verification commands. | T027, T028, T029, T030 | Feature quickstart and supporting references are synchronized with implemented workflow and validation steps. |
 
-Goal: Capture a placeholder implementation path for no-relationship outcomes.
+## Completion Checklist
 
-Independent Test Criteria:
-- A placeholder verification artifact exists for empty-relationship outcomes.
-- Placeholder references align to Scenario 2 in spec.md without adding design detail.
-
-- [ ] T009 [US2] Create US2 placeholder implementation notes in specs/003-inqacccu-customer-account-relationship-modernization/supporting/us2-implementation-placeholder.md
-- [ ] T010 [P] [US2] Add US2 placeholder contract notes in specs/003-inqacccu-customer-account-relationship-modernization/contracts/openapi.yaml
-- [ ] T011 [US2] Create US2 placeholder verification checklist in specs/003-inqacccu-customer-account-relationship-modernization/checklists/us2-verification.md
-
-## Phase 5: User Story 3 - Handle unknown customer (Priority P3)
-
-Goal: Capture a placeholder implementation path for not-found outcomes.
-
-Independent Test Criteria:
-- A placeholder verification artifact exists for not-found outcomes.
-- Placeholder references align to Scenario 3 in spec.md without adding design detail.
-
-- [ ] T012 [US3] Create US3 placeholder implementation notes in specs/003-inqacccu-customer-account-relationship-modernization/supporting/us3-implementation-placeholder.md
-- [ ] T013 [P] [US3] Add US3 placeholder contract notes in specs/003-inqacccu-customer-account-relationship-modernization/contracts/openapi.yaml
-- [ ] T014 [US3] Create US3 placeholder verification checklist in specs/003-inqacccu-customer-account-relationship-modernization/checklists/us3-verification.md
-
-## Phase 6: Polish & Cross-Cutting Concerns
-
-Purpose: Finalize placeholder readiness notes for later replacement.
-
-- [ ] T015 [P] Consolidate placeholder open questions in specs/003-inqacccu-customer-account-relationship-modernization/supporting/open-questions.md
-- [ ] T016 Create placeholder release-readiness checklist in specs/003-inqacccu-customer-account-relationship-modernization/checklists/release-readiness-placeholder.md
-
-## Dependencies
-
-- Phase 1 (Setup) must complete before Phase 2 (Foundational).
-- Phase 2 (Foundational) must complete before User Story phases.
-- User Story completion order: US1 -> US2 -> US3.
-- Phase 6 (Polish) depends on completion of US1, US2, and US3 placeholder tasks.
-
-## Parallel Execution Examples
-
-- US1 parallel set: T007 can run in parallel with T006 after Phase 2.
-- US2 parallel set: T010 can run in parallel with T009 after Phase 2.
-- US3 parallel set: T013 can run in parallel with T012 after Phase 2.
-- Cross-story parallel option: T008, T011, and T014 can be prepared in parallel once their related placeholder notes exist.
-
-## Implementation Strategy
-
-- MVP first: Complete Phase 1, Phase 2, and US1 (T006-T008) as the minimum placeholder delivery.
-- Incremental expansion: Add US2 placeholders next, then US3 placeholders.
-- Final pass: Complete Phase 6 to prepare this placeholder backlog for detailed planning replacement.
+- [ ] All tasks T001-T031 are completed.
+- [ ] Backend and frontend build/test pipelines pass with INQACCCU changes.
+- [ ] Runtime endpoint and frontend route are integrated and manually smoke-tested.
+- [ ] Frozen contract conformance checks pass for INQACCCU responses.
+- [ ] Documentation updates are complete and match implemented behavior.

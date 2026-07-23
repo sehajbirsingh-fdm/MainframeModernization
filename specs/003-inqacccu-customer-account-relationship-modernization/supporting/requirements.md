@@ -26,6 +26,14 @@ These requirements describe business capability and observable behavior only. Th
 | FR-012 | The system shall preserve fixed-width identifier semantics for customer number and account number, including preservation of leading zeroes. |
 | FR-013 | The system shall preserve legacy date semantics where account dates originate from DB2 date context and legacy output meaning corresponds to DDMMYYYY representation. |
 | FR-014 | The system shall not imply deterministic account ordering unless an explicit future scope decision introduces ordering behavior. |
+| FR-015 | The system shall provide a usable user-facing inquiry channel through which a user can initiate a customer account inquiry using customer number. |
+| FR-016 | The system shall present associated account results to the user when inquiry outcomes indicate customer found with one or more accounts. |
+| FR-017 | The system shall present a distinct user-visible outcome when inquiry results indicate customer found with zero accounts. |
+| FR-018 | The system shall present a distinct user-visible outcome when inquiry results indicate customer not found. |
+| FR-019 | The system shall provide user-visible feedback for invalid inquiry input consistent with validation failure behavior. |
+| FR-020 | The system shall present a distinct user-visible outcome when non-business infrastructure failure occurs. |
+| FR-021 | The system shall preserve leading zeroes in externally visible customer and account identifiers throughout inquiry input and output presentation. |
+| FR-022 | The system shall allow users to perform subsequent inquiries by modifying inquiry input and submitting another request through the same inquiry interaction. |
 
 ## Optional Future Enhancements (Not Mandatory Requirements)
 
