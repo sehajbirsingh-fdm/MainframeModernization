@@ -1,400 +1,242 @@
-# Copilot Implementation Prompt
+# INQACCCU Copilot Build Prompt
 
 ## Purpose
-Generate implementation code for the INQACCCU modernization initiative—transforming a legacy COBOL CICS customer-account inquiry program into a Spring Boot 3.3.x REST API with React 18.x frontend. Use this prompt to drive iterative pull requests aligned with the mainframe modernization pipeline.
+Implement the INQACCCU Customer-Account Relationship Modernization feature in a controlled, task-driven manner using the finalized artifacts and existing repository architecture.
 
----
+This prompt governs implementation execution only. It does not redefine requirements, business behavior, architecture, API behavior, or contract design.
 
-## Context & Mandatory Constraints
+## Authoritative Artifacts
+Use the following files as frozen authorities:
 
-### System Intent (Binding Architecture)
-- **Backend Stack:** Java 21, Spring Boot 3.3.x, Maven 3.9+
-- **Frontend Stack:** React 18.x, TypeScript 5.x, Vite 5.x, Node.js 20 LTS
-- **API Contract:** REST over HTTPS, OpenAPI 3.0.3
-- **Authentication:** OAuth2 resource server with JWT bearer tokens
-- **Authorization:** Role-based access control (RBAC) for customer-account inquiry endpoints
-- **Persistence (POC):** Mock repository layer (no live CICS or DB2 connectivity)
-- **Observability:** Structured JSON logging with correlation IDs; OpenTelemetry-ready tracing
-- **Security Baseline:** TLS 1.2+, strict input validation, secrets via environment variables or secret manager only
+- supporting/intended-system.md
+- supporting/architecture.md
+- supporting/business-rules.md
+- supporting/data-model.md
+- supporting/program-analysis.md
+- supporting/research.md
+- requirements.md
+- spec.md
+- plan.md
+- tasks.md
+- contracts/openapi.yaml
+- supporting/test-spec.md
 
-### Preservation & Enhancement Rules
-1. **Default Behavior:** Preserve all legacy observable behavior from INQACCCU COBOL program as the default execution path
-2. **Future Enhancements:** Any new functionality must be explicitly marked and toggleable; do not change default behavior
-3. **Architecture:** Keep controllers thin; business logic resides in service layer; repositories abstract persistence
-4. **No Mainframe Mocking:** Do not attempt to call real CICS or DB2 systems in POC mode
+Use artifact responsibilities exactly as defined:
 
----
+- requirements.md defines business needs.
+- spec.md defines externally observable feature and API behavior.
+- plan.md defines implementation architecture and strategy.
+- tasks.md defines implementation sequence and completion criteria.
+- contracts/openapi.yaml defines the machine-readable API contract.
+- supporting/test-spec.md defines required verification coverage.
+- supporting artifacts provide legacy, data, mapping, and architectural context.
 
-## Feature: Customer Account Relationship Inquiry REST API
+If any frozen artifacts conflict, do not guess and do not edit frozen files. Stop only the affected task and report the exact conflict with file names and relevant sections.
 
-### Functional Scope
+## Repository-First Implementation
+Before making code changes:
 
-**Endpoint:** `GET /api/v1/customers/{customerId}/accounts`
+1. Inspect the current repository structure.
+2. Identify established backend and frontend modules.
+3. Identify existing naming, packaging, configuration, API, testing, error-handling, logging, and security conventions.
+4. Reuse existing conventions and patterns where they do not conflict with frozen artifacts.
+5. Do not create a second backend or frontend application.
+6. Do not introduce new frameworks, libraries, infrastructure, or architectural layers unless explicitly required by plan.md and absent from the repository.
 
-**Input:**
-- Path parameter: `customerId` (10-digit numeric string, required)
-- Header: `Authorization: Bearer {JWT}` (required, OAuth2 resource server)
+Implementation must follow the finalized feature architecture in plan.md and supporting/architecture.md while staying consistent with repository conventions.
 
-**Output (200 OK):**
-```json
-{
-  "customerId": "0123456789",
-  "customerFound": true,
-  "numberOfAccounts": 2,
-  "accounts": [
-    {
-      "eyeCatcher": "ACCT",
-      "accountNumber": "12345678",
-      "sortCode": "123456",
-      "balance": "9876543.21",
-      "interestRate": "2.5",
-      "statementDate": "2025-01-15"
-    }
-  ]
-}
-```
+## Task-Driven Execution Rules
+Execute tasks.md in dependency order.
 
-**Error Responses:**
-- `400 Bad Request`: Invalid customer ID format or missing required fields
-- `401 Unauthorized`: Missing or invalid JWT
-- `403 Forbidden`: JWT valid but user role insufficient for `ROLE_CUSTOMER_INQUIRY`
-- `500 Internal Server Error`: Unexpected server error
+For each task:
 
-**Legacy Business Rules Mapped:**
-- **BR001:** Accept 10-digit customer number; return CUSTOMER-FOUND flag (true/false) and 0–20 account records
-- **BR002:** Validate customer number format strictly; reject non-numeric or invalid length inputs
-- **BR003:** Return all associated accounts regardless of status (Active, Inactive, Closed)
-- **BR004:** Preserve legacy response structure and field mappings from COBOL copybooks (INQACCCUZ, ACCOUNT, ACCDB2)
+1. Read task description, dependencies, and acceptance criteria.
+2. Confirm all dependency tasks are complete.
+3. Implement only the current task plus minimum supporting changes.
+4. Do not implement future tasks early.
+5. Add or update tests required for current task verification.
+6. Run relevant build/test command(s) for impacted modules.
+7. Verify all acceptance criteria are satisfied.
+8. Mark/report task complete only after implementation and verification succeed.
+9. Continue to next unblocked task.
 
----
+Do not create separate TODO files. Do not replace implementation work with planning notes.
 
-## Implementation Guidance
+## Scope Control
+Implement only finalized INQACCCU scope.
 
-### Phase 1: Foundation & API Contract (Weeks 1–4)
+Do not introduce:
 
-#### Iteration 1A: Spring Boot Scaffolding (TASK-001)
+- new inquiry modes
+- new reserved-value behavior
+- write operations
+- new endpoints
+- pagination/filtering not required by frozen artifacts
+- additional customer/account capabilities outside feature scope
+- dedicated Repeat Inquiry feature
+- unrelated navigation redesign
+- unrelated repository cleanup or refactoring
 
-**Objective:** Initialize Maven-based Spring Boot 3.3.x project with core dependencies.
+Frontend may support updating inquiry input and submitting another request through normal inquiry flow only.
 
-**Deliverables:**
-1. Create `pom.xml` with:
-   - Spring Boot 3.3.x BOM
-   - Spring Web, Spring Security (OAuth2 Resource Server)
-   - Spring Data (mock persistence ready)
-   - Micrometer Metrics, OpenTelemetry SDK
-   - Jackson for JSON serialization
-   - Lombok for boilerplate reduction
-   - JUnit 5, Mockito for testing
-2. Configure Maven profiles: `dev`, `test`, `prod`
-3. Create `.gitignore` to exclude secrets, build artifacts, IDE files
-4. Set Java 21 target in `<source>` and `<target>`
-5. Establish directory structure: `src/main/java`, `src/test/java`, `src/main/resources`
+## Backend Implementation Expectations
+Implement backend according to plan.md, tasks.md, contracts/openapi.yaml, and established repository structure.
 
-**Acceptance Criteria:**
-- [ ] AC-001.1: `mvn clean verify` succeeds; application starts with `mvn spring-boot:run`
-- [ ] AC-001.2: No secrets in `pom.xml`; all sensitive configuration via environment variables
-- [ ] AC-001.3: Build profiles selectable without code changes
+Required implementation concerns (as assigned by tasks):
 
-**Pull Request Checklist:**
-- All dependencies pinned to specific versions
-- No `SNAPSHOT` or `RELEASE` versions in production profile
-- Dependency security scan passes (no known CVEs)
+- request validation
+- customer validation before account retrieval
+- internally derived sort-code behavior
+- read-only account retrieval
+- bounded maximum account return count
+- normal end-of-data handling
+- customer-not-found outcomes
+- zero-account outcomes
+- successful account-list outcomes
+- retrieval-stage legacy failure mappings
+- separation of business outcomes from infrastructure failures
+- identifier and leading-zero preservation
+- date transformation
+- numberOfAccounts alignment with returned account collection
+- contract-conformant validation and infrastructure error payloads
+- correlation and safe logging
+- existing project security behavior
 
----
+Do not expose internal repository/domain records directly through API payloads.
+Do not change contracts/openapi.yaml to fit implementation drift.
+Runtime behavior must conform to frozen OpenAPI contract.
 
-#### Iteration 1B: Application Properties & Security Configuration (TASK-002)
+## Frontend Implementation Expectations
+Implement in the existing frontend application and follow repository-established React, TypeScript, Vite, routing, API-client, state, and testing conventions already present in src/frontend-react.
 
-**Objective:** Configure Spring Boot application for OAuth2 resource server and environment-driven secrets.
+Required frontend behavior (as assigned by tasks):
 
-**Deliverables:**
-1. Create `application.yml` (shared across profiles):
-   ```yaml
-   spring:
-     application:
-       name: inqacccu-api
-     security:
-       oauth2:
-         resourceserver:
-           jwt:
-             issuer-uri: ${JWT_ISSUER_URI}
-             jwk-set-uri: ${JWT_JWK_SET_URI}
-   server:
-     servlet:
-       context-path: /api/v1
-     ssl:
-       enabled: true
-       key-store: ${SERVER_SSL_KEYSTORE_PATH:#{null}}
-       key-store-password: ${SERVER_SSL_KEYSTORE_PASSWORD}
-   management:
-     endpoints:
-       web:
-         exposure:
-           include: health,metrics,info
-   ```
-2. Create `application-dev.yml`:
-   - Override `ssl.enabled: false` for local development
-   - Configure in-memory mock OAuth2 issuer for testing
-3. Create `SecurityConfig` class:
-   - Enable OAuth2 resource server filter chain
-   - Configure RBAC: permit `/actuator/health` unauthenticated; require `ROLE_CUSTOMER_INQUIRY` for account endpoint
-   - Add `JwtAuthenticationConverter` to map JWT claims to Spring Security authorities
-4. Create `SecretValidator` bean to validate required environment variables at startup (e.g., `JWT_ISSUER_URI`, `JWT_JWK_SET_URI`)
+- inquiry-page route and rendering
+- customer-number input
+- client-side validation and field-level feedback
+- prevention of invalid backend requests
+- valid API request construction
+- loading presentation
+- successful account-result rendering
+- zero-account presentation
+- customer-not-found presentation
+- business failure presentation
+- validation-error presentation
+- infrastructure and network error presentation
+- preservation of leading zeroes
+- update input and submit another request through normal flow
+- replace previous display with newly completed inquiry outcome
+- prevent stale result/loading/error leakage between inquiries
 
-**Acceptance Criteria:**
-- [ ] AC-002.1: Application starts; `/actuator/health` returns 200 without JWT
-- [ ] AC-002.2: Unauthenticated requests to `/api/v1/customers/{id}/accounts` return 401
-- [ ] AC-002.3: Missing required secrets cause startup failure with clear error message
-- [ ] AC-002.4: Valid JWT with `ROLE_CUSTOMER_INQUIRY` claim passes authorization filter
-- [ ] AC-002.5: Valid JWT without required role returns 403
+Do not add user-entered bearer-token fields unless explicitly required by frozen artifacts and existing application architecture.
 
-**Pull Request Checklist:**
-- No hardcoded secrets; all externalized to environment variables
-- `SecurityConfig` documented with Javadoc explaining RBAC rules
-- Unit tests for `JwtAuthenticationConverter` and `SecretValidator`
+## Testing Expectations
+Implement tests according to supporting/test-spec.md and task acceptance criteria.
 
----
+Use only frameworks/tooling already established in repository or explicitly named in plan.md.
 
-#### Iteration 1C: Data Models & DTOs (TASK-003)
+Required verification (as applicable by task):
 
-**Objective:** Define Java DTOs representing legacy COBOL copybook structures.
+- backend unit tests
+- mapper/transformation tests
+- service orchestration tests
+- repository/adapter tests
+- controller and exception-handler tests
+- Spring integration tests
+- frontend unit/component tests
+- frontend validation tests
+- frontend API-client tests
+- frontend integration tests
+- browser-level end-to-end tests
+- automated OpenAPI contract-conformance tests
 
-**Deliverables:**
-1. Create `com.modernize.inqacccu.dto` package with:
-   - `CustomerAccountsRequest` (if needed for input validation)
-   - `CustomerAccountsResponse` wrapper DTO
-   - `AccountDTO` (individual account record)
-   - `ErrorResponse` (standardized error payload)
-2. Map legacy COBOL fields to Java:
-   - `CUSTOMER-NUMBER` (10 digits) → `String customerId`
-   - `CUSTOMER-FOUND` ('Y'/'N') → `Boolean customerFound`
-   - `NUMBER-OF-ACCOUNTS` (S9(8) BINARY) → `Integer numberOfAccounts`
-   - Account fields: `accountNumber`, `sortCode`, `balance`, `interestRate`, `statementDate`
-3. Add Jackson annotations:
-   - `@JsonSerialize` for custom numeric formatting (balance, interest rate)
-   - `@JsonProperty` to control field naming if needed
-   - `@Schema` (OpenAPI) to document each field
-4. Implement `equals`, `hashCode`, `toString` using Lombok `@Data` or `@EqualsAndHashCode`
+Tests must use deterministic data and controlled failure simulation.
+Do not fabricate results. Do not mark tests complete without running applicable commands.
 
-**Example Structure:**
-```java
-@Data
-@Builder
-@Schema(description = "Customer account inquiry response")
-public class CustomerAccountsResponse {
-  @Schema(description = "10-digit customer ID", example = "0123456789")
-  private String customerId;
-  
-  @Schema(description = "Whether customer was found")
-  private Boolean customerFound;
-  
-  @Schema(description = "Number of associated accounts (0-20)")
-  @Min(0) @Max(20)
-  private Integer numberOfAccounts;
-  
-  @Schema(description = "List of account records")
-  private List<AccountDTO> accounts;
-}
+## OpenAPI Conformance
+Treat contracts/openapi.yaml as frozen and authoritative.
 
-@Data
-@Builder
-public class AccountDTO {
-  private String eyeCatcher;
-  private String accountNumber;
-  private String sortCode;
-  private String balance;
-  private String interestRate;
-  private String statementDate;
-}
+Verify that implementation matches:
 
-@Data
-@Builder
-public class ErrorResponse {
-  private Integer status;
-  private String message;
-  private String correlationId;
-  private LocalDateTime timestamp;
-  private Map<String, Object> details;
-}
-```
+- path and parameter definitions
+- HTTP 200 business response schema
+- HTTP 400 validation-error schema
+- HTTP 500 infrastructure-error schema
+- required fields, types, formats, and enums
 
-**Acceptance Criteria:**
-- [ ] AC-003.1: All DTOs compile without errors
-- [ ] AC-003.2: Jackson serialization/deserialization works end-to-end (verified via test)
-- [ ] AC-003.3: OpenAPI `@Schema` annotations populated; validate via OpenAPI spec generation
+If mismatch exists, fix implementation unless frozen-artifact conflict is identified.
 
-**Pull Request Checklist:**
-- Immutable DTOs (use `@Builder`, no setters)
-- No business logic in DTOs; data carriers only
-- Comprehensive Javadoc for each DTO class and field
+## Configuration and Data Modes
+Follow configuration strategy in plan.md.
 
----
+- Keep configuration externalized where required.
+- Preserve intended mode separation where plan/tasks define mock and adapter-backed behavior.
+- Do not invent production credentials, connection settings, or unsupported infrastructure.
+- Avoid starting unnecessary infrastructure in mock mode.
+- If non-mock mode is selected without required configuration, fail clearly.
+- Keep repository/service contracts independent of specific data source implementation.
 
-#### Iteration 1D: Mock Repository Layer (TASK-004)
+## Quality Rules
+Maintain:
 
-**Objective:** Implement in-memory mock repository for POC phase (no DB2 or CICS connectivity).
+- existing formatting and naming conventions
+- clear separation of concerns
+- read-only feature behavior
+- safe error messages
+- safe structured logging
+- correlation propagation where required
+- no sensitive values in logs
+- deterministic tests
+- no dead code or temporary implementations
+- no unexplained suppressions or disabled tests
+- no unrelated dependency upgrades
 
-**Deliverables:**
-1. Create `com.modernize.inqacccu.repository` package with:
-   - `AccountRepository` interface (contract for persistence)
-   - `MockAccountRepository` implementation (hardcoded test data)
-2. Define repository contract:
-   ```java
-   public interface AccountRepository {
-     Optional<CustomerAccountRecord> findAccountsByCustomerId(String customerId);
-   }
-   ```
-3. Implement mock with fixture data:
-   ```java
-   @Repository
-   public class MockAccountRepository implements AccountRepository {
-     private static final Map<String, CustomerAccountRecord> DATA = Map.ofEntries(
-       Map.entry("0123456789", CustomerAccountRecord.builder()
-         .customerId("0123456789")
-         .customerFound(true)
-         .accounts(List.of(
-           AccountDTO.builder()
-             .accountNumber("12345678")
-             .sortCode("123456")
-             .balance("9876543.21")
-             .interestRate("2.5")
-             .statementDate("2025-01-15")
-             .build()
-         ))
-         .build())
-     );
-     
-     @Override
-     public Optional<CustomerAccountRecord> findAccountsByCustomerId(String customerId) {
-       return Optional.ofNullable(DATA.get(customerId));
-     }
-   }
-   ```
-4. Add note in code: "POC mock data; replace with DB2/CICS adapter in production"
+## Blocker Handling
+A task is blocked only when:
 
-**Acceptance Criteria:**
-- [ ] AC-004.1: `MockAccountRepository` returns valid data for known customer IDs
-- [ ] AC-004.2: Unknown customer IDs return empty `Optional`
-- [ ] AC-004.3: No network calls or external dependencies
+- required dependency task is incomplete
+- required repository content is missing
+- frozen artifacts contain a material conflict
+- external dependency required by frozen scope is unavailable
+- task acceptance criteria cannot be satisfied without changing approved behavior
 
-**Pull Request Checklist:**
-- Test data covers: existing customer (1–20 accounts), non-existent customer
-- Repository interface documented with Javadoc
-- Comments clearly mark mock implementation as POC-only
+When blocked:
 
----
+1. Stop only the affected task.
+2. Do not invent behavior.
+3. Report:
+   - blocked task ID
+   - exact blocker
+   - affected artifact or repository path
+   - what was verified
+   - smallest decision/correction required
 
-#### Iteration 1E: Service Layer & Business Logic (TASK-005)
+Continue other tasks only when dependencies and behavior are unaffected.
 
-**Objective:** Implement business logic layer; keep controller thin.
+## Completion Standard
+Feature implementation is complete only when:
 
-**Deliverables:**
-1. Create `com.modernize.inqacccu.service` package with:
-   - `CustomerAccountsService` interface
-   - `CustomerAccountsServiceImpl` implementation
-2. Service methods:
-   ```java
-   public interface CustomerAccountsService {
-     CustomerAccountsResponse inquireAccounts(String customerId);
-   }
-   ```
-3. Implement business logic:
-   ```java
-   @Service
-   @Slf4j
-   public class CustomerAccountsServiceImpl implements CustomerAccountsService {
-     private final AccountRepository accountRepository;
-     private final InputValidator inputValidator;
-     
-     @Autowired
-     public CustomerAccountsServiceImpl(AccountRepository accountRepository, InputValidator inputValidator) {
-       this.accountRepository = accountRepository;
-       this.inputValidator = inputValidator;
-     }
-     
-     @Override
-     public CustomerAccountsResponse inquireAccounts(String customerId) {
-       // BR002: Validate input strictly
-       inputValidator.validateCustomerId(customerId);
-       
-       // BR001: Lookup customer and accounts
-       Optional<CustomerAccountRecord> record = accountRepository.findAccountsByCustomerId(customerId);
-       
-       if (record.isEmpty()) {
-         // BR001: customer not found
-         return CustomerAccountsResponse.builder()
-           .customerId(customerId)
-           .customerFound(false)
-           .numberOfAccounts(0)
-           .accounts(Collections.emptyList())
-           .build();
-       }
-       
-       // BR004: Return all accounts (preserved from legacy)
-       CustomerAccountRecord data = record.get();
-       return CustomerAccountsResponse.builder()
-         .customerId(customerId)
-         .customerFound(true)
-         .numberOfAccounts(data.getAccounts().size())
-         .accounts(data.getAccounts())
-         .build();
-     }
-   }
-   ```
-4. Create `InputValidator` utility:
-   ```java
-   @Component
-   public class InputValidator {
-     public void validateCustomerId(String customerId) throws InvalidInputException {
-       if (customerId == null || !customerId.matches("^\\d{10}$")) {
-         throw new InvalidInputException("Customer ID must be exactly 10 digits");
-       }
-     }
-   }
-   ```
+- all tasks are implemented in dependency order
+- all task acceptance criteria are satisfied
+- backend and frontend builds succeed
+- required automated tests pass
+- integrated inquiry flow is verified
+- runtime responses conform to frozen OpenAPI contract
+- no unresolved critical defects remain
+- no frozen artifacts were changed to hide implementation drift
+- no unsupported behavior was introduced
 
-**Acceptance Criteria:**
-- [ ] AC-005.1: Valid customer ID returns populated response
-- [ ] AC-005.2: Invalid customer ID throws `InvalidInputException`
-- [ ] AC-005.3: Non-existent customer ID returns `customerFound=false`, `numberOfAccounts=0`
-- [ ] AC-005.4: All business rules (BR001–BR004) implemented and tested
+## Final Implementation Report
+After implementation, provide a concise report with:
 
-**Pull Request Checklist:**
-- Service logic isolated; no HTTP concerns
-- Comprehensive unit tests for each business rule
-- Logging at INFO level for customer lookups (no PII in logs unless needed for debugging)
+1. Tasks completed
+2. Files created/modified
+3. Backend behavior implemented
+4. Frontend behavior implemented
+5. Tests added and commands run
+6. Build and test results
+7. OpenAPI conformance status
+8. Any blockers, deviations, or remaining manual verification
 
----
-
-#### Iteration 1F: REST Controller & Error Handling (TASK-006)
-
-**Objective:** Implement REST controller; integrate service layer; define error handling.
-
-**Deliverables:**
-1. Create `com.modernize.inqacccu.controller` package with:
-   - `CustomerAccountsController` REST endpoint handler
-   - `GlobalExceptionHandler` for centralized error responses
-2. Implement controller:
-   ```java
-   @RestController
-   @RequestMapping("/customers")
-   @Slf4j
-   public class CustomerAccountsController {
-     private final CustomerAccountsService service;
-     
-     @Autowired
-     public CustomerAccountsController(CustomerAccountsService service) {
-       this.service = service;
-     }
-     
-     @GetMapping("/{customerId}/accounts")
-     @PreAuthorize("hasRole('ROLE_CUSTOMER_INQUIRY')")
-     @Operation(summary = "Inquire customer accounts", security = @SecurityRequirement(name = "bearer-jwt"))
-     @ApiResponses({
-       @ApiResponse(responseCode = "200", description = "Accounts found or customer not found"),
-       @ApiResponse(responseCode = "400", description = "Invalid customer ID format"),
-       @ApiResponse(responseCode = "401", description = "Missing or invalid JWT"),
-       @ApiResponse(responseCode = "403", description = "Insufficient role"),
-       @ApiResponse(responseCode = "500", description = "Server error")
-     })
-     public ResponseEntity<CustomerAccountsResponse> inquireAccounts(
-         @PathVariable @Schema(description = "10-digit customer ID", example = "0123
+Do not claim command success unless command execution occurred.
+Do not include speculative future work unless tied to an actual documented blocker.

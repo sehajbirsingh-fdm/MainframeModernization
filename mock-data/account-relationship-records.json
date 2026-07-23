@@ -1,0 +1,58 @@
+[
+  {
+    "customer": {
+      "customerNumber": "0000000001",
+      "customerName": "John Smith",
+      "sortCode": "123456",
+      "customerType": "INDIVIDUAL"
+    },
+    "accounts": [
+      {
+        "accountNumber": "1000000001",
+        "sortCode": "123456",
+        "accountType": "CHK",
+        "accountTypeDescription": "Checking Account",
+        "availableBalance": 1520.45,
+        "actualBalance": 1498.12,
+        "interestRate": 0.50,
+        "overdraftLimit": 500,
+        "lastStatementDate": 20251231,
+        "nextStatementDate": 20260131
+      },
+      {
+        "accountNumber": "1000000002",
+        "sortCode": "123456",
+        "accountType": "SAV",
+        "accountTypeDescription": "Savings Account",
+        "availableBalance": 9200.00,
+        "actualBalance": 9200.00,
+        "interestRate": 2.15,
+        "overdraftLimit": 0,
+        "lastStatementDate": 20251231,
+        "nextStatementDate": 20260131
+      }
+    ]
+  },
+  {
+    "customer": {
+      "customerNumber": "0000000002",
+      "customerName": "Priya Patel",
+      "sortCode": "654321",
+      "customerType": "INDIVIDUAL"
+    },
+    "accounts": [
+      {
+        "accountNumber": "2000000001",
+        "sortCode": "654321",
+        "accountType": "SAV",
+        "accountTypeDescription": "Savings Account",
+        "availableBalance": 500.00,
+        "actualBalance": 500.00,
+        "interestRate": 1.75,
+        "overdraftLimit": 0,
+        "lastStatementDate": 20251130,
+        "nextStatementDate": 20251231
+      }
+    ]
+  }
+]

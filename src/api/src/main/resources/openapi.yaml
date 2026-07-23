@@ -49,6 +49,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/customers/{customerNumber}/accounts:
+    get:
+      summary: Retrieve customer-account relationship inquiry response
+      operationId: getCustomerAccountRelationship
+      parameters:
+        - name: customerNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{10}$'
+            example: '0000000001'
+      responses:
+        '200':
+          description: Customer-account inquiry completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAccountRelationshipResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqacccuErrorResponse'
+        '500':
+          description: Internal processing error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqacccuErrorResponse'
 components:
   schemas:
     CustomerInquiryResponse:
@@ -163,3 +194,106 @@ components:
           type: string
         message:
           type: string
+    CustomerAccountRelationshipResponse:
+      type: object
+      required: [legacyStatus]
+      properties:
+        legacyStatus:
+          $ref: '#/components/schemas/InqacccuLegacyStatus'
+        customer:
+          $ref: '#/components/schemas/InqacccuCustomerSummary'
+          nullable: true
+        accounts:
+          $ref: '#/components/schemas/InqacccuAccountsList'
+          nullable: true
+    InqacccuLegacyStatus:
+      type: object
+      required: [success, failCode, customerFound]
+      properties:
+        success:
+          type: string
+          enum: [Y, N]
+        failCode:
+          type: string
+        customerFound:
+          type: string
+          enum: [Y, N]
+    InqacccuCustomerSummary:
+      type: object
+      required: [customerNumber, customerName, sortCode, customerType]
+      properties:
+        customerNumber:
+          type: string
+          pattern: '^[0-9]{10}$'
+        customerName:
+          type: string
+        sortCode:
+          type: string
+          pattern: '^[0-9]{6}$'
+        customerType:
+          type: string
+    InqacccuAccountsList:
+      type: object
+      required: [count, accounts]
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/InqacccuAccountSummary'
+    InqacccuAccountSummary:
+      type: object
+      required:
+        - accountNumber
+        - sortCode
+        - accountType
+        - accountTypeDescription
+        - availableBalance
+        - availableBalanceCurrency
+        - actualBalance
+        - actualBalanceCurrency
+        - interestRate
+        - overdraftLimit
+      properties:
+        accountNumber:
+          type: string
+        sortCode:
+          type: string
+        accountType:
+          type: string
+        accountTypeDescription:
+          type: string
+        availableBalance:
+          type: number
+        availableBalanceCurrency:
+          type: string
+        actualBalance:
+          type: number
+        actualBalanceCurrency:
+          type: string
+        interestRate:
+          type: number
+        overdraftLimit:
+          type: integer
+        lastStatementDate:
+          type: string
+          format: date
+          nullable: true
+        nextStatementDate:
+          type: string
+          format: date
+          nullable: true
+    InqacccuErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldErrorResponse'

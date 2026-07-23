@@ -122,3 +122,65 @@
 | TC-006-001    | 400 Bad Request on invalid input | BR-003, BR-005 | FR-006 | `GlobalExceptionHandler` | HTTP 400, error message in body | ✓ READY |
 | TC-007-001    | 401 Unauthorized on missing JWT | BR-008 | FR-007 | `AuthenticationEntryPoint` | HTTP 401, `WWW-Authenticate` header | ✓ READY |
 | TC-008-001    | 403 Forbidden on insufficient role | BR-009 | FR-008 | `AccountInquiryController` | HTTP 403, error message in body | ✓ READY |
+
+---
+
+## 5. INQACCCU Implementation Evidence Addendum (2026-07-22)
+
+### 5.1 OpenAPI Verification Paths
+
+- Frozen feature contract (unchanged): `specs/003-inqacccu-customer-account-relationship-modernization/contracts/openapi.yaml`
+- Runtime OpenAPI document (modified for implementation): `src/api/src/main/resources/openapi.yaml`
+
+### 5.2 Implemented Endpoint Traceability
+
+| Capability | Implemented Artifact |
+|---|---|
+| Endpoint mapping | `src/api/src/main/java/com/bankofz/inqcust/api/inqacccu/controller/AccountRelationshipController.java` |
+| Orchestration service | `src/api/src/main/java/com/bankofz/inqcust/api/inqacccu/service/AccountRelationshipService.java` |
+| Domain response mapping | `src/api/src/main/java/com/bankofz/inqcust/api/inqacccu/service/AccountRelationshipMapper.java` |
+| Date conversion | `src/api/src/main/java/com/bankofz/inqcust/api/inqacccu/service/DateMapper.java` |
+| Repository abstraction | `src/api/src/main/java/com/bankofz/inqcust/api/inqacccu/repository/AccountRelationshipRepository.java` |
+| Mock-data repository | `src/api/src/main/java/com/bankofz/inqcust/api/inqacccu/repository/JsonAccountRelationshipRepository.java` |
+| Mock-data source | `mock-data/account-relationship-records.json` |
+
+### 5.3 Frontend Integration Traceability
+
+| Capability | Implemented Artifact |
+|---|---|
+| Route registration | `src/frontend-react/src/App.tsx` |
+| Route URL | `/customer-accounts` |
+| API client | `src/frontend-react/src/api/customerAccountInquiryClient.ts` |
+| Domain typing | `src/frontend-react/src/domain/customerAccountTypes.ts` |
+| Page behavior | `src/frontend-react/src/features/customerAccountInquiry/CustomerAccountInquiryPage.tsx` |
+
+### 5.4 Executed Verification Commands
+
+| Area | Command | Outcome |
+|---|---|---|
+| Backend compile | `mvn -q -DskipTests compile` | PASS |
+| Backend targeted INQACCCU tests | `mvn -q -Dtest="InqacccuOpenApiConformanceTest,AccountRelationshipControllerTest,JsonAccountRelationshipRepositoryTest,AccountRelationshipServiceTest,AccountRelationshipMapperTest" test` | PASS |
+| Backend full tests | `mvn -q test` | PASS |
+| Frontend unit/integration tests | `npm test` | PASS |
+| Frontend build | `npm run build` | PASS |
+| Browser-level E2E | `npm run test:e2e` | PASS |
+
+### 5.5 Automated Test Evidence References
+
+Backend tests:
+
+- `src/api/src/test/java/com/bankofz/inqcust/api/inqacccu/contract/InqacccuOpenApiConformanceTest.java`
+- `src/api/src/test/java/com/bankofz/inqcust/api/inqacccu/controller/AccountRelationshipControllerTest.java`
+- `src/api/src/test/java/com/bankofz/inqcust/api/inqacccu/repository/JsonAccountRelationshipRepositoryTest.java`
+- `src/api/src/test/java/com/bankofz/inqcust/api/inqacccu/service/AccountRelationshipMapperTest.java`
+- `src/api/src/test/java/com/bankofz/inqcust/api/inqacccu/service/AccountRelationshipServiceTest.java`
+
+Frontend tests:
+
+- `src/frontend-react/src/api/customerAccountInquiryClient.test.ts`
+- `src/frontend-react/src/features/customerAccountInquiry/validation.test.ts`
+- `src/frontend-react/src/features/customerAccountInquiry/CustomerAccountInquiryPage.test.tsx`
+
+Browser-level E2E tests:
+
+- `src/frontend-react/e2e/inqacccu.e2e.spec.ts`

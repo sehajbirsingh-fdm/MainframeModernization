@@ -18,6 +18,28 @@ body {
   padding: 1.5rem;
 }
 
+.app-nav {
+  max-width: 920px;
+  margin: 0 auto 1rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.app-nav a {
+  text-decoration: none;
+  color: #0f4c5c;
+  background: #ffffff;
+  border: 1px solid #d5dbe3;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-weight: 600;
+}
+
+.app-nav a:hover {
+  border-color: #0f4c5c;
+}
+
 .page {
   max-width: 920px;
   margin: 0 auto;
@@ -135,6 +157,28 @@ button:disabled {
 
 .status-region {
   min-height: 1.5rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.accounts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.accounts-table th,
+.accounts-table td {
+  border: 1px solid #d5dbe3;
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.accounts-table th {
+  background: #f4f7fb;
 }
 
 @media (max-width: 640px) {
