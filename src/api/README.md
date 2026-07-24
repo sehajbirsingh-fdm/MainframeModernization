@@ -1,9 +1,10 @@
-# INQCUST and INQACC API Module
+# INQCUST, INQACC, and INQACCCU API Module
 
 This module is the Spring Boot implementation of:
 
 - INQCUST customer inquiry
 - INQACC account inquiry
+- INQACCCU customer-account relationship inquiry
 
 This README reflects the current implementation.
 
@@ -23,11 +24,25 @@ This README reflects the current implementation.
 		- `sortcode` must be 6 digits
 		- `accountNumber` must be 8 digits
 
+- Endpoint: `GET /api/v1/customers/{customerNumber}/accounts`
+	- INQACCCU controller mapping:
+		- Base path: `/api/v1/customers`
+		- Method path: `/{customerNumber}/accounts`
+	- Validation:
+		- `customerNumber` must be 10 digits
+	- Business outcomes are returned in HTTP 200 with `legacyStatus` (`success`/`failCode`/`customerFound`).
+	- Validation and infrastructure failures are returned as HTTP 400/500 error payloads.
+
 ### Special Customer Numbers
 
 - `0000000000` = RANDOM lookup mode
 - `9999999999` = LATEST lookup mode
 - Any other 10-digit number = SPECIFIC lookup mode
+
+For INQACCCU:
+
+- `0000000000` and `9999999999` are validly formatted values.
+- They continue through business flow and return customer-not-found business outcomes (not HTTP 400).
 
 ### Special Account Numbers
 
@@ -40,6 +55,7 @@ Switching mode is configuration-only via `app.data.mode` in `src/main/resources/
 
 - Default mode: `mock`
 	- Uses `mock-data/customer-records.json`
+	- INQACCCU uses `mock-data/account-relationship-records.json` via `app.inqacccu.mock-data.path`
 - Optional mode: `db`
 	- Uses repository-backed DB queries when DB properties are provided
 	- INQACC db-mode properties:
@@ -65,7 +81,7 @@ Live DB2 connectivity is not verified in this POC and is not required for POC ac
 ## OpenAPI And Traceability
 
 - Active runtime OpenAPI file: `src/main/resources/openapi.yaml`
-- Contract/spec artifact: `specs/001-inqcust-customer-inquiry-modernization/contracts/openapi.yaml`
+- INQACCCU frozen feature contract: `specs/003-inqacccu-customer-account-relationship-modernization/contracts/openapi.yaml`
 - Build/runtime behavior should be aligned to these files, not legacy/generated artifacts.
 
 ## Build, Test, And Run
@@ -74,6 +90,8 @@ From `src/api`:
 
 - Run tests: `mvn test`
 - Run the service: `mvn spring-boot:run`
+
+The backend starts on port `8080` by default.
 
 Use the Spring Boot Maven commands above for local build and run.
 
@@ -132,4 +150,31 @@ Current INQACC authentication implementation is a deterministic development adap
 ## Generated Artifacts
 
 - `target/` is build output and should not be edited.
+
+## INQACCCU Sample Inputs From Mock Data
+
+Values in `mock-data/account-relationship-records.json`:
+
+- `0000000001` (customer `John Smith`, accounts `1000000001`, `1000000002`)
+- `0000000002` (customer `Priya Patel`, account `2000000001`)
+
+Valid business not-found sample used in tests:
+
+- `0000000999`
+
+## Verified INQACCCU Test Evidence
+
+Implemented backend test files:
+
+- `src/test/java/com/bankofz/inqcust/api/inqacccu/contract/InqacccuOpenApiConformanceTest.java`
+- `src/test/java/com/bankofz/inqcust/api/inqacccu/controller/AccountRelationshipControllerTest.java`
+- `src/test/java/com/bankofz/inqcust/api/inqacccu/repository/JsonAccountRelationshipRepositoryTest.java`
+- `src/test/java/com/bankofz/inqcust/api/inqacccu/service/AccountRelationshipMapperTest.java`
+- `src/test/java/com/bankofz/inqcust/api/inqacccu/service/AccountRelationshipServiceTest.java`
+
+Executed verification commands:
+
+- `mvn -q -DskipTests compile`
+- `mvn -q -Dtest="InqacccuOpenApiConformanceTest,AccountRelationshipControllerTest,JsonAccountRelationshipRepositoryTest,AccountRelationshipServiceTest,AccountRelationshipMapperTest" test`
+- `mvn -q test`
 

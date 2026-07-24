@@ -4,6 +4,7 @@ This frontend hosts both inquiry experiences in one React/Vite application:
 
 - INQCUST customer inquiry
 - INQACC account inquiry
+- INQACCCU customer-account relationship inquiry
 
 ## Prerequisites
 
@@ -23,6 +24,7 @@ App runs by default on http://localhost:5173.
 
 - http://localhost:5173/customers for INQCUST
 - http://localhost:5173/accounts for INQACC
+- http://localhost:5173/customer-accounts for INQACCCU
 
 ## Configuration
 
@@ -47,12 +49,26 @@ Local development behavior:
 - This avoids browser CORS issues for common localhost development.
 - For explicit cross-origin testing, set `VITE_API_BASE_URL` and keep backend CORS enabled.
 
+Port summary:
+
+- Frontend dev server: `5173`
+- Backend API target: `8080`
+
 ## Test and Build
 
 ```bash
 npm run test
+npm run test:e2e
 npm run build
 ```
+
+Directory and startup commands:
+
+- Frontend directory: `src/frontend-react`
+  - `npm install`
+  - `npm run dev`
+- Backend directory: `src/api`
+  - `mvn spring-boot:run`
 
 ## Notes
 
@@ -67,3 +83,13 @@ npm run build
   - configured development token `valid-inqacc-inquirer-token` is accepted for inquiry access
   - `valid-inqacc-limited-token` is authenticated but forbidden (403) for inquiry role
   - this is a deterministic development authentication adapter for bearer-header and role-boundary behavior; it is not production OAuth2/JWT identity validation
+
+- INQACCCU inquiry:
+	- uses customer-number input only
+	- calls `GET /api/v1/customers/{customerNumber}/accounts`
+	- supports subsequent inquiry in-page by updating customer number and resubmitting
+
+INQACCCU browser-level E2E evidence:
+
+- `e2e/inqacccu.e2e.spec.ts`
+- Executed command: `npm run test:e2e`

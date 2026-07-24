@@ -1,0 +1,291 @@
+openapi: 3.0.3
+info:
+  title: INQACCCU Customer Accounts API
+  version: 1.0.0
+paths:
+  /api/v1/customers/{customerNumber}/accounts:
+    get:
+      summary: Read-only customer account inquiry
+      description: Read-only inquiry that returns customer-account business outcomes using legacy status semantics.
+      parameters:
+        - name: customerNumber
+          in: path
+          required: true
+          description: Ten-digit customer identifier. Leading zeroes are preserved. Values such as 0000000000 and 9999999999 are validly formatted and produce a customer-not-found business outcome (HTTP 200), not HTTP 400.
+          schema:
+            type: string
+            minLength: 10
+            maxLength: 10
+            pattern: '^[0-9]{10}$'
+            example: '0000001234'
+      responses:
+        '200':
+          description: Business outcome response for successful retrieval, zero-account success, customer-not-found, or retrieval stage failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAccountInquiryResponse'
+              examples:
+                customerFoundWithAccounts:
+                  summary: Customer found with accounts
+                  value:
+                    legacyStatus:
+                      success: Y
+                      failCode: '0'
+                      customerFound: Y
+                    customerNumber: '0000001234'
+                    numberOfAccounts: 1
+                    accounts:
+                      - eyecatcher: ACCT
+                        customerNumber: '0000001234'
+                        sortCode: '987654'
+                        accountNumber: '12345678'
+                        accountType: CURRENT
+                        interestRate: 1.25
+                        openedDate: '2020-01-15'
+                        overdraftLimit: 1000
+                        lastStatementDate: '2026-06-01'
+                        nextStatementDate: '2026-07-01'
+                        availableBalance: 3500.25
+                        actualBalance: 3400.0
+                customerFoundWithZeroAccounts:
+                  summary: Customer found with zero accounts
+                  value:
+                    legacyStatus:
+                      success: Y
+                      failCode: '0'
+                      customerFound: Y
+                    customerNumber: '0000005678'
+                    numberOfAccounts: 0
+                    accounts: []
+                customerNotFound:
+                  summary: Customer not found
+                  value:
+                    legacyStatus:
+                      success: N
+                      failCode: '1'
+                      customerFound: N
+                    customerNumber: '9999999999'
+                    numberOfAccounts: 0
+                    accounts: []
+                retrievalOpenStageFailure:
+                  summary: Retrieval open-stage failure
+                  value:
+                    legacyStatus:
+                      success: N
+                      failCode: '2'
+                      customerFound: Y
+                    customerNumber: '0000001234'
+                    numberOfAccounts: 0
+                    accounts: []
+                retrievalFetchStageFailure:
+                  summary: Retrieval fetch-stage failure
+                  value:
+                    legacyStatus:
+                      success: N
+                      failCode: '3'
+                      customerFound: Y
+                    customerNumber: '0000001234'
+                    numberOfAccounts: 0
+                    accounts: []
+                retrievalCloseStageFailure:
+                  summary: Retrieval close-stage failure
+                  value:
+                    legacyStatus:
+                      success: N
+                      failCode: '4'
+                      customerFound: Y
+                    customerNumber: '0000001234'
+                    numberOfAccounts: 0
+                    accounts: []
+        '400':
+          description: Request validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+              example:
+                error:
+                  type: VALIDATION_ERROR
+                  message: Validation failed
+                  details:
+                    - field: customerNumber
+                      reason: must be exactly 10 digits
+        '500':
+          description: Non-business infrastructure failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfrastructureErrorResponse'
+              example:
+                error:
+                  type: INFRASTRUCTURE_ERROR
+                  message: Service unavailable due to infrastructure failure
+components:
+  schemas:
+    CustomerAccountInquiryResponse:
+      type: object
+      required:
+        - legacyStatus
+        - customerNumber
+        - numberOfAccounts
+        - accounts
+      properties:
+        legacyStatus:
+          $ref: '#/components/schemas/LegacyStatus'
+        customerNumber:
+          type: string
+          minLength: 10
+          maxLength: 10
+          pattern: '^[0-9]{10}$'
+          example: '0000001234'
+        numberOfAccounts:
+          type: integer
+          minimum: 0
+          maximum: 20
+          example: 1
+        accounts:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/AccountRecord'
+    LegacyStatus:
+      type: object
+      required:
+        - success
+        - failCode
+        - customerFound
+      properties:
+        success:
+          type: string
+          enum: [Y, N]
+        failCode:
+          type: string
+          enum: ['0','1','2','3','4']
+        customerFound:
+          type: string
+          enum: [Y, N]
+    AccountRecord:
+      type: object
+      required:
+        - eyecatcher
+        - customerNumber
+        - sortCode
+        - accountNumber
+        - accountType
+        - interestRate
+        - openedDate
+        - overdraftLimit
+        - lastStatementDate
+        - nextStatementDate
+        - availableBalance
+        - actualBalance
+      properties:
+        eyecatcher:
+          type: string
+          example: ACCT
+        customerNumber:
+          type: string
+          minLength: 10
+          maxLength: 10
+          pattern: '^[0-9]{10}$'
+          example: '0000001234'
+        sortCode:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: '^[0-9]{6}$'
+          example: '987654'
+        accountNumber:
+          type: string
+          minLength: 8
+          maxLength: 8
+          pattern: '^[0-9]{8}$'
+          example: '12345678'
+        accountType:
+          type: string
+          example: CURRENT
+        interestRate:
+          type: number
+          format: double
+          example: 1.25
+        openedDate:
+          type: string
+          format: date
+          example: '2020-01-15'
+        overdraftLimit:
+          type: number
+          format: double
+          example: 1000
+        lastStatementDate:
+          type: string
+          format: date
+          example: '2026-06-01'
+        nextStatementDate:
+          type: string
+          format: date
+          example: '2026-07-01'
+        availableBalance:
+          type: number
+          format: double
+          example: 3500.25
+        actualBalance:
+          type: number
+          format: double
+          example: 3400
+    ValidationErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ValidationError'
+    ValidationError:
+      type: object
+      required:
+        - type
+        - message
+        - details
+      properties:
+        type:
+          type: string
+          enum: [VALIDATION_ERROR]
+        message:
+          type: string
+          enum: [Validation failed]
+        details:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ValidationErrorDetail'
+    ValidationErrorDetail:
+      type: object
+      required:
+        - field
+        - reason
+      properties:
+        field:
+          type: string
+          example: customerNumber
+        reason:
+          type: string
+          example: must be exactly 10 digits
+    InfrastructureErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: '#/components/schemas/InfrastructureError'
+    InfrastructureError:
+      type: object
+      required:
+        - type
+        - message
+      properties:
+        type:
+          type: string
+          enum: [INFRASTRUCTURE_ERROR]
+        message:
+          type: string
+          enum: [Service unavailable due to infrastructure failure]
