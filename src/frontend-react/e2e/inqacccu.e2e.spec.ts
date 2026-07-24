@@ -56,4 +56,19 @@ test.describe('INQACCCU integrated inquiry flow', () => {
     await expect(page.getByRole('heading', { name: 'Backend Error' })).not.toBeVisible()
     await expect(page.getByText('Service unavailable due to infrastructure failure')).not.toBeVisible()
   })
+
+  test('renders retrieval-failure business outcome from backend response', async ({ page }) => {
+    await page.goto('http://localhost:5173/customer-accounts')
+
+    await page.getByLabel('Customer Number').fill('0000000200')
+    await page.getByRole('button', { name: 'Inquire' }).click()
+
+    await expect(page.getByText('Account retrieval failed. Please retry later.')).toBeVisible()
+    const customerSummary = page.getByLabel('Customer Summary')
+    await expect(customerSummary.getByText('0000000200')).toBeVisible()
+    await expect(page.getByText(/^2$/)).toBeVisible()
+    await expect(page.getByText('Customer not found')).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Backend Error' })).not.toBeVisible()
+    await expect(page.getByText('Service unavailable due to infrastructure failure')).not.toBeVisible()
+  })
 })

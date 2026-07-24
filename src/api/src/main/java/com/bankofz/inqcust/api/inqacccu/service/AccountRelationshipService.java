@@ -1,6 +1,7 @@
 package com.bankofz.inqcust.api.inqacccu.service;
 
 import com.bankofz.inqcust.api.inqacccu.domain.AccountRelationshipResponse;
+import com.bankofz.inqcust.api.inqacccu.exception.RetrievalStageFailureException;
 import com.bankofz.inqcust.api.inqacccu.repository.AccountRelationshipRepository;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +20,12 @@ public class AccountRelationshipService {
     }
 
     public AccountRelationshipResponse inquire(String customerNumber) {
-        return repository.findByCustomerNumber(customerNumber)
-                .map(mapper::toSuccessResponse)
-                .orElseGet(() -> mapper.toNotFoundResponse(customerNumber));
+        try {
+            return repository.findByCustomerNumber(customerNumber)
+                    .map(mapper::toSuccessResponse)
+                    .orElseGet(() -> mapper.toNotFoundResponse(customerNumber));
+        } catch (RetrievalStageFailureException exception) {
+            return mapper.toRetrievalFailureResponse(exception.customerNumber(), exception.failCode());
+        }
     }
 }

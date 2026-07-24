@@ -50,7 +50,17 @@ export function CustomerAccountInquiryPage() {
           return
         }
 
-        setMessage('Customer not found')
+        if (response.data.legacyStatus.failCode === '1') {
+          setMessage('Customer not found')
+          return
+        }
+
+        if (['2', '3', '4'].includes(response.data.legacyStatus.failCode)) {
+          setMessage('Account retrieval failed. Please retry later.')
+          return
+        }
+
+        setMessage('Inquiry failed')
         return
       }
 

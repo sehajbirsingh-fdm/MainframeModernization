@@ -94,7 +94,81 @@ describe('CustomerAccountInquiryPage', () => {
     await user.click(screen.getByRole('button', { name: 'Inquire' }))
 
     expect(await screen.findByText('Customer not found')).toBeInTheDocument()
-    expect(screen.getByText('1')).toBeInTheDocument()
+    expect(screen.getByText('Legacy Status')).toBeInTheDocument()
+    expect(screen.queryByText('Account retrieval failed. Please retry later.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Backend Error')).not.toBeInTheDocument()
+  })
+
+  it('renders retrieval open-stage business failure for failCode 2', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          legacyStatus: { success: 'N', failCode: '2', customerFound: 'Y' },
+          customerNumber: '0000000200',
+          numberOfAccounts: 0,
+          accounts: [],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    )
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Customer Number'), '0000000200')
+    await user.click(screen.getByRole('button', { name: 'Inquire' }))
+
+    expect(await screen.findByText('Account retrieval failed. Please retry later.')).toBeInTheDocument()
+    expect(screen.queryByText('Customer not found')).not.toBeInTheDocument()
+    expect(screen.queryByText('Backend Error')).not.toBeInTheDocument()
+  })
+
+  it('renders retrieval fetch-stage business failure for failCode 3', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          legacyStatus: { success: 'N', failCode: '3', customerFound: 'Y' },
+          customerNumber: '0000000300',
+          numberOfAccounts: 0,
+          accounts: [],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    )
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Customer Number'), '0000000300')
+    await user.click(screen.getByRole('button', { name: 'Inquire' }))
+
+    expect(await screen.findByText('Account retrieval failed. Please retry later.')).toBeInTheDocument()
+    expect(screen.queryByText('Customer not found')).not.toBeInTheDocument()
+    expect(screen.queryByText('Backend Error')).not.toBeInTheDocument()
+  })
+
+  it('renders retrieval close-stage business failure for failCode 4', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          legacyStatus: { success: 'N', failCode: '4', customerFound: 'Y' },
+          customerNumber: '0000000400',
+          numberOfAccounts: 0,
+          accounts: [],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    )
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('Customer Number'), '0000000400')
+    await user.click(screen.getByRole('button', { name: 'Inquire' }))
+
+    expect(await screen.findByText('Account retrieval failed. Please retry later.')).toBeInTheDocument()
+    expect(screen.queryByText('Customer not found')).not.toBeInTheDocument()
+    expect(screen.queryByText('Backend Error')).not.toBeInTheDocument()
   })
 
   it('renders backend 500 error response', async () => {
@@ -113,6 +187,7 @@ describe('CustomerAccountInquiryPage', () => {
 
     expect((await screen.findAllByText('Service unavailable due to infrastructure failure')).length).toBeGreaterThan(0)
     expect(screen.getByText('INFRASTRUCTURE_ERROR')).toBeInTheDocument()
+    expect(screen.queryByText('Account retrieval failed. Please retry later.')).not.toBeInTheDocument()
   })
 
   it('supports subsequent inquiry update and shows latest result', async () => {

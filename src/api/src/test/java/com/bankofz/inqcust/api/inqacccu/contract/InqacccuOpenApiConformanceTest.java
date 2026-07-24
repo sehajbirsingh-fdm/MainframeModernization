@@ -58,10 +58,34 @@ class InqacccuOpenApiConformanceTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.legacyStatus.success").value("N"))
                 .andExpect(jsonPath("$.legacyStatus.failCode").value("1"))
+                .andExpect(jsonPath("$.legacyStatus.customerFound").value("N"))
                 .andExpect(jsonPath("$.customerNumber").value("0000000999"))
                 .andExpect(jsonPath("$.numberOfAccounts").value(0))
                 .andExpect(jsonPath("$.accounts").isArray())
                 .andExpect(jsonPath("$.accounts").isEmpty());
+    }
+
+    @Test
+    void retrievalOpenStageBusinessFailureShouldUseFailCode2AndContractShape() throws Exception {
+        assertBusinessFailure("0000000200", "2", "Y");
+    }
+
+    @Test
+    void retrievalFetchStageBusinessFailureShouldUseFailCode3AndContractShape() throws Exception {
+        assertBusinessFailure("0000000300", "3", "Y");
+    }
+
+    @Test
+    void retrievalCloseStageBusinessFailureShouldUseFailCode4AndContractShape() throws Exception {
+        assertBusinessFailure("0000000400", "4", "Y");
+    }
+
+    @Test
+    void businessFailureFailCodesShouldMatchFrozenContractSet() throws Exception {
+        assertBusinessFailure("0000000999", "1", "N");
+        assertBusinessFailure("0000000200", "2", "Y");
+        assertBusinessFailure("0000000300", "3", "Y");
+        assertBusinessFailure("0000000400", "4", "Y");
     }
 
     @Test
@@ -104,5 +128,18 @@ class InqacccuOpenApiConformanceTest {
         mockMvc.perform(get("/api/v1/customers/%200000000001/accounts"))
             .andExpect(status().isBadRequest());
         }
+
+    private void assertBusinessFailure(String customerNumber, String failCode, String customerFound) throws Exception {
+        mockMvc.perform(get("/api/v1/customers/{customerNumber}/accounts", customerNumber))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.legacyStatus.success").value("N"))
+                .andExpect(jsonPath("$.legacyStatus.failCode").value(failCode))
+                .andExpect(jsonPath("$.legacyStatus.customerFound").value(customerFound))
+                .andExpect(jsonPath("$.customerNumber").value(customerNumber))
+                .andExpect(jsonPath("$.numberOfAccounts").value(0))
+                .andExpect(jsonPath("$.accounts").isArray())
+                .andExpect(jsonPath("$.accounts").isEmpty())
+                .andExpect(jsonPath("$.error").doesNotExist());
+    }
 
 }

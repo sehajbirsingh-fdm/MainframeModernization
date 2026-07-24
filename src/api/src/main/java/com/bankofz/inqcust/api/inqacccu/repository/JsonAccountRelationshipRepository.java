@@ -1,5 +1,6 @@
 package com.bankofz.inqcust.api.inqacccu.repository;
 
+import com.bankofz.inqcust.api.inqacccu.exception.RetrievalStageFailureException;
 import com.bankofz.inqcust.api.inqacccu.exception.RepositoryUnavailableException;
 import com.bankofz.inqcust.api.inqacccu.repository.model.AccountProjection;
 import com.bankofz.inqcust.api.inqacccu.repository.model.CustomerProjection;
@@ -38,7 +39,7 @@ public class JsonAccountRelationshipRepository implements AccountRelationshipRep
         return allRecords.stream()
                 .filter(record -> customerNumber.equals(record.customer().customerNumber()))
                 .findFirst()
-                .map(this::toProjection);
+                                .map(record -> toProjection(record, customerNumber));
     }
 
     private List<RelationshipRecord> readAll() {
@@ -71,13 +72,17 @@ public class JsonAccountRelationshipRepository implements AccountRelationshipRep
                 throw new IOException("Mock data file not found: " + resolvedPath);
         }
 
-    private RelationshipProjection toProjection(RelationshipRecord record) {
+        private RelationshipProjection toProjection(RelationshipRecord record, String customerNumber) {
+                simulateOpenStageFailure(record, customerNumber);
+
         CustomerProjection customer = new CustomerProjection(
                 record.customer().customerNumber(),
                 record.customer().customerName(),
                 record.customer().sortCode(),
                 record.customer().customerType()
         );
+
+                simulateFetchStageFailure(record, customerNumber);
 
         List<AccountProjection> accounts = record.accounts().stream()
                 .map(account -> new AccountProjection(
@@ -94,12 +99,33 @@ public class JsonAccountRelationshipRepository implements AccountRelationshipRep
                 ))
                 .toList();
 
+                simulateCloseStageFailure(record, customerNumber);
+
         return new RelationshipProjection(customer, accounts);
     }
 
+        private void simulateOpenStageFailure(RelationshipRecord record, String customerNumber) {
+                if ("OPEN_FAILURE".equals(record.simulationStage())) {
+                        throw RetrievalStageFailureException.openStage(customerNumber);
+                }
+        }
+
+        private void simulateFetchStageFailure(RelationshipRecord record, String customerNumber) {
+                if ("FETCH_FAILURE".equals(record.simulationStage())) {
+                        throw RetrievalStageFailureException.fetchStage(customerNumber);
+                }
+        }
+
+        private void simulateCloseStageFailure(RelationshipRecord record, String customerNumber) {
+                if ("CLOSE_FAILURE".equals(record.simulationStage())) {
+                        throw RetrievalStageFailureException.closeStage(customerNumber);
+                }
+        }
+
     private record RelationshipRecord(
             CustomerRecord customer,
-            List<AccountRecord> accounts
+            List<AccountRecord> accounts,
+            String simulationStage
     ) {
     }
 

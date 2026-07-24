@@ -47,6 +47,15 @@ public class AccountRelationshipMapper {
         );
     }
 
+        public AccountRelationshipResponse toRetrievalFailureResponse(String customerNumber, String failCode) {
+            return new AccountRelationshipResponse(
+                new LegacyStatus("N", failCode, "Y"),
+                trim(customerNumber),
+                0,
+                List.of()
+            );
+        }
+
         private AccountSummary toAccountSummary(AccountProjection account, String customerNumber) {
         return new AccountSummary(
             EYECATCHER,

@@ -43,6 +43,15 @@ class AccountRelationshipControllerTest {
     @MockBean
     private AccountRelationshipService service;
 
+        private static AccountRelationshipResponse businessFailureResponse(String customerNumber, String failCode, String customerFound) {
+                return new AccountRelationshipResponse(
+                                new LegacyStatus("N", failCode, customerFound),
+                                customerNumber,
+                                0,
+                                List.of()
+                );
+        }
+
     @Test
     void shouldReturnSuccessPayload() throws Exception {
         AccountRelationshipResponse response = new AccountRelationshipResponse(
@@ -84,6 +93,66 @@ class AccountRelationshipControllerTest {
                 .andExpect(jsonPath("$.error.details[0].field").value("customerNumber"))
                 .andExpect(jsonPath("$.error.details[0].reason").exists());
     }
+
+        @Test
+        void shouldReturnBusinessNotFoundPayloadForFailCode1() throws Exception {
+                when(service.inquire("0000000999")).thenReturn(businessFailureResponse("0000000999", "1", "N"));
+
+                mockMvc.perform(get("/api/v1/customers/0000000999/accounts").accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.legacyStatus.success").value("N"))
+                                .andExpect(jsonPath("$.legacyStatus.failCode").value("1"))
+                                .andExpect(jsonPath("$.legacyStatus.customerFound").value("N"))
+                                .andExpect(jsonPath("$.customerNumber").value("0000000999"))
+                                .andExpect(jsonPath("$.numberOfAccounts").value(0))
+                                .andExpect(jsonPath("$.accounts").isArray())
+                                .andExpect(jsonPath("$.accounts").isEmpty());
+        }
+
+        @Test
+        void shouldReturnBusinessRetrievalOpenFailurePayloadForFailCode2() throws Exception {
+                when(service.inquire("0000000200")).thenReturn(businessFailureResponse("0000000200", "2", "Y"));
+
+                mockMvc.perform(get("/api/v1/customers/0000000200/accounts").accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.legacyStatus.success").value("N"))
+                                .andExpect(jsonPath("$.legacyStatus.failCode").value("2"))
+                                .andExpect(jsonPath("$.legacyStatus.customerFound").value("Y"))
+                                .andExpect(jsonPath("$.customerNumber").value("0000000200"))
+                                .andExpect(jsonPath("$.numberOfAccounts").value(0))
+                                .andExpect(jsonPath("$.accounts").isArray())
+                                .andExpect(jsonPath("$.accounts").isEmpty());
+        }
+
+        @Test
+        void shouldReturnBusinessRetrievalFetchFailurePayloadForFailCode3() throws Exception {
+                when(service.inquire("0000000300")).thenReturn(businessFailureResponse("0000000300", "3", "Y"));
+
+                mockMvc.perform(get("/api/v1/customers/0000000300/accounts").accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.legacyStatus.success").value("N"))
+                                .andExpect(jsonPath("$.legacyStatus.failCode").value("3"))
+                                .andExpect(jsonPath("$.legacyStatus.customerFound").value("Y"))
+                                .andExpect(jsonPath("$.customerNumber").value("0000000300"))
+                                .andExpect(jsonPath("$.numberOfAccounts").value(0))
+                                .andExpect(jsonPath("$.accounts").isArray())
+                                .andExpect(jsonPath("$.accounts").isEmpty());
+        }
+
+        @Test
+        void shouldReturnBusinessRetrievalCloseFailurePayloadForFailCode4() throws Exception {
+                when(service.inquire("0000000400")).thenReturn(businessFailureResponse("0000000400", "4", "Y"));
+
+                mockMvc.perform(get("/api/v1/customers/0000000400/accounts").accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.legacyStatus.success").value("N"))
+                                .andExpect(jsonPath("$.legacyStatus.failCode").value("4"))
+                                .andExpect(jsonPath("$.legacyStatus.customerFound").value("Y"))
+                                .andExpect(jsonPath("$.customerNumber").value("0000000400"))
+                                .andExpect(jsonPath("$.numberOfAccounts").value(0))
+                                .andExpect(jsonPath("$.accounts").isArray())
+                                .andExpect(jsonPath("$.accounts").isEmpty());
+        }
 
     @Test
     void shouldReturnInternalErrorForRepositoryFailure() throws Exception {

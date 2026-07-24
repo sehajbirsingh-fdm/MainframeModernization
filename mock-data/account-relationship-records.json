@@ -57,5 +57,35 @@
         "nextStatementDate": 20251231
       }
     ]
+  },
+  {
+    "customer": {
+      "customerNumber": "0000000200",
+      "customerName": "Open Stage Failure",
+      "sortCode": "987654",
+      "customerType": "TEST"
+    },
+    "accounts": [],
+    "simulationStage": "OPEN_FAILURE"
+  },
+  {
+    "customer": {
+      "customerNumber": "0000000300",
+      "customerName": "Fetch Stage Failure",
+      "sortCode": "987654",
+      "customerType": "TEST"
+    },
+    "accounts": [],
+    "simulationStage": "FETCH_FAILURE"
+  },
+  {
+    "customer": {
+      "customerNumber": "0000000400",
+      "customerName": "Close Stage Failure",
+      "sortCode": "987654",
+      "customerType": "TEST"
+    },
+    "accounts": [],
+    "simulationStage": "CLOSE_FAILURE"
   }
 ]

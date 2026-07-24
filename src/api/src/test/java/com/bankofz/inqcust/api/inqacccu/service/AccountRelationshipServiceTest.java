@@ -1,6 +1,8 @@
 package com.bankofz.inqcust.api.inqacccu.service;
 
 import com.bankofz.inqcust.api.inqacccu.domain.AccountRelationshipResponse;
+import com.bankofz.inqcust.api.inqacccu.exception.RepositoryUnavailableException;
+import com.bankofz.inqcust.api.inqacccu.exception.RetrievalStageFailureException;
 import com.bankofz.inqcust.api.inqacccu.repository.AccountRelationshipRepository;
 import com.bankofz.inqcust.api.inqacccu.repository.model.AccountProjection;
 import com.bankofz.inqcust.api.inqacccu.repository.model.CustomerProjection;
@@ -12,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -59,5 +62,60 @@ class AccountRelationshipServiceTest {
         assertThat(response.customerNumber()).isEqualTo("0000000099");
         assertThat(response.numberOfAccounts()).isZero();
         assertThat(response.accounts()).isEmpty();
+    }
+
+    @Test
+    void shouldReturnOpenStageBusinessFailureWhenRepositorySignalsOpenFailure() {
+        when(repository.findByCustomerNumber("0000000200"))
+                .thenThrow(RetrievalStageFailureException.openStage("0000000200"));
+
+        AccountRelationshipResponse response = service.inquire("0000000200");
+
+        assertThat(response.legacyStatus().success()).isEqualTo("N");
+        assertThat(response.legacyStatus().failCode()).isEqualTo("2");
+        assertThat(response.legacyStatus().customerFound()).isEqualTo("Y");
+        assertThat(response.customerNumber()).isEqualTo("0000000200");
+        assertThat(response.numberOfAccounts()).isZero();
+        assertThat(response.accounts()).isEmpty();
+    }
+
+    @Test
+    void shouldReturnFetchStageBusinessFailureWhenRepositorySignalsFetchFailure() {
+        when(repository.findByCustomerNumber("0000000300"))
+                .thenThrow(RetrievalStageFailureException.fetchStage("0000000300"));
+
+        AccountRelationshipResponse response = service.inquire("0000000300");
+
+        assertThat(response.legacyStatus().success()).isEqualTo("N");
+        assertThat(response.legacyStatus().failCode()).isEqualTo("3");
+        assertThat(response.legacyStatus().customerFound()).isEqualTo("Y");
+        assertThat(response.customerNumber()).isEqualTo("0000000300");
+        assertThat(response.numberOfAccounts()).isZero();
+        assertThat(response.accounts()).isEmpty();
+    }
+
+    @Test
+    void shouldReturnCloseStageBusinessFailureWhenRepositorySignalsCloseFailure() {
+        when(repository.findByCustomerNumber("0000000400"))
+                .thenThrow(RetrievalStageFailureException.closeStage("0000000400"));
+
+        AccountRelationshipResponse response = service.inquire("0000000400");
+
+        assertThat(response.legacyStatus().success()).isEqualTo("N");
+        assertThat(response.legacyStatus().failCode()).isEqualTo("4");
+        assertThat(response.legacyStatus().customerFound()).isEqualTo("Y");
+        assertThat(response.customerNumber()).isEqualTo("0000000400");
+        assertThat(response.numberOfAccounts()).isZero();
+        assertThat(response.accounts()).isEmpty();
+    }
+
+    @Test
+    void shouldPropagateInfrastructureFailure() {
+        when(repository.findByCustomerNumber("0000000001"))
+                .thenThrow(new RepositoryUnavailableException("repo unavailable", new RuntimeException("boom")));
+
+        assertThatThrownBy(() -> service.inquire("0000000001"))
+                .isInstanceOf(RepositoryUnavailableException.class)
+                .hasMessageContaining("repo unavailable");
     }
 }
