@@ -30,4 +30,23 @@ public class CustomerInquiryClient {
                 .when()
                 .get("/api/v1/customers/{sortCode}/{customerNumber}", sortCode, customerNumber);
     }
+
+    public Response getCustomerCompatibility(String customerNumber) {
+        return RestAssured
+                .given()
+                .accept("application/json")
+                .queryParam("customerNumber", customerNumber)
+                .when()
+                .get("/api/v1/customers");
+    }
+
+    public Response getCustomerCompatibility(String sortCode, String customerNumber) {
+        return RestAssured
+                .given()
+                .accept("application/json")
+                .queryParam("sortCode", sortCode)
+                .queryParam("customerNumber", customerNumber)
+                .when()
+                .get("/api/v1/customers");
+    }
 }
