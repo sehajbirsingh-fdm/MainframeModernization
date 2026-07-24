@@ -24,7 +24,7 @@ public class InqaccSecurityConfiguration {
             InqaccAccessDeniedHandler accessDeniedHandler
     ) throws Exception {
         http
-                .securityMatcher("/v1/accounts/**")
+                .securityMatcher("/v1/accounts/**", "/v1/customers/**")
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
@@ -33,6 +33,7 @@ public class InqaccSecurityConfiguration {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/v1/accounts/**").hasRole("ACCOUNT_INQUIRER")
+                        .requestMatchers(HttpMethod.POST, "/v1/customers/**").hasRole("ACCOUNT_INQUIRER")
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

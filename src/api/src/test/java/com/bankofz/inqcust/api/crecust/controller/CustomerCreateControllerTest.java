@@ -74,6 +74,7 @@ class CustomerCreateControllerTest {
         );
 
         mockMvc.perform(post("/v1/customers")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
                         .header("X-Correlation-ID", "corr-create-1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request())))
@@ -88,6 +89,7 @@ class CustomerCreateControllerTest {
         String invalid = "{}";
 
         mockMvc.perform(post("/v1/customers")
+                                                .header("Authorization", "Bearer valid-inqacc-inquirer-token")
                         .header("X-Correlation-ID", "corr-create-2")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalid))
@@ -103,6 +105,7 @@ class CustomerCreateControllerTest {
         );
 
         mockMvc.perform(post("/v1/customers")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
                         .header("X-Correlation-ID", "corr-create-3")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request())))
@@ -110,6 +113,56 @@ class CustomerCreateControllerTest {
                 .andExpect(header().string("X-Correlation-ID", "corr-create-3"))
                 .andExpect(jsonPath("$.error.code").value("ERR-101"))
                 .andExpect(jsonPath("$.error.legacyFailCode").value("T"));
+    }
+
+    @Test
+    void missingTokenReturns401() throws Exception {
+        mockMvc.perform(post("/v1/customers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request())))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value("ERR-002"));
+    }
+
+    @Test
+    void insufficientRoleReturns403() throws Exception {
+        mockMvc.perform(post("/v1/customers")
+                        .header("Authorization", "Bearer valid-inqacc-limited-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request())))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ERR-003"));
+    }
+
+    @Test
+    void repositoryUnavailableReturns503() throws Exception {
+        when(customerCreateService.createCustomer(any())).thenThrow(
+                new CustomerCreateException("Unable to persist customer", "ERR-201", "1", HttpStatus.SERVICE_UNAVAILABLE)
+        );
+
+        mockMvc.perform(post("/v1/customers")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
+                        .header("X-Correlation-ID", "corr-create-4")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request())))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(header().string("X-Correlation-ID", "corr-create-4"))
+                .andExpect(jsonPath("$.error.code").value("ERR-201"))
+                .andExpect(jsonPath("$.error.legacyFailCode").value("1"));
+    }
+
+    @Test
+    void unexpectedFailureReturns500() throws Exception {
+        when(customerCreateService.createCustomer(any())).thenThrow(new RuntimeException("boom"));
+
+        mockMvc.perform(post("/v1/customers")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
+                        .header("X-Correlation-ID", "corr-create-5")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request())))
+                .andExpect(status().isInternalServerError())
+                .andExpect(header().string("X-Correlation-ID", "corr-create-5"))
+                .andExpect(jsonPath("$.error.code").value("ERR-999"));
     }
 
     private CreateCustomerRequest request() {

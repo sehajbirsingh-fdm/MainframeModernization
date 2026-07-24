@@ -68,7 +68,7 @@ export type CreateCustomerResult =
     }
   | {
       type: 'backend-error'
-      status: 400 | 422 | 500 | 503
+      status: 400 | 401 | 403 | 422 | 500 | 503
       error: CreateCustomerErrorEnvelope
       correlationId: string
     }

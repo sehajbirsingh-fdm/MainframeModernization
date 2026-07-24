@@ -1,4 +1,4 @@
-import { apiBaseUrl, requestTimeoutMs } from '../config/env'
+import { apiBaseUrl, inqaccDefaultToken, requestTimeoutMs } from '../config/env'
 import type {
   CreateCustomerErrorEnvelope,
   CreateCustomerRequest,
@@ -15,6 +15,7 @@ export async function createCustomer(request: CreateCustomerRequest): Promise<Cr
       method: 'POST',
       signal: controller.signal,
       headers: {
+        Authorization: `Bearer ${inqaccDefaultToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(request),
@@ -34,7 +35,7 @@ export async function createCustomer(request: CreateCustomerRequest): Promise<Cr
 
     const errorEnvelope = await safeParseError(response, correlationId)
 
-    if (response.status === 400 || response.status === 422 || response.status === 500 || response.status === 503) {
+    if (response.status === 400 || response.status === 401 || response.status === 403 || response.status === 422 || response.status === 500 || response.status === 503) {
       return {
         type: 'backend-error',
         status: response.status,
