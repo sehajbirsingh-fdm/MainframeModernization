@@ -1,246 +1,162 @@
 # MainframeModernization Project Onboarding Guide
 
-## 1. What This Project Is
+## 1. Project Purpose
 
-This repository demonstrates modernization of IBM Z banking workloads, with a focused feature implementation for **INQCUST customer inquiry**.
+This project modernizes legacy mainframe banking behaviors into API-first and UI-assisted capabilities while preserving legacy business meaning, fail-code semantics, and data mapping discipline.
 
-At a high level, the project contains:
-- Legacy-oriented artifacts and documentation for Bank of Z.
-- A Spring Boot API module that exposes a modern REST endpoint for customer inquiry.
-- Mock-first behavior for local development, with a DB-ready code path that can be enabled by configuration.
+The modernization is not just a code rewrite. It is a controlled translation from legacy logic to modern services, with verifiable parity and clear traceability from requirement to implementation to test evidence.
 
-If you are new, start with this file, then read:
-- `README.md`
-- `specs/001-inqcust-customer-inquiry-modernization/spec.md`
-- `src/api/README.md`
+## 2. What Has Been Implemented
 
-What is actively implemented right now:
-- Backend API in `src/api` (Spring Boot, Java 21).
-- New customer inquiry frontend in `src/frontend-react` (React + TypeScript + Vite).
-- Legacy static frontend in `src/frontend` (vanilla HTML/JS), kept as a separate older implementation.
+At a high level, three business capabilities are now implemented:
 
-## 2. Feature Scope (INQCUST)
+1. Customer inquiry modernization.
+2. Account inquiry modernization.
+3. Customer create modernization (CRECUST), including backend and frontend.
 
-The modernized API feature is defined in:
-- `specs/001-inqcust-customer-inquiry-modernization/spec.md`
+For the create-customer feature specifically, the implemented core behavior is:
 
-Primary endpoint:
-- `GET /api/v1/customers/{sortCode}/{customerNumber}`
+1. Accept a customer creation request through a modern API contract.
+2. Apply legacy-aligned validation and business rules in sequence.
+3. Execute credit-assessment behavior through an adapter abstraction.
+4. Generate a new customer number with monotonic increment semantics.
+5. Persist the created customer through a repository abstraction.
+6. Return modern HTTP responses while preserving legacy status observability.
 
-Behavior summary:
-- Specific lookup: normal 10-digit customer number.
-- Random lookup command: `0000000000`.
-- Latest lookup command: `9999999999`.
+In the current POC mode, data persistence is mock-first and process-memory based. This enables deterministic local development and testing without requiring live enterprise dependencies.
 
-Important acceptance rules implemented in code:
-- Path validation (`sortCode` 6 digits, `customerNumber` 10 digits).
-- Legacy status mapping (`Y/N` success and fail codes).
-- Random and latest lookup modes.
-- Risk assessment enrichment (`LOW/MEDIUM/HIGH`) from status/score/review date.
+## 3. The Modernization Approach We Used
 
-## 3. Architecture Summary
+We built the solution from scratch using a specification-driven lifecycle. The key principle was:
 
-### Runtime module
-- Spring Boot service in `src/api`.
+"Understand legacy behavior first, then implement only what is supported by source authority, and prove it with tests."
 
-### Core layers
-- Controller layer:
-  - `src/api/src/main/java/com/bankofz/inqcust/api/controller`
-- Service/business logic:
-  - `src/api/src/main/java/com/bankofz/inqcust/api/service`
-- Repository/data access abstraction:
-  - `src/api/src/main/java/com/bankofz/inqcust/api/repository`
-- Mapping/domain model:
-  - `src/api/src/main/java/com/bankofz/inqcust/api/mapper`
-  - `src/api/src/main/java/com/bankofz/inqcust/api/domain`
-- Support config:
-  - `src/api/src/main/java/com/bankofz/inqcust/api/support`
+This prevented accidental behavior drift and ensured modernization decisions remained traceable and auditable.
 
-### Data source strategy
-The API supports two runtime modes (same functionality, different source):
-- `mock` mode (default): reads JSON mock records.
-- `db` mode: uses DB-backed queries via managed DataSource.
+## 4. SDD Basics For New Readers
 
-Mode switch is config-only via `app.data.mode` in:
-- `src/api/src/main/resources/application.properties`
+SDD in this project means a structured, phase-based way to turn business behavior into working software with evidence.
 
-## 4. Folder Structure (What Matters Most)
+SDD here is composed of these practical artifacts:
 
-Top-level folders:
-- `docs/`: user-facing project documentation site.
-- `specs/`: feature specs, traceability, supporting design documents.
-- `src/`: implementation assets.
-- `mock-data/`: shared sample data.
-- `prompts/`: guided AI implementation prompts.
-- `scripts/`: utility scripts.
+1. Specification artifact.
+2. Planning artifact.
+3. Data model artifact.
+4. Mapping matrix.
+5. API contract.
+6. Task breakdown.
+7. Traceability and review checklists.
+8. Test specification.
 
-Within `src/`:
-- `src/api`: active Spring Boot API module.
-- `src/frontend-react`: active INQCUST customer inquiry frontend (current implementation).
-- `src/frontend`: legacy/static frontend demo pages/assets (older stack, separate from React app).
-- `src/base`: legacy-oriented source assets (reference/training/integration context).
+What each artifact does:
 
-Within `src/api/src/`:
-- `main/java`: production Java source.
-- `main/resources`: runtime properties and active OpenAPI YAML.
-- `test/java`: test source.
+1. Specification: Defines feature scope, rules, acceptance criteria, and expected outcomes.
+2. Plan: Defines implementation strategy, boundaries, and architecture choices.
+3. Data model: Defines request, response, and persistence structures.
+4. Mapping matrix: Defines authoritative field-by-field mapping between legacy and modern representations.
+5. API contract: Defines endpoint shape, payload schema, status codes, and error envelope.
+6. Tasks: Converts requirements into executable engineering work.
+7. Traceability/checklists: Ensures each requirement is implemented and test-covered.
+8. Test spec: Defines scenario-level verification criteria.
 
-Generated artifacts:
-- `src/api/target`: build output only. Never edit manually.
+## 5. How SDD Drove Implementation
 
-## 5. API Module Technical Notes
+The execution flow followed this pattern:
 
-Primary app config:
-- `src/api/src/main/resources/application.properties`
+1. Interpret legacy behavior and copybook constraints.
+2. Freeze requirements and contract boundaries.
+3. Design clear layers: controller, service, repository, and adapters.
+4. Implement business rules in service orchestration order.
+5. Keep transport concerns in controllers and error handlers.
+6. Keep persistence behind a repository abstraction.
+7. Build automated tests for both success and failure semantics.
+8. Verify consistency between implementation and SDD artifacts.
 
-Key properties:
-- `app.data.mode=mock|db`
-- `app.mock-data.path=...`
-- `app.db.url`, `app.db.username`, `app.db.password`
-- `app.db.table-name`
+This approach ensured that implementation remained disciplined and explainable to both engineering and domain stakeholders.
 
-Production-oriented DB path details:
-- Managed pooled DataSource (Hikari) configured in support layer.
-- Repository validates configurable table identifier format for SQL safety.
-- DB mode fails fast when required DB configuration is missing.
+## 6. How the Create-Customer Feature Works End-to-End
 
-## 6. Spec-to-Code Traceability (Quick Map)
+From a business-flow point of view:
 
-Spec artifact:
-- `specs/001-inqcust-customer-inquiry-modernization/spec.md`
+1. Input arrives with customer identity, contact, address, status, and date components.
+2. Validation executes for title, date-of-birth correctness, and date constraints.
+3. Credit-assessment path is executed through a dedicated gateway abstraction.
+4. A new customer number is allocated by controlled increment logic.
+5. Customer data is normalized, mapped, and saved through repository abstraction.
+6. Success response returns created identity plus legacy success indicators.
+7. Failure response returns standardized error payload plus legacy fail-code visibility.
 
-Supporting traceability docs:
-- `specs/001-inqcust-customer-inquiry-modernization/supporting/traceability-matrix.md`
-- `specs/001-inqcust-customer-inquiry-modernization/supporting/test-spec.md`
-- `specs/001-inqcust-customer-inquiry-modernization/supporting/mapping-matrix.md`
+From an architecture point of view:
 
-Main implementation touchpoints:
-- Controller endpoint and validation:
-  - `src/api/src/main/java/com/bankofz/inqcust/api/controller/CustomerInquiryController.java`
-- Lookup mode and orchestration:
-  - `src/api/src/main/java/com/bankofz/inqcust/api/service/CustomerInquiryService.java`
-- Risk logic:
-  - `src/api/src/main/java/com/bankofz/inqcust/api/service/RiskAssessmentService.java`
-- Data access abstraction:
-  - `src/api/src/main/java/com/bankofz/inqcust/api/repository/CustomerRepository.java`
+1. Controller remains thin.
+2. Service holds business behavior.
+3. Repository abstracts data persistence and future integration changes.
+4. Gateway abstractions isolate external-style dependencies.
+5. Error mapping is centralized for consistent API behavior.
 
-## 7. How To Run (New Developer)
+## 7. What "Legacy Parity" Means In This Project
 
-### Prerequisites
-- Java 21
-- Maven
+Legacy parity means preserving observable business outcomes, not replicating old technology.
 
-### Build and test
-From `src/api`:
+Parity is enforced by:
 
-```bash
-mvn test
-```
+1. Rule-level fail-code mapping.
+2. Field-level mapping discipline.
+3. Legacy status semantics in modern responses.
+4. Equivalent sequence of decision points in service orchestration.
+5. Acceptance criteria tied to source behavior, not assumptions.
 
-### Run in mock mode (default)
-From `src/api`:
+## 8. Testing and Verification Philosophy
 
-```bash
-mvn spring-boot:run
-```
+Verification is multi-layered:
 
-Important:
-- Run backend commands from `src/api` only.
-- Running `mvn spring-boot:run` from repository root will fail because the root is not the Spring Boot module.
+1. Unit tests validate rule correctness and fail-code behavior.
+2. API tests validate contract-level status and payload behavior.
+3. Frontend tests validate user flow, validation feedback, and success rendering.
+4. Regression checks ensure new functionality does not break existing capabilities.
 
-Alternative from any folder:
+What this gives new contributors:
 
-```bash
-mvn -f src/api/pom.xml spring-boot:run
-```
+1. Fast confidence in behavior changes.
+2. Clear evidence when discussing parity with stakeholders.
+3. Safer iteration when extending adapters or persistence strategy.
 
-### Run frontend (React)
-From `src/frontend-react`:
+## 9. Current State and Known Boundaries
 
-```bash
-npm install
-npm run dev
-```
+Current strengths:
 
-Local dev URL:
-- `http://localhost:5173`
+1. End-to-end modernized flow exists for inquiry and create use cases.
+2. Backend and frontend are operational for create-customer scenarios.
+3. SDD artifacts and implementation have been aligned and versioned.
 
-Backend connectivity:
-- Vite proxy forwards `/api/*` to `http://localhost:8080` by default.
-- This avoids CORS issues in normal local development.
+Current POC boundaries:
 
-### Run in db mode
-Set environment variables and mode before startup:
+1. Mock-first runtime mode is used for local and demonstration environments.
+2. Live enterprise integration is intentionally abstracted behind interfaces.
+3. Some advanced parity branches are intentionally planned for continued hardening.
 
-```bash
-export APP_DB_URL='jdbc:db2://host:port/database'
-export APP_DB_USERNAME='your_user'
-export APP_DB_PASSWORD='your_password'
-```
+## 10. How a New Engineer Should Contribute
 
-Then set `app.data.mode=db` and run:
+When adding or changing behavior, follow this order:
 
-```bash
-mvn spring-boot:run
-```
+1. Start from requirement and acceptance criteria.
+2. Update SDD artifacts first when behavior changes.
+3. Implement through existing architectural boundaries.
+4. Add tests for both success and failure paths.
+5. Re-run verification and confirm traceability stays intact.
 
-## 8. Common Pitfalls
+If you follow this sequence, your changes will remain consistent with the project's modernization standards and will be easier to review, validate, and maintain.
 
-- Typo in Maven command:
-  - Correct: `mvn spring-boot:run`
-  - Incorrect: `mvm spring-boot:run`
-- Confusing source vs generated files:
-  - Source is under `src/main/*` and `src/test/*`.
-  - `target/` is generated.
-- DB mode startup failures:
-  - Usually missing/invalid DB properties or DB driver/environment mismatch.
+## 11. Quick SDD Mental Model (One-Minute Version)
 
-## 9. Testing Strategy
+Use this compact model when onboarding:
 
-Current tests cover:
-- Controller behavior and HTTP status mapping.
-- Service lookup modes and business rules.
-- Risk assessment rules.
-- Date conversion and mapping behavior.
-- Repository behavior in mock mode and DB-mode simulation using in-memory DB for integration confidence.
+1. Spec says what the business behavior must be.
+2. Plan says how we will build it.
+3. Mapping says how legacy and modern fields align.
+4. Contract says how external consumers interact.
+5. Tasks convert intent to build steps.
+6. Tests prove we built what we said we would build.
+7. Reviews confirm nothing important was missed.
 
-Primary test tree:
-- `src/api/src/test/java/com/bankofz/inqcust/api`
-
-## 10. What To Read Next (Recommended Order)
-
-1. `PROJECT_ONBOARDING_GUIDE.md` (this file)
-2. `README.md`
-3. `specs/001-inqcust-customer-inquiry-modernization/spec.md`
-4. `src/api/README.md`
-5. `src/api/src/main/java/com/bankofz/inqcust/api/controller/CustomerInquiryController.java`
-6. `src/api/src/main/java/com/bankofz/inqcust/api/service/CustomerInquiryService.java`
-7. `src/api/src/main/java/com/bankofz/inqcust/api/repository/MockCustomerRepository.java`
-8. `src/api/src/test/java/com/bankofz/inqcust/api`
-
-## 11. New Contributor Checklist
-
-- Run tests successfully in `src/api`.
-- Verify endpoint behavior in mock mode.
-- Understand lookup command values (`0000000000`, `9999999999`).
-- Understand spec acceptance scenarios and fail codes.
-- Avoid editing generated `target/` artifacts.
-- Keep data access changes behind `CustomerRepository` to preserve mode-switch behavior.
-
-## 12. Structure Review: What Is Unnecessary vs Intentional
-
-This section helps avoid deleting files that look redundant but are intentional.
-
-Likely unnecessary (safe cleanup candidates):
-- `src/frontend-react/src/assets/hero.png` (not referenced)
-- `src/frontend-react/src/assets/react.svg` (not referenced)
-- `src/frontend-react/src/assets/vite.svg` (not referenced)
-- `src/frontend-react/public/icons.svg` (not referenced)
-
-Generated/local-only (should not be committed):
-- `src/frontend-react/node_modules/`
-- `src/frontend-react/dist/`
-
-Intentional but easy to confuse as duplicate:
-- `src/frontend/` and `src/frontend-react/` both exist by design right now.
-- If the team decides to standardize on React only, archive or remove `src/frontend/` in a separate cleanup PR after team approval.
+That is the foundation used to build this modernization effort from scratch.
