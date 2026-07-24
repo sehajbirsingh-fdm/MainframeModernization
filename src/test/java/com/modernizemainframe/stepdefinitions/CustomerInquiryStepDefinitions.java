@@ -6,26 +6,22 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
 
 import java.util.List;
 
+import com.modernizemainframe.api.CustomerInquiryClient;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class StepDefinitions {
+public class CustomerInquiryStepDefinitions {
 
-    private static final String DEFAULT_HOST = "localhost";
-    private static final int DEFAULT_PORT = 8080;
-
+    private final CustomerInquiryClient apiClient = new CustomerInquiryClient();
     private Response response;
 
     @Before
     public void setUp() {
-        String host = System.getProperty("api.host", DEFAULT_HOST);
-        int port = Integer.getInteger("api.port", DEFAULT_PORT);
-        RestAssured.baseURI = "http://" + host;
-        RestAssured.port = port;
+        apiClient.configure();
     }
 
     @After
@@ -35,17 +31,13 @@ public class StepDefinitions {
 
     @Given("the API is running at localhost:8080")
     public void theApiIsRunningAtLocalhost8080() {
-        assertThat(RestAssured.baseURI).isEqualTo("http://localhost");
-        assertThat(RestAssured.port).isEqualTo(8080);
+        assertThat(apiClient.baseUri()).isEqualTo("http://localhost");
+        assertThat(apiClient.port()).isEqualTo(8080);
     }
 
     @When("I request the customer with sort code {string} and customer number {string}")
     public void iRequestTheCustomerWithSortCodeAndCustomerNumber(String sortCode, String customerNumber) {
-        this.response = RestAssured
-                .given()
-                .accept("application/json")
-                .when()
-                .get("/api/v1/customers/{sortCode}/{customerNumber}", sortCode, customerNumber);
+        this.response = apiClient.getCustomer(sortCode, customerNumber);
     }
 
     @Then("the response status code is {int}")
@@ -74,7 +66,6 @@ public class StepDefinitions {
 
     @And("the response body legacyStatus.inquiryFailCode is {string}")
     public void theResponseBodyLegacyStatusInquiryFailCodeIs(String expectedValue) {
-        // The API may serialize the fail code as a string or a number; coerce to string for comparison.
         Object rawValue = response.jsonPath().get("legacyStatus.inquiryFailCode");
         String actualValue = rawValue != null ? String.valueOf(rawValue) : null;
         assertThat(actualValue)
@@ -88,19 +79,5 @@ public class StepDefinitions {
         assertThat(actualValue)
                 .as("Expected lookupMode to be '%s' but got '%s'", expectedValue, actualValue)
                 .isEqualTo(expectedValue);
-    }
-
-    @And("the response contains the latest customer")
-    public void theResponseContainsTheLatestCustomer() {
-        assertThat(response.getStatusCode())
-                .as("Expected HTTP 200 for latest customer but got %d", response.getStatusCode())
-                .isEqualTo(200);
-
-        // Assert that a customer object is present in the response body.
-        // The exact field name depends on the API contract; adjust if the root field is named differently.
-        Object customer = response.jsonPath().get("customer");
-        assertThat(customer)
-                .as("Expected a customer object in the response body for the latest customer request")
-                .isNotNull();
     }
 }
