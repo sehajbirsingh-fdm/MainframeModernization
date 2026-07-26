@@ -37,7 +37,7 @@ Feature: Customer Inquiry API
   @TC016 @FR004 @P2
   Scenario: CT-006 Random sentinel request returns deterministic API response
     When I request the customer with sort code "111111" and customer number "0000000000"
-    Then the response status code is 200 or 404
+    Then the response status code is 200
     And the response body lookupMode is "RANDOM"
 
   @TC003 @FR001 @P2
@@ -62,19 +62,19 @@ Feature: Customer Inquiry API
     Then the response status code is 400
 
   @TC007 @FR002 @P2
-  Scenario: CT-010 Compatibility endpoint defaults sort code when omitted
+  Scenario: CT-010 No default compatibility sort code when omitted
     When I request the compatibility customer endpoint with customer number "0000000001"
-    Then the response status code is one of "200,500"
+    Then the response status code is 400
 
   @TC008 @FR002 @P2
-  Scenario: CT-011 Compatibility endpoint treats blank sort code as default
-    When I request the compatibility customer endpoint with sort code "" and customer number "0000000001"
-    Then the response status code is one of "200,500"
+  Scenario: CT-011 Blank sort code is rejected
+    When I request the customer with sort code "" and customer number "0000000001"
+    Then the response status code is 400
 
   @TC009 @FR002 @P2
-  Scenario: CT-012 Compatibility endpoint handles whitespace sort code consistently
-    When I request the compatibility customer endpoint with sort code "   " and customer number "0000000001"
-    Then the response status code is one of "200,400,500"
+  Scenario: CT-012 Whitespace sort code is rejected
+    When I request the customer with sort code "   " and customer number "0000000001"
+    Then the response status code is 400
 
   @TC010 @FR003 @P1
   Scenario: CT-013 Specific lookup mode for non-sentinel customer number
