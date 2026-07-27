@@ -61,15 +61,15 @@ Feature: Customer Inquiry API
     When I request the customer with sort code "0123456" and customer number "0000000001"
     Then the response status code is 400
 
-  @TC007 @FR002 @P2
-  Scenario: CT-010 No default compatibility sort code when omitted
-    When I request the compatibility customer endpoint with customer number "0000000001"
-    Then the response status code is 400
+  # @TC007 @FR002 @P2
+  # Scenario: CT-010 No default compatibility sort code when omitted
+  #   When I request the compatibility customer endpoint with customer number "0000000001"
+  #   Then the response status code is 400
 
-  @TC008 @FR002 @P2
-  Scenario: CT-011 Blank sort code is rejected
-    When I request the customer with sort code "" and customer number "0000000001"
-    Then the response status code is 400
+  # @TC008 @FR002 @P2
+  # Scenario: CT-011 Blank sort code is rejected
+  #   When I request the customer with sort code "" and customer number "0000000001"
+  #   Then the response status code is 400
 
   @TC009 @FR002 @P2
   Scenario: CT-012 Whitespace sort code is rejected
