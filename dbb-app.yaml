@@ -26,9 +26,9 @@ application:
       # Configure the source directory for building
       - name: sourceDirs
         value:
-            - "Bank-of-Z/src/base"
-            - "Bank-of-Z/src/api/src/main/api"
-            - "Bank-of-Z/src/frontend"
+            - "Bank-of-Z/legacy-bankofz/base"
+            - "Bank-of-Z/backend/api/src/main/api"
+            - "Bank-of-Z/frontend/legacy-static"
 
     - task: ScannerInit
       variables:
@@ -74,25 +74,25 @@ application:
             # COBOL program dependencies
             - languageExt: cbl
               dependencyPatterns:
-                - ${APP_DIR_NAME}/src/**/*.cpy   # COPY member (copybook)
-                - ${APP_DIR_NAME}/src/**/*.bms   # BMS map source
-                - ${APP_DIR_NAME}/src/**/.cbl    # Statically CALLed program
+                - ${APP_DIR_NAME}/legacy-bankofz/**/*.cpy   # COPY member (copybook)
+                - ${APP_DIR_NAME}/legacy-bankofz/**/*.bms   # BMS map source
+                - ${APP_DIR_NAME}/legacy-bankofz/**/.cbl    # Statically CALLed program
 
             # Link-card dependencies: each .lnk file may reference
             # one or more COBOL object modules to be link-edited.
             - languageExt: lnk
               dependencyPatterns:
-                - ${APP_DIR_NAME}/src/**/*.cbl   # COBOL object to include
+                - ${APP_DIR_NAME}/legacy-bankofz/**/*.cbl   # COBOL object to include
 
     # ----------------------------------------------------------
     # Cobol task
-    # Compiles all COBOL sources found under src/base/**/cobol/
+    # Compiles all COBOL sources found under legacy-bankofz/base/**/cobol/
     # and link-edits them into load modules.
     # ----------------------------------------------------------
     - task: Cobol
       # Glob pattern selecting COBOL source files to compile
       sources:
-        - "**/src/base/**/cobol/*.cbl"
+        - "**/legacy-bankofz/base/**/cobol/*.cbl"
 
       variables:
 
@@ -132,7 +132,7 @@ application:
         #   RENT             - Reentrant code required for IMS
         #   PGMNAME(LONGMIXED) - Mixed-case entry points for Java interop
         - name: compileParms
-          forFiles: "**/src/base/ims/cobol/IBTRAN.cbl"
+          forFiles: "**/legacy-bankofz/base/ims/cobol/IBTRAN.cbl"
           value: XREF,PGMNAME(LONGMIXED),DLL,RENT,NOEXP,LP(32),JAVAIOP(JAVA64),LIB
           append:
           - condition:
@@ -148,7 +148,7 @@ application:
         # for the IMS Java integration; CASE(MIXED) preserves
         # mixed-case external names.
         - name: linkEditParms
-          forFiles: "**/src/base/ims/cobol/IBTRAN.cbl"
+          forFiles: "**/legacy-bankofz/base/ims/cobol/IBTRAN.cbl"
           value: LIST,XREF,LET,DYNAM(DLL),CASE(MIXED)
 
         # ----- Link-edit instream for IBTRAN -----
@@ -156,7 +156,7 @@ application:
         # the compiled object, and the 31-bit to 64-bit Java bridge libraries
         # (igzxjni2.x and libjvm31.x) for JVM=3164 interoperability.
         - name: linkEditStream
-          forFiles: "**/src/base/ims/cobol/IBTRAN.cbl"
+          forFiles: "**/legacy-bankofz/base/ims/cobol/IBTRAN.cbl"
           value: |2
               INCLUDE  RESLIB(DFSLI000)
               INCLUDE  SYSLIB(${MEMBER})
@@ -170,16 +170,16 @@ application:
         # IMS can locate and invoke the program correctly.
         - name: linkEditStream
           forFiles:
-            - "**/src/base/ims/cobol/IBACSUM.cbl"
-            - "**/src/base/ims/cobol/IBGCUDAT.cbl"
-            - "**/src/base/ims/cobol/IBLOGIN1.cbl"
-            - "**/src/base/ims/cobol/IBLOGOUT.cbl"
-            - "**/src/base/ims/cobol/IBSCUDAT.cbl"
-            - "**/src/base/ims/cobol/LOADACCT.cbl"
-            - "**/src/base/ims/cobol/LOADCUSA.cbl"
-            - "**/src/base/ims/cobol/LOADCUST.cbl"
-            - "**/src/base/ims/cobol/LOADHIST.cbl"
-            - "**/src/base/ims/cobol/LOADTSTA.cbl"
+            - "**/legacy-bankofz/base/ims/cobol/IBACSUM.cbl"
+            - "**/legacy-bankofz/base/ims/cobol/IBGCUDAT.cbl"
+            - "**/legacy-bankofz/base/ims/cobol/IBLOGIN1.cbl"
+            - "**/legacy-bankofz/base/ims/cobol/IBLOGOUT.cbl"
+            - "**/legacy-bankofz/base/ims/cobol/IBSCUDAT.cbl"
+            - "**/legacy-bankofz/base/ims/cobol/LOADACCT.cbl"
+            - "**/legacy-bankofz/base/ims/cobol/LOADCUSA.cbl"
+            - "**/legacy-bankofz/base/ims/cobol/LOADCUST.cbl"
+            - "**/legacy-bankofz/base/ims/cobol/LOADHIST.cbl"
+            - "**/legacy-bankofz/base/ims/cobol/LOADTSTA.cbl"
           value: |2
               INCLUDE  RESLIB(CBLTDLI)
               INCLUDE  SYSLIB(${MEMBER})
@@ -187,9 +187,9 @@ application:
               NAME     ${MEMBER}(R)
 
         # Search path for copybooks (.cpy) used by COBOL sources.
-        # Scanned recursively under src/base/ in a single-repo build.
+        # Scanned recursively under legacy-bankofz/base/ in a single-repo build.
         - name: dependencySearchPath
-          value: search:${WORKSPACE}/?path=${APP_DIR_NAME}/src/base/**/*.cpy
+          value: search:${WORKSPACE}/?path=${APP_DIR_NAME}/legacy-bankofz/base/**/*.cpy
 
         # ----- Deployment type -----
         # Controls which target library the load module is deployed to:
@@ -203,19 +203,19 @@ application:
               value: CICSLOAD
 
         - name: deployType
-          forFiles: "**/src/base/ims/cobol/*.cbl"
+          forFiles: "**/legacy-bankofz/base/ims/cobol/*.cbl"
           value: IMSLOAD
 
     # ----------------------------------------------------------
     # PLI task
-    # Compiles all PL/I sources found under src/base/**/pli/
+    # Compiles all PL/I sources found under legacy-bankofz/base/**/pli/
     # and link-edits them. IMS mode is enabled for all PL/I
     # programs in this application.
     # ----------------------------------------------------------
     - task: PLI
       # Glob pattern selecting PL/I source files to compile
       sources:
-        - "**/src/base/**/*.pli"
+        - "**/legacy-bankofz/base/**/*.pli"
 
       variables:
 
@@ -227,7 +227,7 @@ application:
         # (e.g. DL/I call support, IMS PSB/DBD handling)
         # Enable IMS ONLY for programs under ims/pli/
         - name: isIMS
-          forFiles: "**/src/base/ims/pli/*.pli"
+          forFiles: "**/legacy-bankofz/base/ims/pli/*.pli"
           value: true
 
         # ----- Link-edit instream for IBLOGIN (IMS PL/I program) -----
@@ -236,7 +236,7 @@ application:
         # DFSLI000 provides the IMS language interface stub.
         - name: linkEditStream
           forFiles:
-            - "**/src/base/ims/pli/IBLOGIN.pli"
+            - "**/legacy-bankofz/base/ims/pli/IBLOGIN.pli"
           value: |2
               INCLUDE  SYSLIB(${MEMBER})
               INCLUDE RESLIB(DFSLI000)
@@ -246,7 +246,7 @@ application:
         # Batch programs use CEESTART but don't need DFSLI000
         # DB2 connection handled via DSN RUN in JCL
         - name: linkEditStream
-          forFiles: "**/src/base/batch/pli/*.pli"
+          forFiles: "**/legacy-bankofz/base/batch/pli/*.pli"
           value: |2
               INCLUDE  SYSLIB(${MEMBER})
               ENTRY CEESTART
@@ -256,12 +256,12 @@ application:
         # Controls which target library the load module is deployed to:
         #   IMSLOAD  - IMS program library (for all programs under ims/pli/)
         - name: deployType
-          forFiles: "**/src/base/ims/pli/*.pli"
+          forFiles: "**/legacy-bankofz/base/ims/pli/*.pli"
           value: IMSLOAD
           
         # ----- Deployment type for batch programs -----
         - name: deployType
-          forFiles: "**/src/base/batch/pli/*.pli"
+          forFiles: "**/legacy-bankofz/base/batch/pli/*.pli"
           value: LOAD
           
     - task: MetadataInit
@@ -284,7 +284,7 @@ application:
         - name: javaHome
           value: "/usr/local/sandboxes/tools/J17.0_64"
         - name: vanillaFrontendPath
-          value: "src/frontend"
+          value: "frontend/legacy-static"
         - name: vanillaWarName
           value: "bank-frontend-vanilla.war"
 
@@ -301,9 +301,9 @@ application:
         - name: shellEnvironment
           value: "/usr/lpp/IBM/foz/v1r1/bash/bash/bin/bash"
         - name: serverXmlPath
-          value: "src/api/src/main/liberty/config/server.xml"
+          value: "backend/api/src/main/liberty/config/server.xml"
         - name: cicsXmlPath
-          value: "src/api/src/main/liberty/config/cics.xml"
+          value: "backend/api/src/main/liberty/config/cics.xml"
 
     # ----------------------------------------------------------
     # ImsJavaBuilder task
@@ -321,7 +321,7 @@ application:
           value: "/usr/lpp/IBM/foz/v1r1/bash/bash/bin/bash"
         # Relative path (from repo root) to the Gradle project directory
         - name: configSources
-          value: "src/base/ims/java"
+          value: "legacy-bankofz/base/ims/java"
 
     - task: zOSConnect
       variables:
@@ -364,11 +364,11 @@ application:
         #             DBDs are the counterpart to PSBs - PSBs reference
         #             DBDs to express what a program can see.
         - name: deployType
-          forFiles: "**/src/base/ims/PSB/*.asm"
+          forFiles: "**/legacy-bankofz/base/ims/PSB/*.asm"
           value: PSBLOAD
 
         - name: deployType
-          forFiles: "**/src/base/ims/DBD/*.asm"
+          forFiles: "**/legacy-bankofz/base/ims/DBD/*.asm"
           value: DBDLOAD
 
         # Assembler parms

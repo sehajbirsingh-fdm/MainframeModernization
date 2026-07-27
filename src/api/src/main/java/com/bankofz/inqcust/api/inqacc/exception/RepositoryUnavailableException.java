@@ -1,8 +1,0 @@
-package com.bankofz.inqcust.api.inqacc.exception;
-
-public class RepositoryUnavailableException extends RuntimeException {
-
-    public RepositoryUnavailableException(String message, Throwable cause) {
-        super(message, cause);
-    }
-}

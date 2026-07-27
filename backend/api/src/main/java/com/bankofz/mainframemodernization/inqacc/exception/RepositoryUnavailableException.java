@@ -1,0 +1,8 @@
+package com.bankofz.mainframemodernization.inqacc.exception;
+
+public class RepositoryUnavailableException extends RuntimeException {
+
+    public RepositoryUnavailableException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
