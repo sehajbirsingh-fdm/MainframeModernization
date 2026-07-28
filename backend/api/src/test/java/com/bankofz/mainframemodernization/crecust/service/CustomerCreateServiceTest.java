@@ -17,7 +17,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.doThrow;
@@ -235,7 +237,69 @@ class CustomerCreateServiceTest {
     }
 
     @Test
-    void mapsLockReleaseFailureToLegacyFailCode5And503() throws Exception {
+    void releasesLockAfterSuccessfulCustomerCreation() throws Exception {
+        CreateCustomerRequest request = request("Mr", "John", "Smith");
+        when(creditCheckGateway.assess(any(), any())).thenReturn(
+                new CreditCheckGateway.CreditCheckResult(true, 712, LocalDate.of(2026, 8, 5), " ")
+        );
+        when(repository.nextCustomerNumber("123456")).thenReturn(6L);
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        TrackingLock lock = new TrackingLock();
+        setLock("123456", lock);
+
+        service.createCustomer(request);
+
+        assertEquals(1, lock.unlockCount());
+        assertFalse(lock.isLocked());
+    }
+
+    @Test
+    void releasesLockAfterPersistenceFailure() throws Exception {
+        CreateCustomerRequest request = request("Mr", "John", "Smith");
+        when(creditCheckGateway.assess(any(), any())).thenReturn(
+                new CreditCheckGateway.CreditCheckResult(true, 712, LocalDate.of(2026, 8, 5), " ")
+        );
+        when(repository.nextCustomerNumber("123456")).thenReturn(6L);
+        doThrow(new RuntimeException("write failure")).when(repository).save(any());
+        TrackingLock lock = new TrackingLock();
+        setLock("123456", lock);
+
+        CustomerCreateException exception = assertThrows(CustomerCreateException.class, () -> service.createCustomer(request));
+
+        assertEquals("1", exception.legacyFailCode());
+        assertEquals("ERR-201", exception.errorCode());
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.httpStatus());
+        assertEquals(1, lock.unlockCount());
+        assertFalse(lock.isLocked());
+    }
+
+    @Test
+    void releasesLockAfterUnexpectedRuntimeFailure() throws Exception {
+        CreateCustomerRequest request = new CreateCustomerRequest(
+                "Mr",
+                "John",
+                "Smith",
+                new DateParts(1, 1, 1990),
+                new DateParts(22, 7, 2026),
+                "4165550101",
+                null,
+                "ACTIVE"
+        );
+        when(creditCheckGateway.assess(any(), any())).thenReturn(
+                new CreditCheckGateway.CreditCheckResult(true, 712, LocalDate.of(2026, 8, 5), " ")
+        );
+        when(repository.nextCustomerNumber("123456")).thenReturn(6L);
+        TrackingLock lock = new TrackingLock();
+        setLock("123456", lock);
+
+        assertThrows(NullPointerException.class, () -> service.createCustomer(request));
+
+        assertEquals(1, lock.unlockCount());
+        assertFalse(lock.isLocked());
+    }
+
+    @Test
+    void mapsLockStateAnomalyToLegacyFailCode5And503() throws Exception {
         CreateCustomerRequest request = request("Mr", "John", "Smith");
         when(creditCheckGateway.assess(any(), any())).thenReturn(
                 new CreditCheckGateway.CreditCheckResult(true, 712, LocalDate.of(2026, 8, 5), " ")
@@ -243,13 +307,33 @@ class CustomerCreateServiceTest {
         when(repository.nextCustomerNumber("123456")).thenReturn(6L);
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        setLock("123456", new UnlockFailingLock());
+        setLock("123456", new OwnershipAnomalyLock());
 
         CustomerCreateException exception = assertThrows(CustomerCreateException.class, () -> service.createCustomer(request));
 
         assertEquals("5", exception.legacyFailCode());
         assertEquals("ERR-204", exception.errorCode());
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.httpStatus());
+    }
+
+    @Test
+    void preservesOriginalFailureWhenLockStateAnomalyAlsoOccurs() throws Exception {
+        CreateCustomerRequest request = request("Mr", "John", "Smith");
+        when(creditCheckGateway.assess(any(), any())).thenReturn(
+                new CreditCheckGateway.CreditCheckResult(true, 712, LocalDate.of(2026, 8, 5), " ")
+        );
+        when(repository.nextCustomerNumber("123456")).thenReturn(6L);
+        doThrow(new RuntimeException("write failure")).when(repository).save(any());
+        setLock("123456", new OwnershipAnomalyLock());
+
+        CustomerCreateException exception = assertThrows(CustomerCreateException.class, () -> service.createCustomer(request));
+
+        assertEquals("1", exception.legacyFailCode());
+        assertEquals("ERR-201", exception.errorCode());
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.httpStatus());
+        assertTrue(exception.getSuppressed().length > 0);
+        assertTrue(exception.getSuppressed()[0] instanceof CustomerCreateException);
+        assertEquals("5", ((CustomerCreateException) exception.getSuppressed()[0]).legacyFailCode());
     }
 
     @SuppressWarnings("unchecked")
@@ -260,16 +344,35 @@ class CustomerCreateServiceTest {
         locks.put(sortCode, lock);
     }
 
-    private static final class UnlockFailingLock extends ReentrantLock {
+    private static final class TrackingLock extends ReentrantLock {
+        private int unlockCount;
+
         @Override
         public void unlock() {
-            throw new IllegalMonitorStateException("forced unlock failure");
+            unlockCount++;
+            super.unlock();
+        }
+
+        private int unlockCount() {
+            return unlockCount;
         }
     }
 
     private static final class TryLockFailingLock extends ReentrantLock {
         @Override
         public boolean tryLock() {
+            return false;
+        }
+    }
+
+    private static final class OwnershipAnomalyLock extends ReentrantLock {
+        @Override
+        public boolean tryLock() {
+            return true;
+        }
+
+        @Override
+        public boolean isHeldByCurrentThread() {
             return false;
         }
     }
