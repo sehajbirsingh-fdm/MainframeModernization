@@ -72,6 +72,10 @@ public class CustomerCreateService {
             );
         }
 
+        CreateCustomerResponse response = null;
+        RuntimeException operationFailure = null;
+        CustomerCreateException lockStateAnomaly = null;
+
         try {
             long nextNumber;
             try {
@@ -118,7 +122,7 @@ public class CustomerCreateService {
                 );
             }
 
-            return new CreateCustomerResponse(
+                response = new CreateCustomerResponse(
                     trim(saved.eyecatcher()),
                     trim(saved.sortCode()),
                     trim(saved.customerNumber()),
@@ -138,11 +142,13 @@ public class CustomerCreateService {
                     legacyDateConverter.toLocalDate(saved.creditScoreReviewDate()),
                     new LegacyCreateStatus("Y", " ")
             );
+        } catch (RuntimeException exception) {
+            operationFailure = exception;
         } finally {
-            try {
+            if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
-            } catch (IllegalMonitorStateException exception) {
-                throw new CustomerCreateException(
+            } else {
+                lockStateAnomaly = new CustomerCreateException(
                         "Unable to release customer number lock",
                         "ERR-204",
                         "5",
@@ -150,6 +156,19 @@ public class CustomerCreateService {
                 );
             }
         }
+
+        if (operationFailure != null) {
+            if (lockStateAnomaly != null) {
+                operationFailure.addSuppressed(lockStateAnomaly);
+            }
+            throw operationFailure;
+        }
+
+        if (lockStateAnomaly != null) {
+            throw lockStateAnomaly;
+        }
+
+        return response;
     }
 
     private void validateTitle(String title) {
