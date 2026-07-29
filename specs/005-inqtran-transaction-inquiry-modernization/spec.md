@@ -1,52 +1,127 @@
-# Feature Specification: INQTRAN Transaction Inquiry Modernization (Temporary Placeholder)
+# Feature Specification — Account Transaction List Inquiry
 
-**Feature Branch**: 005-inqtran-transaction-inquiry-modernization  
-**Created**: 2026-07-28  
-**Status**: Draft (Provisional Placeholder)  
-**Input**: Temporary placeholder specification request for INQTRAN Transaction Inquiry Modernization
+## Feature Description
+Provide a read-only transaction list for an account, preserving the observable behavior of `INQTRANL` while integrating into the existing application.
 
-## User Scenarios & Testing *(mandatory)*
+## User Stories
 
-### User Story 1 - Placeholder capability framing
-As a modernization stakeholder, I want a temporary specification for INQTRAN transaction inquiry so that the SpecKit workflow can proceed while legacy analysis is completed.
+### US-001 — View account transactions
+As an operator, I can retrieve transactions for a sort code and account number so that I can inspect the account's transaction history.
 
-### Acceptance Scenarios
-1. Given this temporary specification, when planning readiness is reviewed, then this file is treated only as a workflow placeholder and not as final business approval.
-2. Given unresolved legacy behavior, when final requirements are prepared, then behavior must be derived from confirmed legacy evidence from INQTRANL.cbl and any validated relationship to INQTRAND.cbl.
-3. Given pending analysis, when implementation readiness is checked, then implementation does not begin from this placeholder specification.
+### US-002 — Restrict by date
+As an operator, I can optionally apply inclusive from/to dates so that I can narrow the result set.
 
-## Requirements *(mandatory)*
+### US-003 — Page through results
+As an operator, I can supply limit and offset and see total and returned counts so that I can navigate a large history.
 
-### Functional Requirements
-- FR-001: The feature scope is provisionally defined as modernization of legacy INQTRAN transaction inquiry behavior.
-- FR-002: INQTRANL.cbl is the primary legacy evidence source for deriving final behavior.
-- FR-003: INQTRAND.cbl may contain related behavior, but no dependency or relationship is assumed until legacy analysis confirms it.
-- FR-004: Final business rules, validation rules, request fields, response fields, API paths, status codes, data mappings, and architecture decisions must be deferred until legacy analysis is completed and approved.
-- FR-005: The eventual solution direction is a modern API and a minimal frontend, but this placeholder defines no endpoints, payload fields, or interface contracts.
-- FR-006: This specification is provisional and must be replaced by an approved starter specification before implementation tasks are executed.
+## API Behaviour
 
-## Success Criteria
+`GET /api/v1/accounts/{sortCode}/{accountNumber}/transactions`
 
-- SC-001: A valid spec file exists in the expected SpecKit feature directory and can be used by downstream SpecKit commands.
-- SC-002: The placeholder contains at least one user story and acceptance scenarios that explicitly require final behavior to be derived from supplied legacy evidence.
-- SC-003: The placeholder contains no invented business rules, API definitions, request or response schemas, table definitions, SQL behavior, or unverified legacy-program relationships.
-- SC-004: All unresolved feature details are explicitly marked as pending legacy analysis and approval.
+Path parameters:
+- `sortCode`: exactly 6 digits, represented as a string.
+- `accountNumber`: exactly 8 digits, represented as a string.
 
-## Entities *(include if feature involves data)*
+Query parameters:
+- `fromDate`: optional 8-digit `YYYYMMDD` lower boundary.
+- `toDate`: optional 8-digit `YYYYMMDD` upper boundary.
+- `limit`: optional integer. Omitted or `0` defaults to 50; values above 100 are processed as 100.
+- `offset`: optional non-negative integer; omitted defaults to 0.
 
-- Legacy Evidence Source (provisional): A legacy artifact used to derive approved behavior, currently including INQTRANL.cbl and potentially INQTRAND.cbl pending confirmation.
-- Transaction Inquiry Capability (provisional): The inquiry behavior to be modernized, with fields, rules, and response behavior to be defined only after legacy analysis.
+The exact digit-shape validations reflect copybook widths. Calendar-validity rejection and from-after-to rejection are proposed API safeguards, not evidenced legacy business rules; they must remain visibly traceable as modernization validation.
 
-## Assumptions
+## Expected Success Response
 
-- This placeholder exists only to initialize and progress the SpecKit workflow.
-- Legacy analysis outputs will provide the authoritative business behavior and data definitions.
-- A separate approved starter specification will replace this file before implementation begins.
+HTTP 200:
 
-## Review & Acceptance Checklist
+```json
+{
+	"sortCode": "987654",
+	"accountNumber": "12345678",
+	"fromDate": null,
+	"toDate": "20260728",
+	"limit": 50,
+	"offset": 0,
+	"totalCount": 2,
+	"returnedCount": 2,
+	"transactions": [
+		{
+			"transactionId": "987654-12345678-20260728-143015-000000000123",
+			"sortCode": "987654",
+			"accountNumber": "12345678",
+			"date": "20260728",
+			"time": "143015",
+			"reference": "000000000123",
+			"type": "CRD",
+			"description": "Example description",
+			"amount": 125.50
+		}
+	]
+}
+```
 
-- [x] Placeholder status is explicit and prominent.
-- [x] No business logic, endpoints, field definitions, or technical architecture is invented.
-- [x] Relationship between INQTRANL.cbl and INQTRAND.cbl is left unconfirmed.
-- [x] Acceptance scenarios require final behavior to come from legacy evidence.
-- [x] Specification is suitable only for workflow progression, not implementation start.
+The example illustrates shape only; it is not approved seed data.
+
+## Acceptance Criteria
+
+- **AC-001 [FR-001]:** Given records for multiple accounts, only exact sort-code/account matches are returned.
+- **AC-002 [FR-002]:** Records on provided from/to dates are included; omitted boundaries do not constrain that side.
+- **AC-003 [FR-003]:** Omitted or zero limit yields effective limit 50; a limit above 100 yields effective limit 100.
+- **AC-004 [FR-004]:** Offset skips that many rows from the ordered filtered set.
+- **AC-005 [FR-005]:** Rows are ordered by date descending and then time descending.
+- **AC-006 [FR-006]:** `totalCount` is the filtered pre-page count and `returnedCount` equals the number in `transactions`.
+- **AC-007 [FR-007]:** No matches returns 200, zero counts, and `transactions: []`.
+- **AC-008 [FR-008]:** ID equals `sortCode-accountNumber-date-time-reference`.
+- **AC-009 [FR-009]:** Response transaction fields are exactly those specified; date is `YYYYMMDD`, time is `HHMMSS`, and amount is decimal.
+- **AC-010 [FR-010]:** Query execution performs no transaction-data writes.
+- **AC-011 [FR-011]:** Repository failure returns 500 and no partial page.
+- **AC-012 [FR-012]:** The existing frontend can submit supported inputs, show loading/error/empty states, metadata, and the returned rows.
+
+## Validation Rules
+
+- Sort code: `^[0-9]{6}$`.
+- Account number: `^[0-9]{8}$`.
+- Dates, when present: `^[0-9]{8}$`; calendar validity is a proposed technical validation requiring approval.
+- Limit: integer 0 or greater; effective value defaults/clamps as above.
+- Offset: integer 0 through 99999, matching COMMAREA width.
+- Proposed: reject fromDate later than toDate with HTTP 400. This is not a legacy business rule and must be SME-approved.
+
+## Error Handling
+
+- HTTP 400 for malformed path/query values under approved boundary validation.
+- HTTP 500 for database/repository failure, with a generic error envelope and correlation identifier when available.
+- No 404 is defined for no transactions or unvalidated account existence.
+- No partial result is returned on technical failure.
+
+## Business Rules Traceability
+
+FR-001→BR-001; FR-002→BR-002/003/004; FR-003→BR-005/006; FR-004→BR-007; FR-005→BR-008; FR-006→BR-009; FR-007→BR-010; FR-008→BR-011; FR-009→BR-012/013; FR-010→BR-014; FR-011→BR-015.
+
+## State Diagram
+
+```mermaid
+stateDiagram-v2
+		[*] --> Validating
+		Validating --> Rejected: malformed approved input
+		Validating --> Querying: valid input
+		Querying --> Failed: repository error
+		Querying --> Empty: zero matches
+		Querying --> Results: one or more matches
+		Empty --> [*]: 200 empty page
+		Results --> [*]: 200 page
+		Rejected --> [*]: 400
+		Failed --> [*]: 500
+```
+
+## Edge Cases
+
+- Offset equals or exceeds total count: successful empty page with preserved total count.
+- Limit 0: effective 50.
+- Limit >100: effective 100.
+- Same date/time across multiple rows: relative order is unspecified.
+- Leading-zero identifiers and references must be preserved.
+- Null database values require schema/SME resolution before implementation.
+
+## Non-goals
+
+Single transaction detail, account validation, transaction mutation, inferred sentinel account behavior, statement features, categorization, exports, live mainframe integration, or adding fields from the repository's broad transaction schemas unless independently supported and approved.
