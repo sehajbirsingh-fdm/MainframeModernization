@@ -1,42 +1,33 @@
-# Research: INQTRAN Transaction Inquiry Modernization (Temporary Placeholder)
+# Research and Decisions
 
-## Decision 1
-Decision: Treat all business behavior as provisional and not yet approved.
-Rationale: The current feature specification is explicitly a workflow placeholder.
-Alternatives considered:
-- Infer behavior from prior inquiry features: rejected due to risk of inventing unsupported rules.
-- Start implementation with assumptions: rejected because temporary artifacts must not authorize implementation.
+## Confirmed Evidence
+- `INQTRANL` uses sort code + 8-digit account number, optional date sentinels, limit/offset, total count, and a 100-entry array.
+- DB2 query uses inclusive dates and descending date/time ordering.
+- Pagination is performed after ordered fetch.
+- Empty result is successful.
+- `INQTRAND` is not called and is therefore not part of the list implementation.
+- Existing repository stack is Java 21, Spring Boot 3.5.3, JDBC/H2, React/TypeScript/Vite, Vitest, and Playwright.
 
-## Decision 2
-Decision: Use INQTRANL.cbl as the primary legacy evidence source for final behavior extraction.
-Rationale: This source is explicitly identified as primary in the temporary specification.
-Alternatives considered:
-- Treat INQTRAND.cbl as co-equal source now: rejected because relationship remains unconfirmed.
-- Ignore legacy evidence and design forward: rejected as non-compliant with placeholder constraints.
+## Adopted Design Decisions
+- Feature folder is `005-inqtran-transaction-inquiry-modernization` because the repository uses feature 005 for INQTRAN Transaction Inquiry.
+- Preserve the full account key in the route rather than collapsing it into an unevidenced `accountId`.
+- Preserve transaction date/time/reference as strings and amount as decimal.
+- Model absent dates as optional predicates, not invalid sentinel date objects.
+- Scope `INQTRAND` as a separate future feature in the same capability family.
 
-## Decision 3
-Decision: Keep INQTRAND.cbl relationship status unconfirmed.
-Rationale: No verified linkage has been established yet.
-Alternatives considered:
-- Assume INQTRAND.cbl dependency: rejected due to missing evidence.
-- Exclude INQTRAND.cbl permanently: rejected until legacy analysis confirms or denies relevance.
+## Decisions Requiring Repository Owner or SME
+1. Runtime OpenAPI authority and merge strategy.
+2. Security policy.
+3. H2 transaction schema and local/demo data policy.
+4. Calendar/date-order validation.
+5. Null and padding handling.
+6. Whether the broad existing transaction contract must be replaced, adapted, or deprecated.
+7. Whether explicit `limit=0` should default to 50 in the HTTP API (current proposal preserves legacy behavior).
 
-## Decision 4
-Decision: Defer API contract specifics, payload structures, status mapping, and endpoint paths.
-Rationale: These details are unresolved and must come from approved specification and legacy-derived evidence.
-Alternatives considered:
-- Draft provisional endpoint and schemas: rejected because this would invent interface behavior.
-- Copy patterns from other features: rejected because behavior parity is not yet established.
-
-## Decision 5
-Decision: Defer architecture, testing strategy, integration approach, and migration sequencing.
-Rationale: Final planning must be rebuilt from corrected specification, supporting artifacts, repository evidence, and legacy analysis.
-Alternatives considered:
-- Freeze a technical stack now: rejected as a premature final architecture decision.
-- Authorize implementation tasks now: rejected by plan purpose and acceptance constraints.
-
-## Clarification Resolution Summary
-
-Items marked NEEDS CLARIFICATION in plan.md are resolved in this temporary research artifact as deferred decisions pending legacy analysis and approved specification replacement.
-
-This is a workflow-valid resolution for placeholder planning only, not a business or implementation approval.
+## Missing Evidence
+- Production DDL/indexes and null constraints.
+- CICS transaction/program definitions and caller behavior.
+- DB2 package/bind details.
+- JCL/deployment assets.
+- Production examples and volume/performance characteristics.
+- Authorization rules.

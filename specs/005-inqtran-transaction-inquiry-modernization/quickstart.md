@@ -1,39 +1,45 @@
-# Quickstart: Validate Temporary Plan Artifacts (INQTRAN)
+# Quickstart
 
-This guide validates placeholder planning artifacts only.
-It does not validate implementation behavior.
+These commands follow the repository discovery report and must be re-verified in the actual checkout after implementation.
 
-## Prerequisites
+Feature: INQTRAN - Transaction Inquiry
+Feature ID: 005-inqtran-transaction-list-inquiry-modernization
 
-- Access to repository root.
-- PowerShell terminal.
+## Backend
+```powershell
+cd backend/api
+mvn test
+mvn spring-boot:run
+```
 
-## Setup Commands
+## Frontend
+```powershell
+cd frontend/app
+npm install
+npm run test
+npm run dev
+```
 
-1. Confirm active feature pointer:
-   - Get-Content .specify/feature.json
-2. Confirm feature directory exists:
-   - Test-Path specs/005-inqtran-transaction-inquiry-modernization
+## End-to-end
+Run the repository's Playwright command from `frontend/app` after confirming the configured script:
+```powershell
+npm run test:e2e
+```
 
-## Validation Commands
+## Manual verification
+1. Open the existing frontend application.
+2. Navigate to the transaction-list route.
+3. Enter an approved H2 test account.
+4. Verify default limit 50 and zero offset.
+5. Apply inclusive dates.
+6. Verify a later page by offset.
+7. Verify a no-match query returns an empty success state.
+8. Verify no transaction-detail navigation is present.
 
-1. Validate required planning files exist:
-   - Test-Path specs/005-inqtran-transaction-inquiry-modernization/spec.md
-   - Test-Path specs/005-inqtran-transaction-inquiry-modernization/plan.md
-   - Test-Path specs/005-inqtran-transaction-inquiry-modernization/research.md
-   - Test-Path specs/005-inqtran-transaction-inquiry-modernization/data-model.md
-   - Test-Path specs/005-inqtran-transaction-inquiry-modernization/quickstart.md
-2. Validate contracts placeholder exists:
-   - Test-Path specs/005-inqtran-transaction-inquiry-modernization/contracts/placeholder-contract.md
-
-## Expected Outcomes
-
-- All listed files return True.
-- plan.md states implementation is blocked for this temporary phase.
-- research.md states unresolved decisions are deferred to legacy analysis and approved specification replacement.
-- No runtime endpoints, schemas, tables, SQL, or business rules are defined in these placeholder artifacts.
-
-## Important Note
-
-This quickstart confirms workflow readiness only.
-Do not start implementation from this temporary plan.
+## Contract and quality gates
+- Backend unit/integration/controller tests pass.
+- Frontend unit and E2E tests pass.
+- Runtime OpenAPI matches `contracts/openapi.yaml`.
+- Existing feature regression tests pass.
+- QA and code review checklists are complete.
+- No live DB2/CICS integration, second project, or mock JSON was added.

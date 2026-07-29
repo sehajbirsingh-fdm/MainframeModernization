@@ -1,34 +1,12 @@
-# Specification Quality Checklist: INQTRAN Transaction Inquiry Modernization (Temporary Placeholder)
+# Requirements Quality Checklist
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning  
-**Created**: 2026-07-28  
-**Feature**: specs/005-inqtran-transaction-inquiry-modernization/spec.md
-
-## Content Quality
-
-- [x] No implementation details (languages, frameworks, APIs)
-- [x] Focused on user value and business needs
-- [x] Written for non-technical stakeholders
-- [x] All mandatory sections completed
-
-## Requirement Completeness
-
-- [x] No [NEEDS CLARIFICATION] markers remain
-- [x] Requirements are testable and unambiguous
-- [x] Success criteria are measurable
-- [x] Success criteria are technology-agnostic (no implementation details)
-- [x] All acceptance scenarios are defined
-- [x] Edge cases are identified
-- [x] Scope is clearly bounded
-- [x] Dependencies and assumptions identified
-
-## Feature Readiness
-
-- [x] All functional requirements have clear acceptance criteria
-- [x] User scenarios cover primary flows
-- [x] Feature meets measurable outcomes defined in Success Criteria
-- [x] No implementation details leak into specification
-
-## Notes
-
-- Validation completed for a workflow placeholder specification. The document is intentionally provisional and must be replaced with an approved starter specification before implementation.
+- [ ] Every functional requirement maps to at least one evidenced business rule.
+- [ ] No account-not-found or sentinel account behavior has been invented.
+- [ ] Date omission, inclusion, ordering, offset, default limit, and maximum limit are explicit.
+- [ ] Empty results are specified as success.
+- [ ] Total count and returned count semantics are distinct.
+- [ ] Response fields match the copybook/mapping matrix only.
+- [ ] INQTRAND is explicitly out of scope as a separate future feature.
+- [ ] Modernization validation and error-envelope decisions are labeled as such.
+- [ ] Security, nullability, OpenAPI authority, and H2 data policy are unresolved until approved.
+- [ ] Non-functional, operational, and test requirements fit existing repository conventions.
