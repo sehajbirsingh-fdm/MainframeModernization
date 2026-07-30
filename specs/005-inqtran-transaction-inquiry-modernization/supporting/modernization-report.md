@@ -44,7 +44,7 @@ All files copied under `legacy/`, including primary/related COBOL, COMMAREA and 
 - No transaction-detail behavior is needed to complete list inquiry.
 
 ## Open Questions
-See `program-analysis.md` section 18 and `research.md`.
+See `program-analysis.md` section 18 and `../research.md`.
 
 ## SME Validation Checklist
 - [ ] Confirm query key and account-number width.
