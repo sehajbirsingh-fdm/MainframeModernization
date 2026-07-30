@@ -1,0 +1,11 @@
+# Frontend React workspace artifacts
+src/frontend-react/node_modules/
+src/frontend-react/dist/
+
+# Gradle local cache artifacts
+**/.gradle/
+
+# Backend API local runtime database artifacts
+backend/api/data/*.lock.db
+backend/api/data/*.mv.db
+backend/api/data/*.trace.db
