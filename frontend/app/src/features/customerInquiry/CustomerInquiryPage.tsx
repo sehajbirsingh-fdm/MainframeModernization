@@ -1,4 +1,5 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { inquireCustomer } from '../../api/inquiryClient'
 import type { CustomerInquiryResponse, ErrorResponse } from '../../domain/types'
@@ -7,6 +8,12 @@ import { validateInquiryInput, type ValidationErrors } from './validation'
 interface FormData {
   sortCode: string
   customerNumber: string
+}
+
+interface InquiryLocationState {
+  inquiryResult?: CustomerInquiryResponse
+  prefill?: FormData
+  flashMessage?: string
 }
 
 function toValidationErrors(error: {
@@ -24,14 +31,30 @@ function toValidationErrors(error: {
   return mapped
 }
 
-function renderCustomerDetails(data: CustomerInquiryResponse) {
+function renderCustomerDetails(data: CustomerInquiryResponse, sourceSortCode: string, sourceCustomerNumber: string) {
   if (!data.customer) {
     return null
   }
 
+  const routeSortCode = data.customer.sortCode ?? sourceSortCode
+  const routeCustomerNumber = data.customer.customerNumber ?? sourceCustomerNumber
+
   return (
     <section aria-labelledby="customer-details-heading" className="card">
-      <h2 id="customer-details-heading">Customer Details</h2>
+      <div className="card-heading-row">
+        <h2 id="customer-details-heading">Customer Details</h2>
+        {data.legacyStatus.inquirySuccess === 'Y' ? (
+          <div className="actions">
+            <Link
+              to={`/customers/${routeSortCode}/${routeCustomerNumber}/edit`}
+              state={{ customer: data.customer }}
+              className="button-link"
+            >
+              Update Customer
+            </Link>
+          </div>
+        ) : null}
+      </div>
       <dl className="kv-grid">
         <dt>Name</dt>
         <dd>{`${data.customer.title ?? ''} ${data.customer.firstName ?? ''} ${data.customer.lastName ?? ''}`.trim()}</dd>
@@ -73,6 +96,9 @@ function renderRisk(data: CustomerInquiryResponse) {
 }
 
 export function CustomerInquiryPage() {
+  const location = useLocation()
+  const locationState = (location.state ?? {}) as InquiryLocationState
+
   const [formData, setFormData] = useState<FormData>({ sortCode: '', customerNumber: '' })
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
   const [responseData, setResponseData] = useState<CustomerInquiryResponse | null>(null)
@@ -103,6 +129,18 @@ export function CustomerInquiryPage() {
       setResponseData(null)
     },
   })
+
+  useEffect(() => {
+    if (locationState.prefill) {
+      setFormData(locationState.prefill)
+    }
+    if (locationState.inquiryResult) {
+      setResponseData(locationState.inquiryResult)
+    }
+    if (locationState.flashMessage) {
+      setUiMessage(locationState.flashMessage)
+    }
+  }, [locationState.flashMessage, locationState.inquiryResult, locationState.prefill])
 
   function onSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
@@ -244,10 +282,11 @@ export function CustomerInquiryPage() {
             <dt>Lookup Mode</dt>
             <dd>{responseData.lookupMode}</dd>
           </dl>
+
         </section>
       ) : null}
 
-      {renderCustomerDetails(responseData ?? ({} as CustomerInquiryResponse))}
+      {renderCustomerDetails(responseData ?? ({} as CustomerInquiryResponse), formData.sortCode, formData.customerNumber)}
       {renderRisk(responseData ?? ({} as CustomerInquiryResponse))}
 
       {!responseData && uiMessage && !isLoading ? (

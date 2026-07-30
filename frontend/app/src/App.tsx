@@ -1,13 +1,57 @@
-import { NavLink, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Link, NavLink, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { CustomerInquiryPage } from './features/customerInquiry/CustomerInquiryPage'
 import { AccountInquiryPage } from './features/accountInquiry/AccountInquiryPage'
 import { CustomerCreatePage } from './features/customerCreate/CustomerCreatePage'
 import { CustomerAccountInquiryPage } from './features/customerAccountInquiry/CustomerAccountInquiryPage'
+import { CustomerUpdatePage } from './features/customerUpdate/CustomerUpdatePage'
 
 interface SiteLink {
   to: string
   label: string
   code?: string
+}
+
+interface RouteErrorBoundaryState {
+  hasError: boolean
+}
+
+class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(): RouteErrorBoundaryState {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: unknown, errorInfo: ErrorInfo): void {
+    console.error('Route render failure', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <section className="page" aria-labelledby="ui-error-heading">
+          <header className="page-header">
+            <p className="pill">SYSTEM</p>
+            <h2 id="ui-error-heading">Something Went Wrong</h2>
+            <p>The page hit an unexpected error. Please return to Customer Inquiry and retry.</p>
+          </header>
+          <section className="card">
+            <div className="actions">
+              <Link to="/customers" className="button-link">
+                Go To Customer Inquiry
+              </Link>
+            </div>
+          </section>
+        </section>
+      )
+    }
+
+    return this.props.children
+  }
 }
 
 const featureLinks: SiteLink[] = [
@@ -62,7 +106,9 @@ function SiteLayout() {
         </aside>
 
         <main className="site-content">
-          <Outlet />
+          <RouteErrorBoundary>
+            <Outlet />
+          </RouteErrorBoundary>
         </main>
       </div>
 
@@ -170,6 +216,7 @@ function App() {
       <Route path="/" element={<SiteLayout />}>
         <Route index element={<LandingPage />} />
         <Route path="customers" element={<CustomerInquiryPage />} />
+        <Route path="customers/:sortCode/:customerNumber/edit" element={<CustomerUpdatePage />} />
         <Route path="customers/create" element={<CustomerCreatePage />} />
         <Route path="accounts" element={<AccountInquiryPage />} />
         <Route path="customer-accounts" element={<CustomerAccountInquiryPage />} />
