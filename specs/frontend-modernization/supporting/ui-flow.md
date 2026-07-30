@@ -1,98 +1,75 @@
-# UI Flow: INQCUST Frontend React
+# UI Flow: Website Shell + Banking Features
 
 ## Overview
 
-This document describes user navigation and state transitions for the customer inquiry UI.
+This document defines navigation and page flow for the React frontend after shell modernization.
 
-Backend endpoint consumed:
-- `GET /api/v1/customers/{sortCode}/{customerNumber}`
+## Global Navigation Model
 
-## Primary Flow
+Routes exposed in global nav:
+- `/` (Landing)
+- `/customers` (INQCUST)
+- `/customers/create` (CRECUST)
+- `/accounts` (INQACC)
+- `/customer-accounts` (INQACCCU)
+- `/about`
+- `/license`
 
-1. User lands on Customer Inquiry page.
-2. User enters `sortCode` and `customerNumber`.
-3. User submits inquiry.
-4. Frontend validates input.
-5. If valid, frontend sends API request.
-6. UI transitions to loading state.
-7. UI transitions to one of: success, not found, validation error, system error, network timeout.
+Unknown routes:
+- Any unmatched path redirects to `/`.
 
-## Screen/State Model
+## Layout Regions
 
-### State A: Initial
-- Empty form
-- Submit disabled until minimally valid input (optional UX decision)
+1. Header:
+- Product title and modernization context.
+- User identity chip shown in top-right.
 
-### State B: Client Validation Error
-- Inline errors under fields
-- Focus moved to first invalid field
-- Error summary announced in ARIA live region
+2. Navigation:
+- Desktop: left sidebar with grouped links.
+- Mobile: stacked nav links with same route coverage.
+- Active route highlight required.
+- Active state must be exact-match only, so nested routes do not double-highlight parent links.
 
-### State C: Loading
-- Submit button disabled
-- Progress indicator visible
-- Optional cancel action if request cancellation is supported
+3. Content region:
+- Renders route-specific page via router outlet.
+- Existing feature pages retain form and result behavior.
 
-### State D: Success (HTTP 200)
-- Display customer header information
-- Display `legacyStatus` block exactly
-- Display `lookupMode` (`SPECIFIC`, `RANDOM`, `LATEST`)
-- Display `riskAssessment` block exactly
+4. Footer:
+- Program and license context visible on all routes.
 
-### State E: Not Found (HTTP 404)
-- Display not-found message
-- Display `legacyStatus` values exactly
-- Keep form values for quick correction/retry
+## Landing Flow
 
-### State F: Validation Error From Backend (HTTP 400)
-- Display backend validation message list
-- Map field-specific errors to corresponding inputs when possible
+1. User lands on `/`.
+2. User sees quick-start cards linking to feature routes.
+3. User selects a workflow and navigates directly.
 
-### State G: System Error (HTTP 5xx)
-- Display non-technical failure message with retry action
-- Optional expandable technical details for troubleshooting mode
+## Feature Flow Continuity
 
-### State H: Network Timeout/Connectivity Error
-- Display timeout/offline message
-- Provide retry action
-- Preserve existing form data
+All existing inquiry/create flows remain unchanged inside shared shell:
+- INQCUST customer inquiry.
+- CRECUST customer creation.
+- INQACC account inquiry.
+- INQACCCU customer-account relationship inquiry.
 
-## Special Input Commands UX
+Create Customer layout behavior:
+- Title is selected from a dropdown, defaulting to `Mr`.
+- Form uses compact desktop grid with side-by-side fields where feasible.
+- Mobile layout collapses to single-column fields.
 
-- `0000000000`:
-  - UI helper text: command value triggers random lookup mode.
-- `9999999999`:
-  - UI helper text: command value triggers latest customer lookup mode.
+## Informational Page Flow
 
-## Scenario Mapping
-
-- UI Scenario 1 -> Backend Scenario 1 (specific found)
-- UI Scenario 2 -> Backend Scenario 2 (specific not found)
-- UI Scenario 3 -> Backend Scenario 3 (latest)
-- UI Scenario 4 -> Backend Scenario 4 (random)
-- UI Scenario 5 -> Backend Scenario 5 (invalid request)
-- UI Scenario 6 -> Backend Scenario 6 (risk assessment)
+- `/about`: program intent and modernization goals.
+- `/license`: legal and usage summary with reference to repository license.
 
 ## Accessibility Notes
 
-- All form controls have associated `<label>` elements.
-- Errors use `aria-describedby` and `aria-live` regions.
-- Result region gets focus heading after state transition.
-- Color is never sole indicator of success/error state.
+- Header/nav/content/footer use semantic structure.
+- Nav and links are keyboard accessible.
+- Focus states are visible for links, inputs, and buttons.
+- Existing live-region messaging in feature pages remains intact.
 
-## Assumptions
+## Responsive Behavior
 
-- Single-page workflow for inquiry (no multi-step wizard).
-- Backend returns JSON in consistent structure for all handled statuses.
-
-## Out Of Scope
-
-- Cross-feature navigation shell design.
-- Internationalization/localization.
-- Authentication gating flow.
-
-## Open Questions
-
-1. Should result cards persist when user edits inputs after a successful lookup?
-2. Should we auto-submit when command values are detected?
-3. Should retry use exponential backoff or manual-only retry?
+- Desktop: two-column layout with sidebar + content.
+- Tablet/mobile: single-column stack with nav above content.
+- Data-heavy tables continue horizontal scroll via `table-wrap`.

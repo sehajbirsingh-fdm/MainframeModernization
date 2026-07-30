@@ -1,8 +1,10 @@
-# Frontend-Backend Contract: INQCUST Inquiry
+# Frontend-Backend Contract: Banking Features In Shared Website Shell
 
 ## Scope
 
 Defines how frontend consumes backend endpoint and maps responses to UI states.
+
+Website shell additions (landing/header/nav/footer/about/license) are presentation-only and do not introduce new backend API contracts.
 
 Source of truth for backend behavior:
 - `specs/001-inqcust-customer-inquiry-modernization/spec.md`
@@ -85,6 +87,7 @@ Source of truth for backend behavior:
 - Backend authentication token flow.
 - API versioning policy definition.
 - Cross-service fallback orchestration.
+- Shell-only content routes (`/`, `/about`, `/license`) that do not call backend APIs.
 
 ## Open Questions
 
