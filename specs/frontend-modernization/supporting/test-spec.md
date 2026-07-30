@@ -1,14 +1,44 @@
-# Frontend Test Specification: INQCUST React
+# Frontend Test Specification: Website Shell + Banking Features
 
 ## Test Strategy
 
 Test pyramid for frontend:
 - Unit tests: utility functions, validators, mappers.
-- Component tests: form, result, error and accessibility behavior.
+- Component tests: shell, nav, page sections, form, result, error and accessibility behavior.
 - Integration tests (mocked API): state transitions by HTTP/status payload.
-- E2E tests: user journey from input to final state.
+- E2E tests: route navigation journey and inquiry outcomes.
 
 ## Test Coverage Matrix
+
+### FE-TC-101 Landing route renders website shell
+Given user opens `/`
+When app renders
+Then header, nav, landing content, and footer are visible.
+
+### FE-TC-102 Navigation links route correctly
+Given user clicks links in sidebar/top nav
+When route changes
+Then expected page component renders for each target route.
+
+### FE-TC-103 Active route style indication
+Given a route is active
+When navigation renders
+Then active link style is applied for that route.
+
+### FE-TC-108 Active route exclusivity
+Given user opens `/customers/create`
+When sidebar renders
+Then only Create Customer nav link is active and Customer Inquiry is not active.
+
+### FE-TC-104 About and License pages render
+Given user opens `/about` or `/license`
+When page renders
+Then informational content appears within shared shell.
+
+### FE-TC-105 Unknown route redirects to landing
+Given user opens an unmatched route
+When router resolves it
+Then app redirects to `/`.
 
 ### FE-TC-001 Form validation: sortCode format
 Given invalid sort code input  
@@ -70,6 +100,22 @@ Given validation/system errors occur
 When state updates  
 Then screen reader live region announces relevant message.
 
+### FE-TC-106 Responsive shell behavior
+Given desktop and mobile breakpoints
+When layout renders
+Then shell adapts without hiding required navigation actions.
+
+### FE-TC-107 Non-regression feature behavior
+Given existing feature page tests
+When test suite runs after shell/theme updates
+Then prior behavior-oriented tests remain green.
+
+### FE-TC-109 Create form compact layout and default title
+Given user opens `/customers/create`
+When create form renders
+Then title is a dropdown with `Mr` selected by default
+And key fields are arranged in side-by-side rows on desktop.
+
 ## Unit Test Targets
 
 - Input regex validators
@@ -94,6 +140,7 @@ Then screen reader live region announces relevant message.
 
 ## E2E Test Targets
 
+- Landing to feature navigation flow
 - Happy path specific lookup
 - Latest command lookup
 - Random command lookup

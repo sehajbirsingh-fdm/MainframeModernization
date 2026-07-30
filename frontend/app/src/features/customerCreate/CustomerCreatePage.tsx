@@ -23,6 +23,8 @@ interface FormState {
   status: string
 }
 
+const TITLE_OPTIONS = ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr', 'Professor', 'Drs', 'Lord', 'Sir', 'Lady']
+
 function initialFormState(): FormState {
   const now = new Date()
   return {
@@ -129,10 +131,17 @@ export function CustomerCreatePage() {
 
       <section className="card" aria-labelledby="create-form-heading">
         <h2 id="create-form-heading">Create Form</h2>
-        <form onSubmit={onSubmit} noValidate>
+        <form onSubmit={onSubmit} noValidate className="create-form">
+          <div className="form-grid">
           <div className="field">
             <label htmlFor="title">Title</label>
-            <input id="title" type="text" maxLength={10} value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} />
+            <select id="title" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}>
+              {TITLE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
             {validationErrors.title ? <p className="error-text">{validationErrors.title}</p> : null}
           </div>
 
@@ -148,9 +157,9 @@ export function CustomerCreatePage() {
             {validationErrors.lastName ? <p className="error-text">{validationErrors.lastName}</p> : null}
           </div>
 
-          <div className="field">
+          <div className="field field-span-2">
             <label>Date Of Birth (DD/MM/YYYY)</label>
-            <div className="actions">
+            <div className="date-grid">
               <input aria-label="DOB day" type="text" inputMode="numeric" maxLength={2} value={form.dobDay} onChange={(e) => setForm((p) => ({ ...p, dobDay: e.target.value.replace(/\D/g, '').slice(0, 2) }))} />
               <input aria-label="DOB month" type="text" inputMode="numeric" maxLength={2} value={form.dobMonth} onChange={(e) => setForm((p) => ({ ...p, dobMonth: e.target.value.replace(/\D/g, '').slice(0, 2) }))} />
               <input aria-label="DOB year" type="text" inputMode="numeric" maxLength={4} value={form.dobYear} onChange={(e) => setForm((p) => ({ ...p, dobYear: e.target.value.replace(/\D/g, '').slice(0, 4) }))} />
@@ -158,9 +167,9 @@ export function CustomerCreatePage() {
             {validationErrors.dateOfBirth ? <p className="error-text">{validationErrors.dateOfBirth}</p> : null}
           </div>
 
-          <div className="field">
+          <div className="field field-span-2">
             <label>Created Date (DD/MM/YYYY)</label>
-            <div className="actions">
+            <div className="date-grid">
               <input aria-label="Created day" type="text" inputMode="numeric" maxLength={2} value={form.createdDay} onChange={(e) => setForm((p) => ({ ...p, createdDay: e.target.value.replace(/\D/g, '').slice(0, 2) }))} />
               <input aria-label="Created month" type="text" inputMode="numeric" maxLength={2} value={form.createdMonth} onChange={(e) => setForm((p) => ({ ...p, createdMonth: e.target.value.replace(/\D/g, '').slice(0, 2) }))} />
               <input aria-label="Created year" type="text" inputMode="numeric" maxLength={4} value={form.createdYear} onChange={(e) => setForm((p) => ({ ...p, createdYear: e.target.value.replace(/\D/g, '').slice(0, 4) }))} />
@@ -207,6 +216,7 @@ export function CustomerCreatePage() {
             <label htmlFor="status">Status</label>
             <input id="status" type="text" maxLength={10} value={form.status} onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))} />
             {validationErrors.status ? <p className="error-text">{validationErrors.status}</p> : null}
+          </div>
           </div>
 
           <div className="actions">

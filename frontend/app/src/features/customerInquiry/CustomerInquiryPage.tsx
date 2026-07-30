@@ -133,6 +133,7 @@ export function CustomerInquiryPage() {
   return (
     <main className="page">
       <header className="page-header">
+        <p className="pill">INQCUST</p>
         <h1>Customer Inquiry</h1>
         <p>
           Enter sort code and customer number using text boxes only. Use 0000000000 for random and 9999999999 for latest lookup.
