@@ -37,6 +37,9 @@ Query parameters:
 - `limit`: optional integer. Omitted or `0` defaults to 50; values above 100 are processed as 100.
 - `offset`: optional non-negative integer; omitted defaults to 0.
 
+Omitted-date processing note:
+- Legacy omission handling normalizes omitted boundaries through sentinel conversion and still evaluates both date predicates; final target API semantics for omitted bounds remain an approval gate.
+
 ## Expected Success Response
 
 HTTP 200:
@@ -101,6 +104,7 @@ Transaction row properties:
 
 - The operation is always read-only and does not mutate transaction data.
 - Legacy-evidenced field and date-transformation behavior is preserved.
+- Omitted-date legacy processing preserves sentinel normalization and always-present bounded date predicates; final omitted-date API semantics require explicit approval.
 - Ordering keys are fixed as transaction date descending then transaction time descending; additional tie-break ordering is not contracted.
 - Technical retrieval failure never returns partial successful results.
 - Existing application compatibility is preserved without altering unrelated functionality.
@@ -109,7 +113,7 @@ Transaction row properties:
 ## Acceptance Criteria
 
 - **AC-001 [FR-001]:** Given records for multiple accounts, only exact sort-code/account matches are returned.
-- **AC-002 [FR-002]:** Records on provided from/to dates are included; omitted boundaries do not constrain that side.
+- **AC-002 [FR-002]:** Records on provided from/to dates are included; when a boundary is omitted, sentinel-normalization processing is preserved and final omitted-boundary API semantics remain an explicit decision gate.
 - **AC-003 [FR-003]:** Omitted or zero limit yields effective limit 50; a limit above 100 yields effective limit 100; returned rows never exceed 100 in one successful inquiry.
 - **AC-004 [FR-004]:** Offset skips that many rows from the ordered filtered set.
 - **AC-005 [FR-005]:** Rows are ordered by date descending and then time descending; no additional tie-break ordering rule is required by this contract.
@@ -138,6 +142,7 @@ Proposed modernization validations requiring approval:
 
 - Calendar-validity rejection for provided dates.
 - Reject `fromDate` later than `toDate` with HTTP 400.
+- Treating omitted `fromDate`/`toDate` as unconstrained effective bounds instead of legacy sentinel-normalization behavior.
 
 Contract-boundary note:
 - Any decision on nullable date-control echo representation, finalized technical-error envelope shape, and database-native pagination implementation remains an approved modernization decision until explicitly ratified as finalized contract behavior.
@@ -149,6 +154,7 @@ Contract-boundary note:
 - Technical failure responses use a generic error envelope only when that modernization decision is approved for this feature contract; correlation identifiers are included where platform conventions support them.
 - No 404 is defined for empty transaction results or unvalidated account existence.
 - No partial successful response is returned on technical failure.
+- For omitted-date requests, the contract does not assert unconstrained-bound behavior until the runtime/SME decision gate is resolved.
 
 ## Business Rule Traceability
 
@@ -166,6 +172,7 @@ Contract-boundary note:
 ## Document-level Traceability
 
 - FR-010 -> supporting/requirements.md FR-010; supporting/intended-system.md (read-only capability constraint).
+- FR-002 -> supporting/requirements.md FR-002 (omitted-date decision gate).
 - FR-012 -> supporting/requirements.md FR-012; supporting/intended-system.md (existing application integration intent).
 - FR-013 -> supporting/requirements.md FR-013.
 - FR-014 -> supporting/requirements.md FR-014; supporting/architecture.md (established architectural conventions).
@@ -207,8 +214,8 @@ stateDiagram-v2
 - Offset equals or exceeds total count: successful empty page with preserved total count.
 - Limit 0: effective 50.
 - Limit >100: effective 100.
-- Omitted `fromDate`: lower boundary is not constrained.
-- Omitted `toDate`: upper boundary is not constrained.
+- Omitted `fromDate`: legacy processing applies sentinel normalization and still evaluates the lower-bound predicate; runtime outcome remains unresolved pending decision gate.
+- Omitted `toDate`: legacy processing applies sentinel normalization and still evaluates the upper-bound predicate; runtime outcome remains unresolved pending decision gate.
 - Same date/time across multiple rows: no additional tie-break behavior is contracted.
 - Leading-zero identifiers and references must be preserved.
 - Null database values require schema/SME resolution before implementation.

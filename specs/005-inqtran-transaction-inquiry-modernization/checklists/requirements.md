@@ -6,7 +6,8 @@ Use this checklist to verify that Requirements, Specification, Plan, Tasks, Test
 
 - [ ] FR-001 through FR-014 are all represented in downstream artifacts with no omissions.
 - [ ] Account identity filtering remains exact on sort code and account number only.
-- [ ] Inclusive from/to filtering semantics are preserved, including omitted-boundary behavior.
+- [ ] Inclusive from/to filtering semantics are preserved for supplied boundaries.
+- [ ] Omitted-date handling is represented as sentinel normalization with always-present date predicates, not as proven unconstrained filtering.
 - [ ] Limit normalization is preserved (`0/omitted -> 50`, values above `100 -> 100`) and the 100-row maximum is enforced.
 - [ ] Offset is applied after filtering and ordering and before returned-row selection.
 - [ ] Ordering remains consistent and deterministic by transaction date descending then transaction time descending, with no invented tie-break semantics.
@@ -47,6 +48,7 @@ Use this checklist to verify that Requirements, Specification, Plan, Tasks, Test
 ## Modernization Decisions
 
 - [ ] Approved modernization decisions remain explicitly separated from mandatory legacy-preservation requirements.
+- [ ] Final omitted-date API behavior is backed by runtime evidence, SME approval, or an explicitly approved modernization decision before being treated as contractual.
 - [ ] Date-validation and technical-error-envelope decisions are labeled as modernization decisions, not reclassified as legacy business rules.
 - [ ] Database-native pagination is treated as conditional on behavioral equivalence proof.
 
@@ -55,6 +57,7 @@ Use this checklist to verify that Requirements, Specification, Plan, Tasks, Test
 - [ ] No validated legacy behavior has been removed, weakened, or altered without an approved modernization decision.
 - [ ] No account-not-found or sentinel-account business behavior has been invented.
 - [ ] Any unresolved evidence gaps remain documented as assumptions/risks, not converted into invented rules.
+- [ ] Downstream artifacts keep omitted-date behavior provisional until the runtime/SME decision gate is resolved.
 
 ## Traceability
 

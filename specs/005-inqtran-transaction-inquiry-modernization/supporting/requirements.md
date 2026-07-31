@@ -22,7 +22,7 @@ This feature provides a modernized account transaction-list inquiry capability t
 ## Functional Requirements
 
 - **FR-001 [BR-001]:** The system shall retrieve transactions using both sort code and account number as exact identity filters.
-- **FR-002 [BR-002, BR-003, BR-004]:** The system shall support inclusive optional from/to date filters; omitted boundaries shall not constrain that side of the date range.
+- **FR-002 [BR-002, BR-003, BR-004]:** The system shall support inclusive from/to date filtering for supplied boundaries; when a boundary is omitted, legacy processing shall preserve sentinel normalization behavior, and final target omitted-boundary semantics shall require an approved modernization decision after runtime/SME verification.
 - **FR-003 [BR-005, BR-006, BR-007]:** The system shall default limit to 50 when omitted or zero, clamp values above 100 to 100, and never return more than 100 rows in one successful inquiry.
 - **FR-004 [BR-008]:** The system shall apply offset after filtering and ordering and before selecting returned rows.
 - **FR-005 [BR-009]:** The system shall provide consistent and deterministic ordering using transaction date descending followed by transaction time descending, without introducing additional ordering semantics beyond validated legacy behavior.
@@ -74,6 +74,7 @@ This feature provides a modernized account transaction-list inquiry capability t
 The following items are approved modernization decisions identified during Research and are intentionally separated from mandatory legacy-preservation requirements.
 
 - Use nullable date query parameters rather than invalid legacy DB2 sentinel dates.
+- Treating omitted date parameters as unconstrained effective bounds (instead of legacy sentinel-normalization path) requires explicit modernization approval and runtime/SME verification.
 - Use a standard JSON technical-error envelope and HTTP 500.
 - Validate date syntax/calendar order at the API boundary.
 - Use database-native pagination if proven behaviorally equivalent.
@@ -94,6 +95,7 @@ The following items are approved modernization decisions identified during Resea
 - Ambiguous runtime OpenAPI authority.
 - Numeric COMMAREA reference conflicts with DB2 `CHAR(12)`.
 - API date representation compatibility remains unresolved across legacy declarations and host conversion evidence.
+- Runtime behavior of converted sentinel date values in always-present SQL date predicates remains unresolved.
 
 ### Minor
 - No evidenced account-not-found distinction.

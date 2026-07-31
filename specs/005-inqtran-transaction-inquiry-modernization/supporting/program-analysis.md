@@ -221,12 +221,37 @@ From `INQTRANL.cbl` SQL declarations:
 
 - Account filter is exact equality on sort code and account number.
 - Date filter is inclusive lower and upper bound (`>=` and `<=`).
-- Default date values become range sentinels (0 and 99999999) before conversion.
-  - Evidence: defaulting in `A010`; conversion in `GTC010`/`RTD010` via `PERFORM CONVERT-YYYYMMDD-TO-ISO`.
+- Omitted-date source conditions are defined in COMMAREA as:
+  - `INQTRANL-NO-FROM-DATE VALUE 0`,
+  - `INQTRANL-NO-TO-DATE VALUE 99999999`.
+  - Evidence: `INQTRANL.cpy`.
+- In `A010`, omitted-date conditions trigger sentinel assignments:
+  - if `INQTRANL-NO-FROM-DATE`, `INQTRANL-FROM-DATE <- 0`;
+  - if `INQTRANL-NO-TO-DATE`, `INQTRANL-TO-DATE <- 99999999`.
+  - Evidence: `INQTRANL.cbl` `A010`.
+- Sentinel/defaulted date values are mechanically converted through the same path used for non-omitted values:
+  - `INQTRANL-*-DATE -> WS-DATE-YYYYMMDD -> CONVERT-YYYYMMDD-TO-ISO -> WS-DATE-ISO -> HV-QUERY-*-DATE`.
+  - Evidence: `INQTRANL.cbl` `GTC010`, `RTD010`, `CYI010`.
+- Both count and list SQL statements always retain both date predicates:
+  - `PROCTRAN_DATE >= :HV-QUERY-FROM-DATE`
+  - `PROCTRAN_DATE <= :HV-QUERY-TO-DATE`
+  - Evidence: `DECLARE TRAN-COUNT-CURSOR`, `DECLARE TRAN-CURSOR`.
+- The shown INQTRANL path includes no alternate SQL text that removes a date predicate when a boundary is omitted.
+- The shown INQTRANL path includes no pre-SQL calendar-validity or sentinel-validity guard for input dates before predicate execution.
+- Non-acceptable SQLCODE values from cursor OPEN/FETCH/CLOSE paths route to `ABEND-ROUTINE` technical-failure handling.
+  - Evidence: SQLCODE checks in `GTC010`, `RTD010`, `FTD010`.
+
+#### Reasonable inference
+
+- Omitted-date processing in legacy is sentinel-normalization plus bounded predicates, not a distinct predicate-omission mode in SQL text.
+- Converted sentinel values can reach DB2 predicate evaluation as plain host-variable strings without additional INQTRANL-side date-sanity screening.
 
 #### Remaining uncertainty
 
-- If date values are invalid (for example non-calendar values), source shows no validation before SQL usage.
+- Repository evidence does not conclusively establish deployed `PROCTRAN_DATE` runtime type/format behavior for this path.
+- Runtime treatment of converted sentinel values in the date predicates is unresolved from static evidence alone.
+- It is not provable from supplied artifacts that omitted-date handling always yields an unconstrained effective boundary.
+- It is not provable from supplied artifacts that omitted-date handling definitively produces SQLCODE `-180`.
 
 ### Ordering and tie behavior
 

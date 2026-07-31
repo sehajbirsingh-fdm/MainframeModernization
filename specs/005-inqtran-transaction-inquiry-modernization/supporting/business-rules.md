@@ -15,19 +15,19 @@ Evidence labels used below:
 ## BR-002 — Date range filtering is inclusive
 - **Classification:** Confirmed Evidence
 - **Legacy evidence:** `INQTRANL.cbl` SQL declarations apply `PROCTRAN_DATE >= :HV-QUERY-FROM-DATE` and `PROCTRAN_DATE <= :HV-QUERY-TO-DATE`.
-- **Business rule:** Transactions on the start and end boundaries are included.
+- **Business rule:** Transactions on supplied start and end boundaries are included.
 
 ## BR-003 — No from-date is normalized to the legacy minimum sentinel
 - **Classification:** Confirmed Evidence
 - **Legacy evidence:** `INQTRANL.cpy` defines `INQTRANL-NO-FROM-DATE VALUE 0`; `INQTRANL.cbl` paragraph `A010` sets `INQTRANL-FROM-DATE` to `0`; `GTC010`/`RTD010` convert to ISO text before SQL use.
-- **Business rule:** A missing from-date is treated as the legacy minimum sentinel path rather than rejected.
-- **Classification note (intent):** Reasonable Inference: this behavior is intended to avoid excluding older transactions.
+- **Business rule:** A missing from-date is normalized through the legacy minimum-sentinel conversion path before SQL predicate evaluation.
+- **Remaining Uncertainty:** The runtime query effect of the converted sentinel value is not provable from supplied artifacts alone.
 
 ## BR-004 — No to-date is normalized to the legacy maximum sentinel
 - **Classification:** Confirmed Evidence
 - **Legacy evidence:** `INQTRANL.cpy` defines `INQTRANL-NO-TO-DATE VALUE 99999999`; `INQTRANL.cbl` paragraph `A010` sets `INQTRANL-TO-DATE` to `99999999`; `GTC010`/`RTD010` convert to ISO text before SQL use.
-- **Business rule:** A missing to-date is treated as the legacy maximum sentinel path rather than rejected.
-- **Classification note (intent):** Reasonable Inference: this behavior is intended to avoid excluding newer transactions.
+- **Business rule:** A missing to-date is normalized through the legacy maximum-sentinel conversion path before SQL predicate evaluation.
+- **Remaining Uncertainty:** The runtime query effect of the converted sentinel value is not provable from supplied artifacts alone.
 
 ## BR-005 — Limit value 0 is normalized to 50
 - **Classification:** Confirmed Evidence
