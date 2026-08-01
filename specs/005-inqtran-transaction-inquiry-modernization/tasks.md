@@ -71,7 +71,7 @@ Parallelizable lanes:
 ## 3. Analysis Confirmation Tasks
 
 ### T001 - Confirm backend package and module conventions
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Inspect existing backend feature package conventions and confirm Feature 005 placement strategy without creating a parallel structure.
 - **Affected area**: backend/api source and test package areas
 - **Dependencies**: None
@@ -84,7 +84,7 @@ Parallelizable lanes:
   - Task execution notes or pull-request description entry summarizing repository inspection findings.
 
 ### T002 - Confirm frontend route and feature conventions
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Inspect existing frontend route, feature, and state-management conventions and confirm Feature 005 integration points.
 - **Affected area**: frontend/app route and feature areas
 - **Dependencies**: None
@@ -97,7 +97,7 @@ Parallelizable lanes:
   - Task execution notes or pull-request description entry summarizing repository inspection findings.
 
 ### T003 - Confirm exception-handling and error-shape conventions
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Verify current backend exception-handling patterns and safe error response conventions used by implemented features.
 - **Affected area**: backend/api error-handling component area
 - **Dependencies**: T001
@@ -110,7 +110,7 @@ Parallelizable lanes:
   - Task execution notes or pull-request description entry referencing existing controller/error test seams.
 
 ### T004 - Confirm API-client and request composition conventions
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Verify existing frontend API-client organization and request construction conventions.
 - **Affected area**: frontend/app api and feature areas
 - **Dependencies**: T002
@@ -123,7 +123,7 @@ Parallelizable lanes:
   - Task execution notes or pull-request description entry referencing frontend API-client conventions.
 
 ### T005 - Confirm H2 schema/data initialization conventions
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Verify repository conventions for schema.sql and data.sql initialization and shared compatibility constraints.
 - **Affected area**: backend/api resources initialization area
 - **Dependencies**: T001
@@ -136,7 +136,7 @@ Parallelizable lanes:
   - Task execution notes or pull-request description entry referencing existing schema/data initialization flow.
 
 ### T006 - Confirm test framework and execution script conventions
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Verify backend, frontend, integration, and E2E test frameworks and scripts currently used by repository implementations.
 - **Affected area**: backend/api test scripts, frontend/app test scripts
 - **Dependencies**: T001, T002
@@ -149,7 +149,7 @@ Parallelizable lanes:
   - Task execution notes or pull-request description entry with verified command list for mvn test, npm test, npm run test:e2e.
 
 ### T007 - Verify traceability identifier set used by implementation tasks
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Confirm all FR/NFR/SR/OR/BR/AC/TC identifiers referenced by tasks exist in authoritative sources.
 - **Affected area**: specs/005-inqtran-transaction-inquiry-modernization artifacts
 - **Dependencies**: None
@@ -164,7 +164,7 @@ Parallelizable lanes:
 ## 4. Setup Tasks
 
 ### T008 - Establish Feature 005 implementation component map
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Record repository-first component areas for backend, frontend, tests, and docs where Feature 005 changes will be applied.
 - **Affected area**: Feature 005 planning artifacts and repository component map
 - **Dependencies**: T001, T002, T003, T004, T005, T006
@@ -177,7 +177,7 @@ Parallelizable lanes:
   - Task execution notes or pull-request description entry with approved component-area mapping.
 
 ### T009 - Confirm dependency sufficiency for approved design
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Validate that existing backend and frontend dependencies satisfy Feature 005 design and testing needs.
 - **Affected area**: backend/api build config, frontend/app package config
 - **Dependencies**: T006
@@ -190,7 +190,7 @@ Parallelizable lanes:
   - Task execution notes or pull-request description entry with dependency confirmation summary.
 
 ### T010 - Prepare deterministic test fixture strategy in test scope
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Define deterministic fixture organization for backend integration and frontend tests following existing repository conventions.
 - **Affected area**: backend/api test fixture area, frontend/app test fixture area
 - **Dependencies**: T005, T006
@@ -205,7 +205,7 @@ Parallelizable lanes:
 ## 5. Data and Schema Tasks
 
 ### T011 - Inspect existing H2 schema for PROCTRAN-compatible coverage
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Evaluate current H2 schema and identify minimal changes needed for approved Feature 005 fields and query behavior.
 - **Affected area**: backend/api schema initialization area
 - **Dependencies**: T005, T008
@@ -218,7 +218,7 @@ Parallelizable lanes:
   - Schema review trace to mapping-matrix and openapi fields.
 
 ### T012 - Implement or extend deterministic H2 seed data for Feature 005
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add or adjust deterministic H2 seed/test data to cover multi-account, date/time, tie, amount, and pagination scenarios.
 - **Affected area**: backend/api data initialization and test fixture area
 - **Dependencies**: T011, T010
@@ -231,7 +231,7 @@ Parallelizable lanes:
   - Deterministic dataset review with scenario coverage matrix.
 
 ### T013 - Validate schema/data compatibility with existing features
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Verify that schema/data changes do not break existing INQCUST, INQACC, INQACCCU, or CRECUST behavior.
 - **Affected area**: backend/api shared schema/data compatibility
 - **Dependencies**: T012
@@ -245,7 +245,7 @@ Parallelizable lanes:
   - Startup/test output for directly affected schema/repository checks and task execution notes documenting regression risks.
 
 ### T014 - Confirm no mock JSON persistence path for Feature 005
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Verify Feature 005 persistence path remains JDBC/H2 and does not introduce JSON repository fallback.
 - **Affected area**: backend/api repository and configuration areas
 - **Dependencies**: T011
@@ -260,7 +260,7 @@ Parallelizable lanes:
 ## 6. Backend Domain and DTO Tasks
 
 ### T015 - Implement inquiry request and control models aligned to contract
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement request/control representations for sortCode, accountNumber, optional dates, limit, and offset aligned to approved contract semantics.
 - **Affected area**: backend/api Feature 005 domain/request model area
 - **Dependencies**: T008, T011
@@ -273,7 +273,7 @@ Parallelizable lanes:
   - Unit tests mapped to TC-004 through TC-012 and TC-023 through TC-036.
 
 ### T016 - Implement normalized control representation
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add normalized control model for effective limit/offset and approved omitted-date handling.
 - **Affected area**: backend/api Feature 005 service/domain normalization area
 - **Dependencies**: T015
@@ -286,7 +286,7 @@ Parallelizable lanes:
   - Unit tests linked to TC-004 through TC-008, TC-035, TC-036.
 
 ### T017 - Implement transaction/result domain models and metadata structures
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement transaction record and inquiry result structures including totalCount and returnedCount.
 - **Affected area**: backend/api Feature 005 domain/result model area
 - **Dependencies**: T015
@@ -299,7 +299,7 @@ Parallelizable lanes:
   - Unit and contract tests linked to TC-017, TC-021, TC-022, TC-051 through TC-059, TC-064, TC-065.
 
 ### T018 - Implement response DTOs and safe error response reuse
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement API DTOs for success response and reuse/align safe error envelope with existing conventions.
 - **Affected area**: backend/api Feature 005 DTO and error response area
 - **Dependencies**: T017, T003
@@ -314,7 +314,7 @@ Parallelizable lanes:
 ## 7. Repository and Adapter Tasks
 
 ### T019 - Implement repository abstraction for count and ordered retrieval
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add or extend repository abstraction with operations for filtered total count and ordered row retrieval.
 - **Affected area**: backend/api Feature 005 repository abstraction area
 - **Dependencies**: T017
@@ -327,7 +327,7 @@ Parallelizable lanes:
   - Repository abstraction review plus tests linked to TC-039, TC-040, TC-048.
 
 ### T020 - Implement JDBC/H2 filtered total-count query
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement read-only count query for exact account filters and approved date-control behavior.
 - **Affected area**: backend/api JDBC repository implementation area
 - **Dependencies**: T019, T012
@@ -340,7 +340,7 @@ Parallelizable lanes:
   - Integration tests linked to TC-039, TC-040, TC-041, TC-048, TC-101.
 
 ### T021 - Implement JDBC/H2 ordered row-retrieval query
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement read-only ordered row retrieval with date desc/time desc ordering and pagination inputs.
 - **Affected area**: backend/api JDBC repository implementation area
 - **Dependencies**: T019, T012
@@ -353,7 +353,7 @@ Parallelizable lanes:
   - Integration tests linked to TC-042 through TC-047 and TC-101.
 
 ### T022 - Implement repository parity guard between count and row filters
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Ensure count and row paths use equivalent filter construction and remain synchronized.
 - **Affected area**: backend/api repository query construction area
 - **Dependencies**: T020, T021
@@ -366,7 +366,7 @@ Parallelizable lanes:
   - Tests linked to TC-039, TC-040, TC-041, TC-049, TC-050.
 
 ### T023 - Implement persistence row-to-domain mapping
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Map JDBC rows into approved domain structures preserving approved transformations and field constraints.
 - **Affected area**: backend/api repository mapper area
 - **Dependencies**: T021, T017
@@ -379,7 +379,7 @@ Parallelizable lanes:
   - Tests linked to TC-051 through TC-059.
 
 ### T024 - Implement repository failure propagation behavior
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Propagate count and row retrieval failures to service layer without partial success construction.
 - **Affected area**: backend/api repository-service boundary area
 - **Dependencies**: T020, T021, T022
@@ -394,7 +394,7 @@ Parallelizable lanes:
 ## 8. Service Tasks
 
 ### T025 - Implement service request handoff and structural input handling
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement service entry processing from controller-bound inputs without adding unsupported business validation.
 - **Affected area**: backend/api Feature 005 service area
 - **Dependencies**: T015, T016, T019, T023
@@ -407,7 +407,7 @@ Parallelizable lanes:
   - Unit tests linked to TC-023 through TC-034 and TC-078.
 
 ### T026 - Implement limit defaulting and zero normalization
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement service behavior for omitted or zero limit normalization.
 - **Affected area**: backend/api Feature 005 service normalization area
 - **Dependencies**: T016
@@ -419,7 +419,7 @@ Parallelizable lanes:
   - Tests linked to TC-007, TC-008, TC-035.
 
 ### T027 - Implement maximum-limit clamping and offset handling
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement clamping for limits above 100 and non-negative offset orchestration behavior.
 - **Affected area**: backend/api Feature 005 service normalization area
 - **Dependencies**: T016
@@ -432,7 +432,7 @@ Parallelizable lanes:
   - Tests linked to TC-009, TC-010, TC-011 through TC-015, TC-036.
 
 ### T028 - Implement optional date-boundary interpretation at API boundary
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement approved modern omitted-date behavior and supplied inclusive boundary interpretation.
 - **Affected area**: backend/api Feature 005 service control interpretation area
 - **Dependencies**: T016, T020, T021
@@ -446,7 +446,7 @@ Parallelizable lanes:
   - Tests linked to TC-002 through TC-006, TC-040, TC-041, TC-085, TC-086.
 
 ### T029 - Implement count and row retrieval orchestration
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement service orchestration for filtered total count and ordered page retrieval.
 - **Affected area**: backend/api Feature 005 service orchestration area
 - **Dependencies**: T022, T023
@@ -459,7 +459,7 @@ Parallelizable lanes:
   - Tests linked to TC-017, TC-021, TC-022, TC-039 through TC-041.
 
 ### T030 - Implement empty-result handling and metadata construction
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Build success response for empty/no-match and offset-beyond-total outcomes with coherent metadata.
 - **Affected area**: backend/api Feature 005 service response assembly area
 - **Dependencies**: T029
@@ -472,7 +472,7 @@ Parallelizable lanes:
   - Tests linked to TC-013, TC-014, TC-016, TC-087, TC-089.
 
 ### T031 - Implement technical-failure propagation and no-partial-success enforcement
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Ensure service propagates technical failures and prevents any partial successful response construction.
 - **Affected area**: backend/api Feature 005 service error path area
 - **Dependencies**: T024, T029
@@ -487,7 +487,7 @@ Parallelizable lanes:
 ## 9. Controller and Error-Handling Tasks
 
 ### T032 - Implement GET endpoint path and method wiring
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add Feature 005 controller endpoint with approved path and method.
 - **Affected area**: backend/api controller area for Feature 005
 - **Dependencies**: T025
@@ -500,7 +500,7 @@ Parallelizable lanes:
   - Controller and contract tests linked to TC-060, TC-072.
 
 ### T033 - Implement path/query binding and structural validation behavior
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement binding and approved boundary validation for path and query controls.
 - **Affected area**: backend/api controller validation area
 - **Dependencies**: T032
@@ -513,7 +513,7 @@ Parallelizable lanes:
   - Tests linked to TC-023 through TC-034, TC-029.
 
 ### T034 - Implement HTTP 200 populated and empty response handling
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Return approved populated and empty success responses using service output.
 - **Affected area**: backend/api controller response mapping area
 - **Dependencies**: T030, T033
@@ -526,7 +526,7 @@ Parallelizable lanes:
   - Tests linked to TC-016, TC-064, TC-065, TC-068.
 
 ### T035 - Implement technical-failure HTTP 500 handling
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Map repository/service technical failures to safe HTTP 500 responses.
 - **Affected area**: backend/api controller and exception-handling area
 - **Dependencies**: T031, T003
@@ -539,7 +539,7 @@ Parallelizable lanes:
   - Tests linked to TC-019, TC-020, TC-066, TC-067, TC-096.
 
 ### T036 - Align controller behavior to approved exception-handling conventions
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Reuse or minimally extend existing exception-handling patterns without introducing a new framework.
 - **Affected area**: backend/api shared exception-handling component area
 - **Dependencies**: T003, T033, T035
@@ -554,7 +554,7 @@ Parallelizable lanes:
 ## 10. Frontend Tasks
 
 ### T037 - Confirm Feature 005 frontend implementation placement
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Confirm exact frontend placement based on existing frontend/app feature, api, and route conventions.
 - **Affected area**: frontend/app feature and api component areas
 - **Dependencies**: T002, T004, T008
@@ -567,7 +567,7 @@ Parallelizable lanes:
   - Read-only placement confirmation note.
 
 ### T038 - Implement frontend inquiry form inputs and controls
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement inquiry form controls for sortCode, accountNumber, optional fromDate/toDate, limit, and offset.
 - **Affected area**: frontend/app Feature 005 UI component area
 - **Dependencies**: T037
@@ -579,7 +579,7 @@ Parallelizable lanes:
   - Tests linked to TC-071, TC-073, TC-074, TC-078.
 
 ### T039 - Implement frontend API client request construction
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Build request path and query composition for Feature 005 endpoint, including omission of unsupplied optional dates.
 - **Affected area**: frontend/app api client area for Feature 005
 - **Dependencies**: T037, T046
@@ -592,7 +592,7 @@ Parallelizable lanes:
   - Tests linked to TC-072, TC-073, TC-074.
 
 ### T040 - Implement loading and populated success states
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement loading indicator and populated success rendering for metadata and transaction rows.
 - **Affected area**: frontend/app Feature 005 UI state rendering area
 - **Dependencies**: T038, T039
@@ -605,7 +605,7 @@ Parallelizable lanes:
   - Tests linked to TC-075, TC-076, TC-084.
 
 ### T041 - Implement empty-success and pagination rendering states
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement empty-success rendering and pagination behavior for limit/offset-driven navigation.
 - **Affected area**: frontend/app Feature 005 UI state and controls area
 - **Dependencies**: T040
@@ -618,7 +618,7 @@ Parallelizable lanes:
   - Tests linked to TC-077, TC-081, TC-087, TC-088, TC-089.
 
 ### T042 - Implement validation-feedback and safe technical-error states
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Implement frontend validation feedback and safe technical-error rendering without exposing internals.
 - **Affected area**: frontend/app Feature 005 UI error-handling area
 - **Dependencies**: T039, T035
@@ -631,7 +631,7 @@ Parallelizable lanes:
   - Tests linked to TC-078, TC-079, TC-080, TC-090, TC-091.
 
 ### T043 - Implement subsequent inquiry result replacement behavior
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Ensure a later completed inquiry replaces prior completed result state cleanly.
 - **Affected area**: frontend/app Feature 005 UI state transition area
 - **Dependencies**: T040, T041, T042
@@ -643,7 +643,7 @@ Parallelizable lanes:
   - Tests linked to TC-082 and TC-092.
 
 ### T044 - Verify no unrelated shell and route regression from frontend integration
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Validate that Feature 005 integration does not alter unrelated shell, routes, or existing feature UX paths.
 - **Affected area**: frontend/app shared routing and shell behavior
 - **Dependencies**: T043
@@ -658,7 +658,7 @@ Parallelizable lanes:
 ## 11. API Contract Tasks
 
 ### T045 - Compare Feature 005 implementation behavior against contracts/openapi.yaml
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Validate endpoint behavior and schemas against approved feature contract before runtime publication updates.
 - **Affected area**: Feature 005 backend API behavior and contract conformance area
 - **Dependencies**: T032, T033, T034, T035
@@ -671,7 +671,7 @@ Parallelizable lanes:
   - Contract tests linked to TC-060 through TC-068.
 
 ### T046 - Reconcile runtime openapi publication with Feature 005 contract
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add or align Feature 005 operation in backend runtime openapi publication file.
 - **Affected area**: backend/api runtime openapi publication area
 - **Dependencies**: T045
@@ -683,7 +683,7 @@ Parallelizable lanes:
   - Contract conformance check linked to TC-069.
 
 ### T047 - Verify parameter optionality, bounds, and defaults conformance
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Verify implementation aligns with contract optionality and bounds for fromDate, toDate, limit, and offset.
 - **Affected area**: backend/api controller/service and frontend/api-client integration area
 - **Dependencies**: T033, T039, T045
@@ -696,7 +696,7 @@ Parallelizable lanes:
   - Tests linked to TC-062, TC-063, TC-073, TC-074.
 
 ### T048 - Verify success/error schema and status semantics conformance
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Confirm 200 populated, 200 empty, 400, and 500 schema/status semantics including no 404 for empty results.
 - **Affected area**: backend/api controller/DTO/contract conformance area
 - **Dependencies**: T034, T035, T045
@@ -711,7 +711,7 @@ Parallelizable lanes:
 ## 12. Unit Test Tasks
 
 ### T049 - Add backend unit tests for control normalization and date interpretation
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add unit tests for omitted/supplied date-control interpretation and limit/offset normalization paths.
 - **Affected area**: backend/api Feature 005 service unit-test area
 - **Dependencies**: T026, T027, T028
@@ -723,7 +723,7 @@ Parallelizable lanes:
   - TC-004 through TC-012, TC-035, TC-036 pass.
 
 ### T050 - Add backend unit tests for metadata and orchestration semantics
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add unit tests for totalCount/returnedCount construction and count/list orchestration coherence.
 - **Affected area**: backend/api Feature 005 service unit-test area
 - **Dependencies**: T029, T030
@@ -735,7 +735,7 @@ Parallelizable lanes:
   - TC-017, TC-021, TC-022 pass.
 
 ### T051 - Add backend unit tests for mapping and transaction identifier behavior
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add unit tests for approved field mapping, transactionId composition, and amount/sign/scale behavior.
 - **Affected area**: backend/api mapper/domain unit-test area
 - **Dependencies**: T023
@@ -747,7 +747,7 @@ Parallelizable lanes:
   - TC-051 through TC-059 pass.
 
 ### T052 - Add backend unit tests for empty and technical-failure service behavior
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add unit tests for empty result behavior and technical failure propagation with no partial success.
 - **Affected area**: backend/api Feature 005 service unit-test area
 - **Dependencies**: T030, T031
@@ -775,7 +775,7 @@ Parallelizable lanes:
 ## 13. Integration Test Tasks
 
 ### T054 - Add repository integration tests for filtering and parity behavior
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add H2-backed repository integration tests for exact account filters, supplied boundaries, omitted-boundary behavior, and count/list parity.
 - **Affected area**: backend/api repository integration-test area
 - **Dependencies**: T020, T021, T022, T012
@@ -787,7 +787,7 @@ Parallelizable lanes:
   - TC-001 through TC-006 and TC-039 through TC-041 pass.
 
 ### T055 - Add repository integration tests for ordering and pagination behavior
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add repository integration tests for date/time ordering, tie behavior constraints, and pagination-before-selection semantics.
 - **Affected area**: backend/api repository integration-test area
 - **Dependencies**: T021, T012
@@ -800,7 +800,7 @@ Parallelizable lanes:
   - TC-009 through TC-015 and TC-042 through TC-047 pass.
 
 ### T056 - Add repository integration tests for read-only and failure propagation
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add integration tests validating read-only behavior and count/row failure propagation.
 - **Affected area**: backend/api repository integration-test area
 - **Dependencies**: T024
@@ -813,7 +813,7 @@ Parallelizable lanes:
   - TC-048 through TC-050 and TC-101 pass.
 
 ### T057 - Add controller/API integration tests for status and schema behavior
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add controller/API tests for 200 populated, 200 empty, 400, and 500 outcomes with safe error schemas.
 - **Affected area**: backend/api controller integration-test area
 - **Dependencies**: T033, T034, T035, T048
@@ -825,7 +825,7 @@ Parallelizable lanes:
   - TC-013, TC-014, TC-016, TC-019, TC-020, TC-066, TC-067, TC-068 pass.
 
 ### T058 - Add integration regression checks for shared schema and runtime OpenAPI impact
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Validate that schema and runtime openapi updates do not break existing implemented feature contracts.
 - **Affected area**: backend/api integration and contract test area
 - **Dependencies**: T013, T046, T054, T055, T056, T057
@@ -840,7 +840,7 @@ Parallelizable lanes:
 ## 14. Frontend Test Tasks
 
 ### T059 - Add frontend component tests for form and request composition
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add tests for input handling, leading-zero preservation, endpoint construction, and optional query omission.
 - **Affected area**: frontend/app Feature 005 component and API-client test area
 - **Dependencies**: T038, T039
@@ -852,7 +852,7 @@ Parallelizable lanes:
   - TC-071 through TC-074 pass.
 
 ### T060 - Add frontend component tests for loading/success/empty states
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add tests for loading, populated success, empty success, metadata, and transaction row rendering.
 - **Affected area**: frontend/app Feature 005 component test area
 - **Dependencies**: T040, T041
@@ -864,7 +864,7 @@ Parallelizable lanes:
   - TC-075 through TC-077 and TC-076 rendering assertions pass.
 
 ### T061 - Add frontend component tests for validation and technical-error states
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add tests for validation feedback, safe technical-error handling, and safe error messaging.
 - **Affected area**: frontend/app Feature 005 component test area
 - **Dependencies**: T042
@@ -876,7 +876,7 @@ Parallelizable lanes:
   - TC-078 through TC-080 pass.
 
 ### T062 - Add frontend component tests for pagination, subsequent inquiry, and shell preservation
-- **Status**: [ ]
+- **Status**: [X]
 - **Description**: Add tests for pagination controls, subsequent inquiry replacement, and no unrelated route/shell regression.
 - **Affected area**: frontend/app Feature 005 component and route test area
 - **Dependencies**: T041, T043, T044
