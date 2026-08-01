@@ -1,13 +1,21 @@
 openapi: 3.0.3
 info:
-  title: INQTRANL Transaction List Inquiry API
+  title: INQTRANL Account Transaction Inquiry API
   version: 1.0.0
-  description: Evidence-backed modernization contract for the INQTRANL list operation.
+  description: >
+    Contract for the INQTRANL Account Transaction Inquiry Capability. The API preserves
+    validated legacy inquiry outcomes while applying approved modernization behavior at
+    the HTTP boundary.
 paths:
   /api/v1/accounts/{sortCode}/{accountNumber}/transactions:
     get:
       operationId: getAccountTransactions
-      summary: Retrieve an account transaction list
+      summary: Retrieve an account transaction inquiry page
+      description: >
+        Read-only inquiry operation. Supplied date controls are evaluated as inclusive
+        boundaries. When a date control is omitted, this API applies the approved
+        modernization contract for omitted boundaries while preserving legacy-compatible
+        processing semantics behind the boundary.
       parameters:
         - name: sortCode
           in: path
@@ -20,33 +28,104 @@ paths:
         - name: fromDate
           in: query
           required: false
+          description: >
+            Optional inclusive lower date boundary in YYYYMMDD form when supplied.
+            Legacy omission handling is sentinel normalization followed by a still-present
+            lower-bound predicate. In this API contract, omitted values follow approved
+            modernization omitted-boundary behavior rather than being asserted as legacy
+            unconstrained filtering truth.
           schema: { type: string, pattern: '^[0-9]{8}$' }
         - name: toDate
           in: query
           required: false
+          description: >
+            Optional inclusive upper date boundary in YYYYMMDD form when supplied.
+            Legacy omission handling is sentinel normalization followed by a still-present
+            upper-bound predicate. In this API contract, omitted values follow approved
+            modernization omitted-boundary behavior rather than being asserted as legacy
+            unconstrained filtering truth.
           schema: { type: string, pattern: '^[0-9]{8}$' }
         - name: limit
           in: query
           required: false
-          description: Omitted or zero defaults to 50; values above 100 are processed as 100.
+          description: >
+            Requested page size. At the modern API boundary, omitted or 0 is normalized to
+            effective limit 50 before legacy-compatible retrieval orchestration; values above
+            100 are normalized to effective limit 100. Successful pages never return more than
+            100 rows.
           schema: { type: integer, minimum: 0, default: 50 }
         - name: offset
           in: query
           required: false
-          schema: { type: integer, minimum: 0, maximum: 99999, default: 0 }
+          description: >
+            Non-negative row skip count. Omitted defaults to 0. Offset is applied after
+            filtering and ordering; offset at or beyond filtered total yields HTTP 200 with
+            preserved totalCount and an empty transactions page.
+          schema: { type: integer, minimum: 0, default: 0 }
       responses:
         '200':
-          description: Successful page, including an empty page when no rows match.
+          description: >
+            Successful inquiry page, including empty success outcomes for no matching
+            transactions and for offset at or beyond filtered total.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TransactionListResponse' }
+              examples:
+                populatedPage:
+                  summary: Successful page with matching rows
+                  value:
+                    sortCode: '987654'
+                    accountNumber: '12345678'
+                    fromDate: null
+                    toDate: '20260728'
+                    limit: 50
+                    offset: 0
+                    totalCount: 2
+                    returnedCount: 2
+                    transactions:
+                      - transactionId: '987654-12345678-20260728-143015-000000000123'
+                        sortCode: '987654'
+                        accountNumber: '12345678'
+                        date: '20260728'
+                        time: '143015'
+                        reference: '000000000123'
+                        type: 'CRD'
+                        description: 'Example description'
+                        amount: 125.5
+                emptyNoMatch:
+                  summary: Empty success when no rows match filters
+                  value:
+                    sortCode: '987654'
+                    accountNumber: '12345678'
+                    fromDate: '20270101'
+                    toDate: '20270131'
+                    limit: 50
+                    offset: 0
+                    totalCount: 0
+                    returnedCount: 0
+                    transactions: []
+                emptyOffsetBeyondTotal:
+                  summary: Empty success when offset is at or beyond filtered total
+                  value:
+                    sortCode: '987654'
+                    accountNumber: '12345678'
+                    fromDate: '20260701'
+                    toDate: '20260728'
+                    limit: 50
+                    offset: 100
+                    totalCount: 2
+                    returnedCount: 0
+                    transactions: []
         '400':
-          description: Request violates approved boundary validation.
+          description: Request violates structural or boundary validation rules.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
         '500':
-          description: Technical retrieval failure; no partial page is returned.
+          description: >
+            Repository or retrieval technical failure; no partial successful page is returned.
+            HTTP 404 is not defined for empty transaction results or unvalidated account
+            existence.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -54,25 +133,67 @@ components:
   schemas:
     TransactionListResponse:
       type: object
+      description: >
+        Response for the Account Transaction Inquiry Capability. Date-control echo
+        representation follows the approved API contract for supplied or omitted boundaries.
       required: [sortCode, accountNumber, limit, offset, totalCount, returnedCount, transactions]
       properties:
-        sortCode: { type: string, pattern: '^[0-9]{6}$' }
-        accountNumber: { type: string, pattern: '^[0-9]{8}$' }
-        fromDate: { type: string, nullable: true, pattern: '^[0-9]{8}$' }
-        toDate: { type: string, nullable: true, pattern: '^[0-9]{8}$' }
-        limit: { type: integer, minimum: 0, maximum: 100 }
-        offset: { type: integer, minimum: 0, maximum: 99999 }
-        totalCount: { type: integer, minimum: 0 }
-        returnedCount: { type: integer, minimum: 0, maximum: 100 }
+        sortCode:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: Requested account sort code context.
+        accountNumber:
+          type: string
+          pattern: '^[0-9]{8}$'
+          description: Requested account number context.
+        fromDate:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{8}$'
+          description: >
+            Effective lower date-control echo. May be null when the lower boundary is not
+            supplied, consistent with this API contract.
+        toDate:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{8}$'
+          description: >
+            Effective upper date-control echo. May be null when the upper boundary is not
+            supplied, consistent with this API contract.
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Effective normalized page size for this response.
+        offset:
+          type: integer
+          minimum: 0
+          description: Effective non-negative row-skip count applied after filtering and ordering.
+        totalCount:
+          type: integer
+          minimum: 0
+          description: Number of filtered matches before pagination.
+        returnedCount:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Number of returned rows in this page; equals transactions array size and does not exceed effective limit.
         transactions:
           type: array
           maxItems: 100
+          description: Ordered rows by transaction date descending then transaction time descending; no additional tie-break ordering is contracted.
           items: { $ref: '#/components/schemas/Transaction' }
     Transaction:
       type: object
+      description: >
+        Contracted transaction row schema includes only legacy-evidenced fields and approved
+        transformations.
       required: [transactionId, sortCode, accountNumber, date, time, reference, type, description, amount]
       properties:
-        transactionId: { type: string, maxLength: 50 }
+        transactionId:
+          type: string
+          maxLength: 50
+          description: Deterministic identifier in component order sortCode-accountNumber-date-time-reference.
         sortCode: { type: string, pattern: '^[0-9]{6}$' }
         accountNumber: { type: string, pattern: '^[0-9]{8}$' }
         date: { type: string, pattern: '^[0-9]{8}$' }
@@ -83,6 +204,9 @@ components:
         amount: { type: number, format: double, multipleOf: 0.01 }
     ErrorResponse:
       type: object
+      description: >
+        Generic technical/business error envelope returned for API failures. Correlation
+        identifiers are included where platform conventions support them.
       required: [code, message]
       properties:
         code: { type: string }
