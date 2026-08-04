@@ -16,28 +16,39 @@ Format: [ID] [P?] Description
 - [ ] T007 Implement selective update rules for name/title, phone, address, status, DOB.
 - [ ] T008 Implement sortCode resolution with fallback to configured default.
 - [ ] T009 Implement legacy status mapping in success and failure responses.
+- [ ] T009a Explicitly clear legacy fail code on every success response path.
 
 ## Phase 3: Repository And Persistence
 - [ ] T010 Add repository query by sortCode + customerNumber.
 - [ ] T011 Add repository update operation with copybook-constrained field lengths.
 - [ ] T012 Preserve immutable fields (createdDate, creditScore, creditScoreReviewDate) during update.
+- [ ] T012a Correct creditScoreReviewDate response mapping to numeric yyyymmdd decomposition (do not preserve legacy raw MOVE defect).
 
 ## Phase 4: API And Error Handling
-- [ ] T013 Add update endpoint controller with thin orchestration only.
-- [ ] T014 Add standardized error envelope with correlation ID and legacy fail code.
-- [ ] T015 Add response mapping for trimmed output fields and ISO date conversion.
+- [x] T013 Add update endpoint controller with thin orchestration only.
+- [x] T014 Add standardized error envelope with correlation ID and legacy fail code.
+- [x] T015 Add response mapping for trimmed output fields and ISO date conversion.
+- [ ] T015a Synchronize runtime OpenAPI to include PUT /api/v1/customers/{customerNumber} with 400/401/403/404/422/500 responses.
 
 ## Phase 5: UI Integration Requirements
-- [ ] T016 Place Update Customer button on inquiry success view.
-- [ ] T017 Add edit route and pre-populate update form from selected customer.
+- [x] T016 Place Update Customer button on inquiry success view.
+- [x] T017 Add edit route and pre-populate update form from selected customer.
 - [ ] T018 Ensure update workflow preserves existing inquiry/create behavior.
 
 ## Phase 6: Testing
-- [ ] T019 Unit tests for each business rule and fail code.
-- [ ] T020 Service tests for conditional field updates.
-- [ ] T021 Controller tests for HTTP + error mappings.
+- [x] T019 Unit tests for each business rule and fail code.
+- [x] T020 Service tests for conditional field updates.
+- [x] T021 Controller tests for HTTP + error mappings.
+- [ ] T021a Add controller security tests for unauthenticated (401) and unauthorized (403) update requests.
 - [ ] T022 Integration tests for successful and failed update scenarios.
-- [ ] T023 Frontend tests for update-button visibility and edit-form prefill.
+- [x] T023 Frontend tests for update-button visibility and edit-form prefill.
+- [ ] T023b Add tests for explicit success fail-code clearing and creditScoreReviewDate integrity mapping.
+
+## Phase 6b: Domain Governance
+- [ ] T023c Capture SME decision on status-domain policy for parity mode and document final stance.
+
+## Phase 6a: Security Alignment
+- [ ] T023a Align security matcher/rules so `/api/v1/customers/**` update route is protected by authentication and authorization policy.
 
 ## Phase 7: Documentation
 - [ ] T024 Keep mapping matrix synchronized with copybook fields.
@@ -49,3 +60,8 @@ Format: [ID] [P?] Description
 - [ ] QG-002 No non-copybook fields added to API contract.
 - [ ] QG-003 Update workflow integrated professionally from inquiry result.
 - [ ] QG-004 Existing feature behavior unchanged.
+- [ ] QG-005 Runtime OpenAPI and feature contract are synchronized for UPDCUST update endpoint.
+- [ ] QG-006 Security negative-path coverage (401/403) is present and passing.
+- [ ] QG-007 creditScoreReviewDate returns valid ISO mapping from numeric storage semantics on success.
+- [ ] QG-008 Success responses always return blank fail code.
+- [ ] QG-009 Status-domain policy decision is documented and approved by SME.

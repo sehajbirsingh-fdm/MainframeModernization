@@ -14,10 +14,14 @@
 | FR-010 not found fail 1 | SQLCODE = 100 branch | ST-001, CT-004 |
 | FR-011 fail 2/3 mappings | SQLCODE non-zero on select/update | ST-002, ST-003 |
 | FR-012 success status | MOVE Y to COMM-UPD-SUCCESS | ST-004, CT-001 |
+| FR-012a explicit fail-code blanking | modernization deterministic response rule | ST-007, CT-008 |
+| FR-012b cs-review-date correction | legacy raw MOVE defect at UPDCUST success mapping | ST-008, IT-009 |
 | FR-014 UI placement | modern UX requirement | FT-001, FT-002, FT-003 |
+| FR-008b status governance check | CUSTOMER.cpy 88-level status names | IT-010 |
 | BR-011 first-character blank semantics | (1:1) blank checks in COBOL | UT-010, IT-005 |
 
 ## Validation Completeness
 - All observed COBOL fail codes (T,1,2,3,4) mapped to rules and tests.
 - All selective update gates mapped to explicit tests.
 - Copybook field limits mapped to API contract validation tests.
+- Legacy cs-review-date raw MOVE defect is explicitly handled as non-parity carry-forward behavior.

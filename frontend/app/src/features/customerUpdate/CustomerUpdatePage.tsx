@@ -311,6 +311,8 @@ export function CustomerUpdatePage() {
             </div>
           </div>
 
+          <p className="info-text form-note">Parity mode accepts any non-blank status value; production domain constraints are governed separately.</p>
+
           {validationErrors.payload ? <p className="error-text">{validationErrors.payload}</p> : null}
 
           <div className="actions">

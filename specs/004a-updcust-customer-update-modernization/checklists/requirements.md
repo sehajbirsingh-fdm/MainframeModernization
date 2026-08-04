@@ -7,3 +7,5 @@
 - [ ] SortCode fallback semantics documented.
 - [ ] UI placement of update action documented.
 - [ ] End-to-end acceptance criteria cover success + all failure categories.
+- [ ] Endpoint authentication/authorization requirements (401/403) are documented.
+- [ ] Runtime OpenAPI synchronization requirement is documented.

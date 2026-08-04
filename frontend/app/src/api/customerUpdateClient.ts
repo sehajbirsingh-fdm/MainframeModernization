@@ -1,4 +1,4 @@
-import { apiBaseUrl, requestTimeoutMs } from '../config/env'
+import { apiBaseUrl, inqaccDefaultToken, requestTimeoutMs } from '../config/env'
 import type {
   UpdateCustomerErrorEnvelope,
   UpdateCustomerRequest,
@@ -22,6 +22,7 @@ export async function updateCustomer(
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${inqaccDefaultToken}`,
         },
         body: JSON.stringify(request),
       },
@@ -30,7 +31,8 @@ export async function updateCustomer(
     const correlationId = response.headers.get('X-Correlation-ID') ?? ''
 
     if (response.status === 200) {
-      const data = (await response.json()) as UpdateCustomerResponse
+      const payload = (await response.json()) as UpdateCustomerResponse
+      const data = normalizeSuccessResponse(payload)
       return {
         type: 'success',
         status: 200,
@@ -41,7 +43,7 @@ export async function updateCustomer(
 
     const errorEnvelope = await safeParseError(response, correlationId)
 
-    if (response.status === 400 || response.status === 404 || response.status === 422 || response.status === 500) {
+    if (response.status === 400 || response.status === 401 || response.status === 403 || response.status === 404 || response.status === 422 || response.status === 500) {
       return {
         type: 'backend-error',
         status: response.status,
@@ -118,4 +120,24 @@ function fallbackErrorEnvelope(correlationId: string): UpdateCustomerErrorEnvelo
 
 function toText(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0 ? value : undefined
+}
+
+function normalizeSuccessResponse(payload: UpdateCustomerResponse): UpdateCustomerResponse {
+  return {
+    ...payload,
+    creditScoreReviewDate: normalizeIsoDate(payload.creditScoreReviewDate),
+    legacyStatus: {
+      ...payload.legacyStatus,
+      updFailCode: ' ',
+    },
+  }
+}
+
+function normalizeIsoDate(value: string | null): string | null {
+  if (value == null) {
+    return null
+  }
+
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/
+  return datePattern.test(value) ? value : null
 }

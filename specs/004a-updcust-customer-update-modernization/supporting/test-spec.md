@@ -21,6 +21,8 @@
 - ST-004 Full success path -> success Y and blank fail code.
 - ST-005 Immutable fields preserved after update.
 - ST-006 No-op payload that passes validation returns parity-consistent success.
+- ST-007 Success response always clears fail code to blank even when prior/internal state was non-blank.
+- ST-008 creditScoreReviewDate mapping uses numeric yyyymmdd decomposition and returns valid ISO date.
 
 ## 3. Controller Tests
 - CT-001 Success returns 200 with updated payload.
@@ -28,6 +30,9 @@
 - CT-003 Legacy business-rule failures return 422 with legacyFailCode.
 - CT-004 Not found returns 404 with legacyFailCode 1.
 - CT-005 Internal failures return 500 with correlationId.
+- CT-006 Unauthenticated request returns 401 for PUT /api/v1/customers/{customerNumber}.
+- CT-007 Authenticated but unauthorized request returns 403 for PUT /api/v1/customers/{customerNumber}.
+- CT-008 Success response payload always contains blank legacyFailCode.
 
 ## 4. Integration Tests
 - IT-001 Update by explicit sortCode + customerNumber.
@@ -36,6 +41,10 @@
 - IT-004 Verify parity behavior for title-only and address-partial update attempts.
 - IT-005 Verify first-character-space payload handling for gate checks.
 - IT-006 Verify customer lookup works with normalizable (short) numeric customerNumber input.
+- IT-007 Verify runtime OpenAPI publishes UPDCUST PUT path and response contracts (400/401/403/404/422/500).
+- IT-008 Verify security matcher includes `/api/v1/customers/**` and blocks unauth/unauthorized callers.
+- IT-009 Verify successful update returns valid creditScoreReviewDate ISO value derived from numeric storage semantics.
+- IT-010 Record SME decision for status-domain policy (open-ended parity vs allow-list hardening mode).
 
 ## 5. Frontend Tests (Spec Requirement)
 - FT-001 Update Customer button visible on inquiry success.

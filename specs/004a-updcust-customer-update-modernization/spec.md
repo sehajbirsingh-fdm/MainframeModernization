@@ -99,9 +99,12 @@ For parity, non-blank check is based on first character not being space.
 ### FR-008a Status Value Parity
 UPDCUST does not enforce a status allow-list during update. Modernization shall not add a stricter status-value rule in parity mode.
 
+### FR-008b Status Domain Governance Check
+Because CUSTOMER copybook 88-level names define `ACTIVE`, `INACTIVE`, and `SUSPENDED`, parity-mode acceptance of any non-blank status value shall be explicitly confirmed with SMEs before production hardening. If SMEs reject open-ended values, stricter validation must be introduced via a documented non-parity mode.
+
 ### FR-009 Date Of Birth Update Rule
 If DOB year is non-zero/non-blank, system computes integer yyyymmdd from provided components and updates DOB.
-No additional calendar validation is performed in strict legacy-parity mode.
+Modernization runtime validates DOB as ISO `yyyy-MM-dd` and rejects calendar-invalid values with HTTP 400.
 
 ### FR-010a No-Op Success Behavior
 If request passes validation gates but does not satisfy any field-update gate, service may return success with no effective data change, preserving legacy parity.
@@ -119,11 +122,25 @@ On success:
 - `legacyStatus.updFailCode` is blank
 - response returns updated customer values and immutable fields (createdDate, creditScore, creditScoreReviewDate).
 
+### FR-012a Explicit Success Fail-Code Clearing
+Modernization shall explicitly set `legacyStatus.updFailCode` to blank on every success response and must not rely on inherited caller or transport state.
+
+### FR-012b Credit-Score-Review-Date Mapping Correction
+Legacy UPDCUST performs a raw MOVE from binary host value to COMMAREA review-date group item, which can corrupt day/month/year fields. Modernization shall not preserve this defect. `creditScoreReviewDate` must be derived from numeric `yyyymmdd` semantics using the same decomposition style used for DOB/createdDate mapping.
+
 ### FR-013 API Contract
 Canonical API for modernization:
 - Method: PUT
 - Path: /api/v1/customers/{customerNumber}
 - Optional query parameter: sortCode
+
+### FR-013a Published Contract Synchronization
+The published runtime OpenAPI definition shall include the UPDCUST update operation (`PUT /api/v1/customers/{customerNumber}`), request/response schemas, and documented error envelopes for 400/401/403/404/422/500.
+
+### FR-013b Authentication And Authorization
+UPDCUST update endpoint shall be protected by authentication and authorization controls aligned to repository security policy:
+- Unauthenticated request -> HTTP 401
+- Authenticated but unauthorized request -> HTTP 403
 
 ### FR-014 UI Placement For Update Action
 Update action shall be placed on Customer Inquiry success result as a primary action:
@@ -160,6 +177,9 @@ Feature shall use repository interfaces and local mock/H2-backed implementation 
 - BR-010: DOB update requires provided year component.
 - BR-011: First-character space is treated as blank for gate checks.
 - BR-012: Payloads that pass validation but trigger no update gates may still return success.
+- BR-013: On success, `updFailCode` is always explicitly blanked by service logic.
+- BR-014: `creditScoreReviewDate` is computed from numeric `yyyymmdd` semantics; raw binary-to-group copy behavior is prohibited.
+- BR-015: Status domain policy (`any non-blank` parity vs allow-list) requires SME sign-off before production hardening.
 
 ## 8. Validation Rules
 ### API-Level Structural Validation
@@ -218,6 +238,9 @@ Mandatory mapping constraints:
 - NFR-003 Observability: correlation ID and legacy fail code captured in logs and responses.
 - NFR-004 Backward Safety: existing inquiry/create feature behavior remains unchanged.
 - NFR-005 Frontend Resilience: error rendering must be defensive against malformed or unexpected backend error payloads.
+- NFR-006 Contract Publication: runtime OpenAPI and feature contract remain synchronized for all UPDCUST update behaviors.
+- NFR-007 Endpoint Security: update endpoint remains under active security matcher and role policy coverage.
+- NFR-008 Data Integrity: response date fields must use deterministic numeric-to-date mapping and must not copy binary storage bytes into grouped day/month/year contracts.
 
 ## 12. Acceptance Criteria
 - AC-001 Invalid title returns mapped failure with legacy fail code T.
@@ -236,8 +259,15 @@ Mandatory mapping constraints:
 - AC-012b Update failure paths do not crash the UI and do not produce blank pages.
 - AC-013 Customer number normalization (trim and zero-left-pad) matches legacy lookup behavior.
 - AC-014 Status updates accept any non-blank value in parity mode unless stricter mode is explicitly introduced later.
+- AC-015 Unauthenticated update requests return 401 and do not execute update logic.
+- AC-016 Unauthorized update requests return 403 and do not execute update logic.
+- AC-017 Runtime OpenAPI includes UPDCUST update endpoint and 400/401/403/404/422/500 response contracts.
+- AC-018 On every successful response, legacy fail code is blank regardless of prior request/internal state.
+- AC-019 `creditScoreReviewDate` is returned as a valid ISO date mapped from numeric `yyyymmdd`, not raw byte copy semantics.
+- AC-020 SME confirms status-domain policy for parity mode and records decision in feature artifacts.
 
 ## 13. Assumptions And Decisions
 - Sort code fallback is configuration-driven to preserve legacy SORTCODE behavior.
-- Strict legacy-parity mode does not add new DOB calendar checks beyond COBOL semantics.
+- Modernization safety profile enforces ISO date parse validity for DOB input and maps invalid dates to HTTP 400.
 - UI update flow enters from inquiry result to reduce accidental edits and preserve operational context.
+- Legacy COMMAREA behavior that depends on pre-cleared caller memory is not preserved where it harms API determinism.

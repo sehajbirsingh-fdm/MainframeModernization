@@ -49,9 +49,10 @@
 | COMM-STATUS | customerStatus | trim |
 | COMM-CREATED-DATE | createdDate | to ISO yyyy-MM-dd |
 | COMM-CREDIT-SCORE | creditScore | numeric |
-| COMM-CS-REVIEW-DATE | creditScoreReviewDate | to ISO yyyy-MM-dd |
+| CUSTOMER_CREDIT_SCORE_REVIEW_DATE (numeric) | creditScoreReviewDate | numeric yyyymmdd to ISO yyyy-MM-dd (computed decomposition) |
 | COMM-UPD-SUCCESS | legacyStatus.updSuccess | direct |
-| COMM-UPD-FAIL-CD | legacyStatus.updFailCode | direct |
+| service success status | legacyStatus.updFailCode | explicit blank on success |
+| legacy failure code mapping | legacyStatus.updFailCode | mapped fail code for failure responses |
 
 ## 4. Copybook Authorities
 - UPDCUST.cpy: request/response COMMAREA structure
@@ -59,3 +60,6 @@
 - CUSTDB2.cpy: DB2 table column constraints
 - SORTCODE.cpy: fallback sort code behavior
 - ABNDINFO.cpy: abend/reporting context (non-contract)
+
+## 5. Known Legacy Defect Handling
+- UPDCUST.cbl raw MOVE of host `HV-CUSTOMER-CS-REVIEW-DATE` to grouped `COMM-CS-REVIEW-DATE` is treated as a legacy defect and not carried into modernization response mapping.

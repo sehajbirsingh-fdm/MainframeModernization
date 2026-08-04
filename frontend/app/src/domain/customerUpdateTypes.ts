@@ -56,7 +56,7 @@ export type UpdateCustomerResult =
     }
   | {
       type: 'backend-error'
-      status: 400 | 404 | 422 | 500
+      status: 400 | 401 | 403 | 404 | 422 | 500
       error: UpdateCustomerErrorEnvelope
       correlationId: string
     }

@@ -80,6 +80,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InfrastructureErrorResponse'
+  /api/v1/customers/{customerNumber}:
+    put:
+      summary: Update customer details (UPDCUST parity)
+      operationId: updateCustomer
+      parameters:
+        - name: customerNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{1,10}$'
+            example: '1'
+        - name: sortCode
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: '^[0-9]{6}$'
+            example: '123456'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerRequest'
+      responses:
+        '200':
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCustomerResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCustomerErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCustomerErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCustomerErrorResponse'
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCustomerErrorResponse'
+        '422':
+          description: Legacy business-rule failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCustomerErrorResponse'
+        '500':
+          description: Internal update/read failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCustomerErrorResponse'
 components:
   schemas:
     CustomerInquiryResponse:
@@ -326,3 +394,110 @@ components:
         message:
           type: string
           enum: [Service unavailable due to infrastructure failure]
+    UpdateCustomerRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 10
+        firstName:
+          type: string
+          maxLength: 50
+        lastName:
+          type: string
+          maxLength: 50
+        dateOfBirth:
+          type: string
+          pattern: '^$|^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+        phoneNumber:
+          type: string
+          maxLength: 20
+        address:
+          $ref: '#/components/schemas/UpdateCustomerAddress'
+        customerStatus:
+          type: string
+          maxLength: 10
+    UpdateCustomerAddress:
+      type: object
+      properties:
+        addressLine1:
+          type: string
+          maxLength: 50
+        addressLine2:
+          type: string
+          maxLength: 50
+        city:
+          type: string
+          maxLength: 50
+        postalCode:
+          type: string
+          maxLength: 10
+        country:
+          type: string
+          maxLength: 50
+    UpdateCustomerResponse:
+      type: object
+      required: [customerNumber, sortCode, legacyStatus]
+      properties:
+        customerNumber:
+          type: string
+          pattern: '^[0-9]{10}$'
+        sortCode:
+          type: string
+          pattern: '^[0-9]{6}$'
+        title:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+        phoneNumber:
+          type: string
+        address:
+          $ref: '#/components/schemas/UpdateCustomerAddress'
+        customerStatus:
+          type: string
+        createdDate:
+          type: string
+          format: date
+          nullable: true
+        creditScore:
+          type: integer
+          nullable: true
+        creditScoreReviewDate:
+          type: string
+          format: date
+          nullable: true
+        legacyStatus:
+          $ref: '#/components/schemas/LegacyUpdateStatus'
+    LegacyUpdateStatus:
+      type: object
+      required: [updSuccess, updFailCode]
+      properties:
+        updSuccess:
+          type: string
+          enum: [Y, N]
+        updFailCode:
+          type: string
+    UpdateCustomerErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, correlationId, timestamp]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            legacyFailCode:
+              type: string
+            correlationId:
+              type: string
+            timestamp:
+              type: string

@@ -54,17 +54,39 @@ class UpdateCustomerControllerTest {
                 .thenReturn(successResponse());
 
         mockMvc.perform(put("/api/v1/customers/1")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
                         .queryParam("sortCode", "123456")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.customerNumber").value("0000000001"))
-                .andExpect(jsonPath("$.legacyStatus.updSuccess").value("Y"));
+                .andExpect(jsonPath("$.legacyStatus.updSuccess").value("Y"))
+                .andExpect(jsonPath("$.legacyStatus.updFailCode").value(" "));
+    }
+
+    @Test
+    void missingTokenReturns401() throws Exception {
+        mockMvc.perform(put("/api/v1/customers/1")
+                        .queryParam("sortCode", "123456")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request())))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void insufficientRoleReturns403() throws Exception {
+        mockMvc.perform(put("/api/v1/customers/1")
+                        .header("Authorization", "Bearer valid-inqacc-limited-token")
+                        .queryParam("sortCode", "123456")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request())))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     void invalidPathVariableReturns400() throws Exception {
         mockMvc.perform(put("/api/v1/customers/ABC")
+                                                .header("Authorization", "Bearer valid-inqacc-inquirer-token")
                         .queryParam("sortCode", "123456")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request())))
@@ -78,6 +100,7 @@ class UpdateCustomerControllerTest {
                 .thenThrow(new UpdateCustomerException("Invalid title", "UPDCUST-422-TITLE", "T", HttpStatus.UNPROCESSABLE_ENTITY));
 
         mockMvc.perform(put("/api/v1/customers/1")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
                         .queryParam("sortCode", "123456")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request())))
@@ -92,6 +115,7 @@ class UpdateCustomerControllerTest {
                 .thenThrow(new UpdateCustomerException("Customer not found", "UPDCUST-404", "1", HttpStatus.NOT_FOUND));
 
         mockMvc.perform(put("/api/v1/customers/1")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
                         .queryParam("sortCode", "123456")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request())))
@@ -105,6 +129,7 @@ class UpdateCustomerControllerTest {
                 .thenThrow(new UpdateCustomerException("Update failed", "UPDCUST-500-UPDATE", "3", HttpStatus.INTERNAL_SERVER_ERROR));
 
         mockMvc.perform(put("/api/v1/customers/1")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
                         .queryParam("sortCode", "123456")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request())))

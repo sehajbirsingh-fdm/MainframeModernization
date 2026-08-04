@@ -162,6 +162,51 @@ class UpdateCustomerServiceTest {
         assertEquals("Y", response.legacyStatus().updSuccess());
     }
 
+        @Test
+        void successAlwaysReturnsBlankFailCode() {
+                CustomerRecord existing = sampleRecord();
+                when(customerRepository.findBySortCodeAndCustomerNumber("123456", "0000000001"))
+                                .thenReturn(Optional.of(existing));
+                when(updateCustomerRepository.update(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+                UpdateCustomerResponse response = service.updateCustomer("123456", "1", validRequest());
+
+                assertEquals("Y", response.legacyStatus().updSuccess());
+                assertEquals(" ", response.legacyStatus().updFailCode());
+        }
+
+        @Test
+        void mapsCreditScoreReviewDateFromNumericYyyyMmDdToIsoDate() {
+                CustomerRecord existing = sampleRecord();
+                CustomerRecord withKnownReviewDate = new CustomerRecord(
+                                existing.eyecatcher(),
+                                existing.sortCode(),
+                                existing.customerNumber(),
+                                existing.title(),
+                                existing.firstName(),
+                                existing.lastName(),
+                                existing.dateOfBirth(),
+                                existing.phone(),
+                                existing.addressLine1(),
+                                existing.addressLine2(),
+                                existing.city(),
+                                existing.postcode(),
+                                existing.country(),
+                                existing.status(),
+                                existing.createdDate(),
+                                existing.creditScore(),
+                                20261231
+                );
+
+                when(customerRepository.findBySortCodeAndCustomerNumber("123456", "0000000001"))
+                                .thenReturn(Optional.of(existing));
+                when(updateCustomerRepository.update(any())).thenReturn(withKnownReviewDate);
+
+                UpdateCustomerResponse response = service.updateCustomer("123456", "1", validRequest());
+
+                assertEquals(LocalDate.of(2026, 12, 31), response.creditScoreReviewDate());
+        }
+
     private UpdateCustomerRequest validRequest() {
         return new UpdateCustomerRequest(
                 "Ms",

@@ -36,6 +36,8 @@ Phone is updated only when non-blank.
 Status is updated only when non-blank.
 No status allow-list validation is applied in strict parity mode.
 
+SME confirmation required before production hardening to affirm parity-mode acceptance of open-ended non-blank values.
+
 ## BR-011 DOB Gate
 DOB is updated only when year is provided (non-zero/non-blank).
 
@@ -43,6 +45,12 @@ DOB is updated only when year is provided (non-zero/non-blank).
 On success:
 - updSuccess = Y
 - updFailCode = blank
+
+Fail code is explicitly blanked by modernization service logic and does not rely on inherited caller state.
+
+## BR-014 Credit Score Review Date Integrity
+creditScoreReviewDate is mapped from numeric yyyymmdd semantics.
+Raw binary-to-group copy behavior from legacy UPDCUST is treated as a defect and is not preserved.
 
 ## BR-013 No-Op Success Parity
 Payload may pass BR-003 yet still produce no effective update if gate-driving fields are blank by first-character rule; this returns success in parity mode.
