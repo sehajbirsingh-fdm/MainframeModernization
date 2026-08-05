@@ -20,7 +20,7 @@ pipeline {
         stage('Place mock repo') {
             steps {
                 dir ('.') {
-                    sh 'cp -r testdata/mock-data app/src/api'
+                    sh 'cp -r testdata/mock-data/data.sql app/backend/api/src/main/resources/data.sql'
                 }
             }
         }
