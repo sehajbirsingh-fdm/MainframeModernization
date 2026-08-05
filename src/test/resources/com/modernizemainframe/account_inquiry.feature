@@ -171,7 +171,7 @@ Feature: Account Inquiry API
 		Then the account inquiry response status code is 500
 		And the error response has standardized fields
 
-	@BR005 @P2 @Conditional
+	@BR005 @P2 @Blocked
 	Scenario: 503 service unavailable has proper error payload
 		# Covers: TC-ACC01-038
 		Given optional precondition "enable.account.503.tests" is enabled
