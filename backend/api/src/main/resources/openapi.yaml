@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: INQCUST Customer Inquiry API
+  title: Bank of Z Modernization API
   version: 1.0.0
-  description: Spring Boot API that modernizes the INQCUST customer inquiry capability using mocked data.
+  description: Spring Boot API that modernizes approved Bank of Z legacy inquiry and onboarding capabilities using local mocked data.
 paths:
   /api/v1/customers/{sortCode}/{customerNumber}:
     get:
