@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { CustomerInquiryPage } from './CustomerInquiryPage'
 
 function renderPage() {
@@ -95,6 +95,73 @@ describe('CustomerInquiryPage', () => {
     expect((await screen.findAllByText('Inquiry successful')).length).toBeGreaterThan(0)
     expect(screen.getByText('Inquiry Success')).toBeInTheDocument()
     expect(screen.getByText('Risk Assessment')).toBeInTheDocument()
+    const updateLink = screen.getByRole('link', { name: 'Update Customer' })
+    expect(updateLink).toBeInTheDocument()
+    expect(updateLink).toHaveAttribute('href', '/customers/123456/0000000001/edit')
+  })
+
+  it('hydrates inquiry result from redirect state after update', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+
+    const queryClient = new QueryClient()
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter
+          initialEntries={[
+            {
+              pathname: '/customers',
+              state: {
+                flashMessage: 'Customer updated successfully.',
+                prefill: {
+                  sortCode: '123456',
+                  customerNumber: '0000000001',
+                },
+                inquiryResult: {
+                  legacyStatus: {
+                    inquirySuccess: 'Y',
+                    inquiryFailCode: ' ',
+                    message: 'Customer updated successfully.',
+                  },
+                  lookupMode: 'SPECIFIC',
+                  customer: {
+                    eyecatcher: 'CUST',
+                    sortCode: '123456',
+                    customerNumber: '0000000001',
+                    title: 'Ms',
+                    firstName: 'Jane',
+                    lastName: 'Doe',
+                    dateOfBirth: '1990-01-01',
+                    phone: '4165550111',
+                    address: {
+                      line1: '10 Bay Street',
+                      line2: 'Suite 200',
+                      city: 'Toronto',
+                      postcode: 'M5J2N8',
+                      country: 'Canada',
+                    },
+                    status: 'SUSPENDED',
+                    createdDate: '2010-06-15',
+                    creditScore: 742,
+                    creditScoreReviewDate: '2026-01-15',
+                  },
+                  riskAssessment: null,
+                },
+              },
+            },
+          ]}
+        >
+          <Routes>
+            <Route path="/customers" element={<CustomerInquiryPage />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    expect((await screen.findAllByText('Customer updated successfully.')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Ms Jane Doe')).toBeInTheDocument()
+    expect(screen.getByLabelText('Sort Code')).toHaveValue('123456')
+    expect(screen.getByLabelText('Customer Number')).toHaveValue('0000000001')
+    expect(fetchSpy).not.toHaveBeenCalled()
   })
 
   it('renders backend error message, code, and status for 400', async () => {

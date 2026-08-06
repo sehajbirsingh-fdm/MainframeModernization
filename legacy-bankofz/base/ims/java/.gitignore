@@ -1,0 +1,2 @@
+# Ignore local Gradle cache files
+.gradle/
