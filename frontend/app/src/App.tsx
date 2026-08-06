@@ -4,6 +4,7 @@ import { CustomerInquiryPage } from './features/customerInquiry/CustomerInquiryP
 import { AccountInquiryPage } from './features/accountInquiry/AccountInquiryPage'
 import { CustomerCreatePage } from './features/customerCreate/CustomerCreatePage'
 import { CustomerAccountInquiryPage } from './features/customerAccountInquiry/CustomerAccountInquiryPage'
+import { TransactionInquiryPage } from './features/transactionInquiry/TransactionInquiryPage'
 import { CustomerUpdatePage } from './features/customerUpdate/CustomerUpdatePage'
 
 interface SiteLink {
@@ -59,6 +60,7 @@ const featureLinks: SiteLink[] = [
   { to: '/customers/create', label: 'Create Customer', code: 'CRECUST' },
   { to: '/accounts', label: 'Account Inquiry', code: 'INQACC' },
   { to: '/customer-accounts', label: 'Customer Accounts', code: 'INQACCCU' },
+  { to: '/transactions', label: 'Transaction Inquiry', code: 'INQTRAN' },
 ]
 
 const infoLinks: SiteLink[] = [
@@ -160,6 +162,14 @@ function LandingPage() {
               </NavLink>
             </div>
           </article>
+
+          <article className="home-tile">
+            <h4>INQTRAN</h4>
+            <p>Retrieve read-only transaction history with optional date boundaries and pagination controls.</p>
+            <NavLink to="/transactions" className="text-link">
+              Open Transaction Inquiry
+            </NavLink>
+          </article>
         </div>
       </section>
     </section>
@@ -220,6 +230,7 @@ function App() {
         <Route path="customers/create" element={<CustomerCreatePage />} />
         <Route path="accounts" element={<AccountInquiryPage />} />
         <Route path="customer-accounts" element={<CustomerAccountInquiryPage />} />
+        <Route path="transactions" element={<TransactionInquiryPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="license" element={<LicensePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: INQCUST Customer Inquiry API
+  title: Bank of Z Modernization API
   version: 1.0.0
-  description: Spring Boot API that modernizes the INQCUST customer inquiry capability using mocked data.
+  description: Spring Boot API that modernizes approved Bank of Z legacy inquiry and onboarding capabilities using local mocked data.
 paths:
   /api/v1/customers/{sortCode}/{customerNumber}:
     get:
@@ -80,6 +80,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InfrastructureErrorResponse'
+/api/v1/accounts/{sortCode}/{accountNumber}/transactions:
+    get:
+      summary: Retrieve an account transaction inquiry page
+      operationId: getAccountTransactions
+      parameters:
+        - name: sortCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{6}$'
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{8}$'
+        - name: fromDate
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: '^[0-9]{8}$'
+        - name: toDate
+          # ... (toDate query param continues, then limit, offset, then responses)
   /api/v1/customers/{customerNumber}:
     put:
       summary: Update customer details (UPDCUST parity)
@@ -93,10 +118,45 @@ paths:
             pattern: '^[0-9]{1,10}$'
             example: '1'
         - name: sortCode
+          # ... (sortCode query param continues, then requestBody, then responses)
           in: query
           required: false
           schema:
             type: string
+            pattern: '^[0-9]{8}$'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Successful inquiry page including empty success outcomes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqtranTransactionListResponse'
+        '400':
+          description: Request violates structural or boundary validation rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqtranErrorResponse'
+        '500':
+          description: Repository or retrieval technical failure with no partial success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqtranErrorResponse'
             pattern: '^[0-9]{6}$'
             example: '123456'
       requestBody:
@@ -394,6 +454,86 @@ components:
         message:
           type: string
           enum: [Service unavailable due to infrastructure failure]
+    InqtranTransactionListResponse:
+      type: object
+      required: [sortCode, accountNumber, limit, offset, totalCount, returnedCount, transactions]
+      properties:
+        sortCode:
+          type: string
+          pattern: '^[0-9]{6}$'
+        accountNumber:
+          type: string
+          pattern: '^[0-9]{8}$'
+        fromDate:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{8}$'
+        toDate:
+          type: string
+          nullable: true
+          pattern: '^[0-9]{8}$'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+        totalCount:
+          type: integer
+          minimum: 0
+        returnedCount:
+          type: integer
+          minimum: 0
+          maximum: 100
+        transactions:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/InqtranTransaction'
+    InqtranTransaction:
+      type: object
+      required: [transactionId, sortCode, accountNumber, date, time, reference, type, description, amount]
+      properties:
+        transactionId:
+          type: string
+          maxLength: 50
+        sortCode:
+          type: string
+          pattern: '^[0-9]{6}$'
+        accountNumber:
+          type: string
+          pattern: '^[0-9]{8}$'
+        date:
+          type: string
+          pattern: '^[0-9]{8}$'
+        time:
+          type: string
+          pattern: '^[0-9]{6}$'
+        reference:
+          type: string
+          maxLength: 12
+        type:
+          type: string
+          maxLength: 3
+        description:
+          type: string
+          maxLength: 40
+        amount:
+          type: number
+          format: double
+          multipleOf: 0.01
+    InqtranErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        correlationId:
+          type: string
+          nullable: true
     UpdateCustomerRequest:
       type: object
       properties:

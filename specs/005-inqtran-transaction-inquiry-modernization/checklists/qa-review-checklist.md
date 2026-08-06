@@ -1,0 +1,191 @@
+# QA Review Checklist
+
+## 1. QA Readiness and Artifact Alignment
+
+- [ ] supporting/requirements.md, spec.md, plan.md, contracts/openapi.yaml, supporting/test-spec.md, tasks.md, and supporting/traceability-matrix.md are mutually consistent for Feature 005 scope. (Cross-check artifacts)
+- [ ] QA execution uses the current finalized identifiers consistently across Feature 005 artifacts (AC, BR, FR, NFR, SR, OR, TC, and task identifiers where applicable). (Verify ID references)
+- [ ] Planned traceability entries are not treated as executed QA evidence. (Review evidence attachments)
+- [ ] Test data, fixtures, and environments are ready for backend, frontend, integration, and E2E verification. (Verify environment readiness)
+- [ ] Implementation behavior does not exceed approved Feature 005 scope before QA execution begins. (Compare with supporting/requirements.md and spec.md)
+- [ ] No unresolved contradiction blocks QA execution. (Review open defects and risks)
+
+## 2. Functional Inquiry Behavior
+
+- [ ] Exact sort code and account number filtering is verified. (Run repository integration tests)
+- [ ] Leading-zero identifiers remain valid and preserved across request/response flow. (Inspect test assertions)
+- [ ] Only matching transactions are returned for the requested identity. (Verify filtered results)
+- [ ] Successful populated inquiry behavior is verified. (Run API and frontend scenario)
+- [ ] Empty no-match behavior returns HTTP 200 with empty transactions, not 404. (Compare response status and payload)
+- [ ] Read-only behavior is verified for inquiry execution. (Review repository behavior tests)
+- [ ] INQTRAND detail behavior is not exposed in Feature 005 runtime flows. (Inspect routes and endpoints)
+
+## 3. Date Boundary and Modernization Behavior
+
+- [ ] Inclusive supplied fromDate behavior is verified. (Run boundary scenario)
+- [ ] Inclusive supplied toDate behavior is verified. (Run boundary scenario)
+- [ ] Only fromDate supplied behavior is verified as approved modern contract behavior. (Compare with supporting/test-spec.md)
+- [ ] Only toDate supplied behavior is verified as approved modern contract behavior. (Compare with supporting/test-spec.md)
+- [ ] Both dates omitted behavior is verified as approved modern contract behavior. (Compare with contracts/openapi.yaml)
+- [ ] Equal supplied date boundaries are verified where approved by current contract and tests. (Run boundary-equality scenario)
+- [ ] Omitted-date behavior is reviewed as modernization behavior, not asserted as deployed legacy runtime equivalence. (Review evidence notes)
+- [ ] QA does not claim omitted dates became unconstrained deployed legacy SQL predicates. (Review QA conclusions)
+- [ ] QA does not claim omitted dates always caused a specific SQLCODE. (Review QA conclusions)
+- [ ] QA does not claim modern omitted-date tests prove deployed DB2 legacy equivalence. (Review QA conclusions)
+
+## 4. Validation and Input Boundaries
+
+- [ ] sortCode too short returns approved validation outcome. (Run API validation tests)
+- [ ] sortCode too long returns approved validation outcome. (Run API validation tests)
+- [ ] sortCode with nondigits returns approved validation outcome. (Run API validation tests)
+- [ ] accountNumber too short returns approved validation outcome. (Run API validation tests)
+- [ ] accountNumber too long returns approved validation outcome. (Run API validation tests)
+- [ ] accountNumber with nondigits returns approved validation outcome. (Run API validation tests)
+- [ ] Valid leading-zero identifiers are accepted. (Run positive validation case)
+- [ ] Invalid date formats return approved validation outcome. (Run API validation tests)
+- [ ] Negative limit returns approved validation outcome. (Run API validation tests)
+- [ ] Negative offset returns approved validation outcome. (Run API validation tests)
+- [ ] Nonnumeric pagination values return approved validation outcome. (Run API validation tests)
+- [ ] limit=0 normalization is verified. (Run normalization test)
+- [ ] limit above maximum normalization/clamping is verified. (Run normalization test)
+- [ ] Conditional validations are asserted only when finalized by current contract/test basis. (Compare with supporting/test-spec.md conditional cases)
+- [ ] No unsupported account-existence validation is introduced. (Inspect controller/service behavior)
+
+## 5. Pagination, Ordering, and Count Semantics
+
+- [ ] Omitted limit behavior is verified. (Run pagination tests)
+- [ ] Zero limit behavior is verified. (Run pagination tests)
+- [ ] Default limit behavior is verified. (Run pagination tests)
+- [ ] Maximum limit behavior is verified. (Run pagination tests)
+- [ ] Above-maximum clamping behavior is verified. (Run pagination tests)
+- [ ] offset=0 behavior is verified. (Run pagination tests)
+- [ ] Offset within results behavior is verified. (Run pagination tests)
+- [ ] Offset exactly equal to total behavior is verified. (Run pagination tests)
+- [ ] Offset beyond total behavior is verified. (Run pagination tests)
+- [ ] Final partial page behavior is verified. (Run pagination tests)
+- [ ] Descending date order is verified. (Inspect ordered results)
+- [ ] Descending time order within date is verified. (Inspect ordered results)
+- [ ] No relative-order assertion is made for rows tied on both date and time. (Review tied-row assertions)
+- [ ] Ordering is verified before offset and limit semantics. (Inspect test design)
+- [ ] totalCount reflects the filtered pre-pagination population. (Verify metadata assertions)
+- [ ] returnedCount equals actual returned rows. (Verify metadata assertions)
+- [ ] Count/list filter parity is verified. (Run parity checks)
+- [ ] No tertiary ordering key is introduced or asserted. (Review ORDER BY and tests)
+
+## 6. Mapping and Data Integrity
+
+- [ ] Composite transaction ID format is verified. (Run mapping tests)
+- [ ] sortCode mapping is verified. (Run mapping tests)
+- [ ] accountNumber mapping is verified. (Run mapping tests)
+- [ ] date mapping is verified. (Run mapping tests)
+- [ ] time mapping is verified. (Run mapping tests)
+- [ ] reference mapping is verified. (Run mapping tests)
+- [ ] type mapping is verified. (Run mapping tests)
+- [ ] description mapping is verified. (Run mapping tests)
+- [ ] amount mapping is verified. (Run mapping tests)
+- [ ] Positive amount handling is verified. (Run mapping tests)
+- [ ] Negative amount handling is verified. (Run mapping tests)
+- [ ] Decimal precision and scale handling is verified. (Run mapping tests)
+- [ ] Leading-zero preservation is verified in mapped fields. (Inspect assertions)
+- [ ] No undocumented fields are present in API response payloads. (Compare with contracts/openapi.yaml)
+- [ ] Only approved padding/trimming behavior is asserted. (Compare with supporting/mapping-matrix.md)
+- [ ] Null-handling behavior is not invented beyond approved upstream evidence. (Review mapping assertions)
+
+## 7. API and OpenAPI Verification
+
+- [ ] HTTP method and path are verified against contracts/openapi.yaml. (Compare with OpenAPI)
+- [ ] Path parameter behavior is verified. (Run API tests)
+- [ ] Query parameter behavior is verified. (Run API tests)
+- [ ] Optionality handling is verified. (Run API tests)
+- [ ] Defaults and bounds are verified. (Run API tests)
+- [ ] HTTP 200 populated behavior is verified. (Run API tests)
+- [ ] HTTP 200 empty behavior is verified. (Run API tests)
+- [ ] HTTP 400 behavior is verified. (Run API tests)
+- [ ] HTTP 500 behavior is verified. (Run API tests)
+- [ ] No HTTP 404 is returned for empty transactions. (Run API tests)
+- [ ] Success schema matches the approved contract. (Compare response with OpenAPI schema)
+- [ ] Error schema matches the approved contract. (Compare response with OpenAPI schema)
+- [ ] Runtime OpenAPI reconciliation is verified. (Compare feature and runtime OpenAPI)
+- [ ] Feature contract and runtime publication are consistent. (Cross-check OpenAPI files)
+
+## 8. Frontend Behavior
+
+- [ ] Route and navigation integration is verified in existing frontend structure. (Inspect frontend route)
+- [ ] Form inputs for inquiry controls are verified. (Inspect browser state)
+- [ ] Leading-zero input preservation is verified. (Inspect request payload/path)
+- [ ] Request path construction is verified. (Inspect API calls)
+- [ ] Supplied query parameter inclusion is verified. (Inspect API calls)
+- [ ] Unsupplied optional date omission is verified. (Inspect API calls)
+- [ ] Loading state is verified. (Inspect browser state)
+- [ ] Populated result state is verified. (Inspect browser state)
+- [ ] Empty-success state is verified. (Inspect browser state)
+- [ ] Validation-feedback state is verified. (Inspect browser state)
+- [ ] Technical-error state is verified. (Inspect browser state)
+- [ ] Safe error messaging is verified. (Inspect browser state)
+- [ ] Metadata rendering is verified. (Inspect browser state)
+- [ ] Transaction row rendering is verified. (Inspect browser state)
+- [ ] Pagination controls behavior is verified. (Inspect browser state)
+- [ ] Subsequent inquiry replaces prior completed result state. (Inspect browser state)
+- [ ] Existing shell, shared navigation, and unrelated routes remain functional. (Run frontend regression suite)
+
+## 9. Failure, Security, and Error Exposure
+
+- [ ] Count-stage failure returns HTTP 500. (Run failure scenario)
+- [ ] Row-stage failure returns HTTP 500. (Run failure scenario)
+- [ ] No partial successful page is returned on technical failure. (Inspect response payload)
+- [ ] Frontend does not display partial data as success on technical failure. (Inspect browser state)
+- [ ] API errors do not expose SQL internals. (Inspect error payload)
+- [ ] API errors do not expose stack traces. (Inspect error payload)
+- [ ] Frontend errors do not expose internal implementation details. (Inspect browser state)
+- [ ] Parameterized query behavior is verified for SQL-safety requirements. (Inspect repository query usage)
+- [ ] Existing route-security behavior is preserved. (Inspect security behavior)
+- [ ] No new feature-specific authorization behavior is introduced. (Review security flow)
+- [ ] Logging avoids full transaction payloads at normal levels. (Review logs)
+- [ ] Logging avoids unnecessary complete account identifiers where policy disallows. (Review logs)
+- [ ] Empty success and technical failure are distinguishable in logs. (Review logs)
+- [ ] Correlation/request identification is preserved where supported. (Review logs)
+
+## 10. Regression Verification
+
+- [ ] INQCUST regression behavior is verified with recorded suite evidence. (Run regression suite)
+- [ ] INQACC regression behavior is verified with recorded suite evidence. (Run regression suite)
+- [ ] INQACCCU regression behavior is verified with recorded suite evidence. (Run regression suite)
+- [ ] CRECUST regression behavior is verified with recorded suite evidence. (Run regression suite)
+- [ ] Shared backend initialization behavior remains stable. (Run startup and regression checks)
+- [ ] Shared H2 schema/data behavior remains stable. (Run integration and startup checks)
+- [ ] Shared frontend shell behavior remains stable. (Run frontend regression suite)
+- [ ] Route/navigation behavior remains stable. (Run frontend regression suite)
+- [ ] Existing OpenAPI operations remain stable. (Run contract/regression checks)
+- [ ] Applicable security behavior remains stable. (Run security regression checks)
+- [ ] Regression scope matches the approved impact analysis and no required shared feature or component was omitted from regression execution. (Review regression scope)
+- [ ] Regression is not marked passed without executed evidence. (Review attached outputs)
+
+## 11. Configuration, Documentation, and Demo Readiness
+
+- [ ] H2 initialization succeeds in QA environment. (Follow quickstart from a clean start)
+- [ ] Backend starts using documented commands. (Run documented commands)
+- [ ] Frontend starts using documented commands. (Run documented commands)
+- [ ] Runtime OpenAPI includes Feature 005 operation and schema updates. (Compare runtime OpenAPI)
+- [ ] No mock JSON persistence path exists for Feature 005 runtime. (Inspect persistence wiring)
+- [ ] No live DB2/CICS/mainframe dependency is required for POC execution. (Inspect runtime configuration)
+- [ ] Quickstart steps are accurate and reproducible. (Follow quickstart from a clean start)
+- [ ] README or usage documentation is current for Feature 005 usage. (Review docs)
+- [ ] Test commands are reproducible in current repository workflow. (Run documented test commands)
+- [ ] Proof-of-concept limitations are explicitly documented. (Review docs)
+- [ ] Demo scenarios for populated, empty, omitted dates, pagination, validation, and technical failure are reproducible. (Run demo flow)
+- [ ] Demo behavior matches the approved Feature 005 specification and does not rely on undocumented setup or manual intervention. (Execute documented demo workflow)
+- [ ] No second backend or frontend application was introduced. (Review repository structure)
+- [ ] No unrelated frontend redesign was introduced. (Inspect frontend scope)
+- [ ] No arbitrary coverage or performance target is treated as a QA gate for Feature 005 approval. (Review QA gate criteria)
+
+## 12. QA Evidence and Review Outcome
+
+- [ ] Automated test evidence attached or referenced. (Attach test outputs)
+- [ ] Manual/integrated QA evidence attached or referenced. (Attach QA notes)
+- [ ] Regression evidence attached or referenced. (Attach regression outputs)
+- [ ] OpenAPI conformance evidence attached or referenced. (Attach contract verification output)
+- [ ] Defects are recorded with severity and reproduction steps. (Review defect log)
+- [ ] QA findings have been communicated to the implementation owners where corrective action is required. (Review QA report)
+- [ ] No blocking defects remain. (Review defect status)
+- [ ] QA passed for approved Feature 005 scope. (Confirm scope-limited QA decision)
+- [ ] Ready for code review completion and merge. (Confirm gate handoff)
+- [ ] Ready for demo handoff. (Confirm demo evidence package)
