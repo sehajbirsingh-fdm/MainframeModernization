@@ -5,7 +5,7 @@ bin/
 !src/**/build/
 src/gen/
 src/main/webapp/
-
+data
 # Ignore Gradle GUI config
 gradle-app.setting
 
