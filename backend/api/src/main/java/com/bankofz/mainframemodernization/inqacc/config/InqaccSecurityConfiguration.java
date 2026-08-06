@@ -16,6 +16,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class InqaccSecurityConfiguration {
 
+        private static final String ACCOUNT_INQUIRER = "ACCOUNT_INQUIRER";
+
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -25,6 +27,8 @@ public class InqaccSecurityConfiguration {
     ) throws Exception {
         http
                 .securityMatcher("/v1/accounts/**", "/api/v1/accounts/**", "/v1/customers/**")
+                // Safe to disable CSRF because this API is stateless and authenticates each request
+                // with Bearer tokens in the Authorization header, not browser cookies/sessions.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
@@ -32,9 +36,9 @@ public class InqaccSecurityConfiguration {
                         .accessDeniedHandler(accessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/v1/accounts/**").hasRole("ACCOUNT_INQUIRER")
-                        .requestMatchers(HttpMethod.GET, "/api/v1/accounts/**").hasRole("ACCOUNT_INQUIRER")
-                        .requestMatchers(HttpMethod.POST, "/v1/customers/**").hasRole("ACCOUNT_INQUIRER")
+                        .requestMatchers(HttpMethod.GET, "/v1/accounts/**").hasRole(ACCOUNT_INQUIRER)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/accounts/**").hasRole(ACCOUNT_INQUIRER)
+                        .requestMatchers(HttpMethod.POST, "/v1/customers/**").hasRole(ACCOUNT_INQUIRER)
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(bearerTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
