@@ -5,7 +5,6 @@ bin/
 !src/**/build/
 src/gen/
 src/main/webapp/
-
 # Ignore Gradle GUI config
 gradle-app.setting
 
@@ -26,3 +25,6 @@ gradle-app.setting
 
 # Ignore OpenAPI generator files
 .openapi-generator/*
+
+# Ignore local runtime data files
+data/
