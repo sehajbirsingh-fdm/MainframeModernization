@@ -51,8 +51,7 @@ pipeline {
                 ) {
                     sh """#!/bin/bash
                         export JENKINS_NODE_COOKIE=dontKillMe
-                        cd app
-                        nohup mvn -f src/api/pom.xml spring-boot:run > app.log 2>&1 &
+                        nohup mvn -f ${API_POM} spring-boot:run > app.log 2>&1 &
                         echo \$! > app.log
                         echo "Waiting for app to become ready on port ${APP_PORT}..."
                         for i in \$(seq 1 30); do
