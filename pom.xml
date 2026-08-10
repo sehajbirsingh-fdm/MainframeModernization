@@ -78,6 +78,14 @@
             <artifactId>rest-assured</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/tools.jackson.core/jackson-databind -->
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>3.2.1</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
