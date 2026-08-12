@@ -114,7 +114,7 @@ class CustomerCreateControllerTest {
     }
 
     @Test
-    void dobYearBefore1601Returns400WithLegacyFailCode0() throws Exception {
+        void dobYearBefore1601Returns422WithLegacyFailCodeO() throws Exception {
         CreateCustomerRequest badDobRequest = new CreateCustomerRequest(
                 "Mr",
                 "John",
@@ -126,15 +126,19 @@ class CustomerCreateControllerTest {
                 "ACTIVE"
         );
 
+        when(customerCreateService.createCustomer(any())).thenThrow(
+                new CustomerCreateException("Date of birth year is out of range", "ERR-102", "O", HttpStatus.UNPROCESSABLE_ENTITY)
+        );
+
         mockMvc.perform(post("/v1/customers")
                         .header("Authorization", "Bearer valid-inqacc-inquirer-token")
                         .header("X-Correlation-ID", "corr-create-2c")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badDobRequest)))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnprocessableEntity())
                 .andExpect(header().string("X-Correlation-ID", "corr-create-2c"))
-                .andExpect(jsonPath("$.error.code").value("ERR-001"))
-                .andExpect(jsonPath("$.error.legacyFailCode").value("0"));
+                .andExpect(jsonPath("$.error.code").value("ERR-102"))
+                .andExpect(jsonPath("$.error.legacyFailCode").value("O"));
     }
 
     @Test

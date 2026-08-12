@@ -113,7 +113,7 @@ The system shall use `CustomerRepository` abstraction and mock data source only;
 Title must be one of the explicit allowed values; otherwise fail code `T`.
 
 ### BR-002 DOB Lower Bound Rule
-DOB year below 1601 is invalid; fail code `0`.
+DOB year below 1601 is invalid; fail code `O`.
 
 ### BR-003 DOB Parsing Rule
 Invalid calendar DOB fails with fail code `Z`.
@@ -122,7 +122,7 @@ Invalid calendar DOB fails with fail code `Z`.
 DOB in future fails with fail code `Y`.
 
 ### BR-005 DOB Max Age Rule
-Derived age above 150 fails with fail code `0`.
+Derived age above 150 fails with fail code `O`.
 
 ### BR-006 Credit Default Rule
 If credit-check returns no usable results, score becomes `0`; review date uses current-date fallback semantics.
@@ -196,7 +196,7 @@ Canonical error response structure:
 ## 12. Legacy Observable Behavior Preservation
 The modernization preserves these observable CRECUST behaviors:
 - Title whitelist logic and fail code `T`.
-- DOB validation window and fail codes `0`, `Z`, `Y`.
+- DOB validation window and fail codes `O`, `Z`, `Y`.
 - Sortcode-derived customer-number generation flow.
 - Credit-score average calculation when responses exist.
 - Zero-credit fallback on missing credit responses.

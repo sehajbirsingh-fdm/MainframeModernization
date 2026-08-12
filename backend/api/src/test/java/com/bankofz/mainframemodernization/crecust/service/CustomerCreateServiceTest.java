@@ -105,7 +105,7 @@ class CustomerCreateServiceTest {
     }
 
     @Test
-    void rejectsDobYearBelow1601WithLegacyFailCode0() {
+    void rejectsDobYearBelow1601WithLegacyFailCodeO() {
         CreateCustomerRequest request = new CreateCustomerRequest(
                 "Mr",
                 "John",
@@ -122,7 +122,7 @@ class CustomerCreateServiceTest {
 
         CustomerCreateException exception = assertThrows(CustomerCreateException.class, () -> service.createCustomer(request));
 
-        assertEquals("0", exception.legacyFailCode());
+        assertEquals("O", exception.legacyFailCode());
         assertEquals("ERR-102", exception.errorCode());
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, exception.httpStatus());
     }
@@ -151,7 +151,7 @@ class CustomerCreateServiceTest {
     }
 
     @Test
-    void rejectsOver150YearsDobWithLegacyFailCode0() {
+    void rejectsOver150YearsDobWithLegacyFailCodeO() {
         CreateCustomerRequest request = new CreateCustomerRequest(
                 "Mr",
                 "John",
@@ -168,7 +168,7 @@ class CustomerCreateServiceTest {
 
         CustomerCreateException exception = assertThrows(CustomerCreateException.class, () -> service.createCustomer(request));
 
-        assertEquals("0", exception.legacyFailCode());
+        assertEquals("O", exception.legacyFailCode());
         assertEquals("ERR-102", exception.errorCode());
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, exception.httpStatus());
     }

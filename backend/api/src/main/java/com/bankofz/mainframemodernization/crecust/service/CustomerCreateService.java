@@ -185,7 +185,7 @@ public class CustomerCreateService {
 
     private LocalDate validateDob(DateParts dob, LocalDate today) {
         if (dob.year() < 1601) {
-            throw new CustomerCreateException("Date of birth year is out of range", "ERR-102", "0", HttpStatus.UNPROCESSABLE_ENTITY);
+            throw new CustomerCreateException("Date of birth year is out of range", "ERR-102", "O", HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
         LocalDate value;
@@ -200,7 +200,7 @@ public class CustomerCreateService {
         }
 
         if (Period.between(value, today).getYears() > 150) {
-            throw new CustomerCreateException("Date of birth implies age greater than 150", "ERR-102", "0", HttpStatus.UNPROCESSABLE_ENTITY);
+            throw new CustomerCreateException("Date of birth implies age greater than 150", "ERR-102", "O", HttpStatus.UNPROCESSABLE_ENTITY);
         }
 
         return value;
