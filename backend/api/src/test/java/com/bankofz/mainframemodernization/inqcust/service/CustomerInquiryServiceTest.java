@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -205,6 +206,28 @@ class CustomerInquiryServiceTest {
     assertEquals("Y", response.legacyStatus().inquirySuccess());
     assertEquals("2147483648", response.customer().customerNumber());
     verify(randomCustomerNumberGenerator).nextCustomerNumber(3000000000L);
+    }
+
+    @Test
+    void randomLookupSkipsInvalidCustomerNumbersWhenFindingUpperBound() {
+    when(customerRepository.findLatestBySortCode("123456"))
+        .thenReturn(Optional.of(record("123456", "ABC", "INACTIVE", 720, 20260201)));
+    when(customerRepository.findBySortCode("123456"))
+        .thenReturn(List.of(
+            record("123456", "ABC", "INACTIVE", 720, 20260201),
+            record("123456", "0000000007", "ACTIVE", 680, 20260110),
+            record("123456", "0000000003", "ACTIVE", 650, 20250510)
+        ));
+    when(randomCustomerNumberGenerator.nextCustomerNumber(7L)).thenReturn("0000000003");
+    when(customerRepository.findBySortCodeAndCustomerNumber("123456", "0000000003"))
+        .thenReturn(Optional.of(record("123456", "0000000003", "ACTIVE", 650, 20250510)));
+
+    CustomerInquiryResponse response = service.inquire("123456", "0000000000");
+
+    assertEquals(LookupMode.RANDOM, response.lookupMode());
+    assertEquals("Y", response.legacyStatus().inquirySuccess());
+    assertEquals("0000000003", response.customer().customerNumber());
+    verify(randomCustomerNumberGenerator).nextCustomerNumber(7L);
     }
 
     private static CustomerRecord record(String sortCode, String number, String status, int score, int reviewDate) {

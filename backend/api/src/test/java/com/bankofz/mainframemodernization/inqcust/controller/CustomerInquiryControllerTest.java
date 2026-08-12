@@ -71,6 +71,20 @@ class CustomerInquiryControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
     }
 
+        @Test
+        void missingCustomerNumberReturnsHttp400() throws Exception {
+                mockMvc.perform(get("/api/v1/customers/123456").accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+        }
+
+        @Test
+        void missingSortCodeReturnsHttp400() throws Exception {
+                mockMvc.perform(get("/api/v1/customers//0000000001").accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+        }
+
     @Test
     void notFoundReturnsHttp404() throws Exception {
         when(customerInquiryService.inquire("123456", "0000009999"))

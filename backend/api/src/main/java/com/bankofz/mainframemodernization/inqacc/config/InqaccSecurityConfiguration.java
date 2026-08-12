@@ -38,6 +38,7 @@ public class InqaccSecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/v1/accounts/**").hasRole(ACCOUNT_INQUIRER)
                         .requestMatchers(HttpMethod.GET, "/api/v1/accounts/**").hasRole(ACCOUNT_INQUIRER)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/customers/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/customers/**").hasRole(ACCOUNT_INQUIRER)
                         .requestMatchers(HttpMethod.PUT, "/api/v1/customers/*").hasRole(ACCOUNT_INQUIRER)
                         .anyRequest().denyAll()

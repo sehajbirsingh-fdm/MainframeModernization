@@ -35,4 +35,9 @@ public class AccountInquiryController {
         LOGGER.info("event=inqacc_inquiry_success path=/v1/accounts/{sortcode}/{accountNumber} status=200 durationMs={}", elapsedMs);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping({"", "/", "/{sortcode}"})
+    public ResponseEntity<AccountResponse> getAccountWithMissingPathSegments() {
+        throw new IllegalArgumentException("sortcode and accountNumber are required path parameters");
+    }
 }

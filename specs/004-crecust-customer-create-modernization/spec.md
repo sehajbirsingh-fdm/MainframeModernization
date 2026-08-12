@@ -178,6 +178,8 @@ On successful create:
 - **500 Internal Server Error**: unexpected processing failure.
 - **503 Service Unavailable**: repository/control-state unavailable.
 
+For request-shape and payload parsing failures (for example malformed JSON or request-body validation failures), the API returns `legacyFailCode = "0"` in the standardized error envelope.
+
 Canonical error response structure:
 ```json
 {

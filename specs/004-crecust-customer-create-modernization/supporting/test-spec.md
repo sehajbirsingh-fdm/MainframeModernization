@@ -23,6 +23,7 @@
 ## 4. Controller Tests
 - `201` on success.
 - `400` on malformed payload.
+- `400` payload-validation paths return `legacyFailCode` value `0`.
 - `422` on semantic business-rule failures.
 - `503` on repository/control unavailability.
 - `500` on unhandled failures.

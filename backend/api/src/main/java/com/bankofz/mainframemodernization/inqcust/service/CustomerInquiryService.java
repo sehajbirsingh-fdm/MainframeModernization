@@ -10,6 +10,7 @@ import com.bankofz.mainframemodernization.inqcust.repository.CustomerRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -67,8 +68,8 @@ public class CustomerInquiryService {
     }
 
     private CustomerInquiryResponse randomLookup(String sortCode) {
-        Optional<CustomerRecord> latestCustomer = customerRepository.findLatestBySortCode(sortCode);
-        if (latestCustomer.isEmpty()) {
+        Optional<Long> highestCustomerNumber = resolveHighestCustomerNumber(sortCode);
+        if (highestCustomerNumber.isEmpty()) {
             return new CustomerInquiryResponse(
                     legacyStatusFactory.randomNotFound(),
                     LookupMode.RANDOM,
@@ -77,9 +78,8 @@ public class CustomerInquiryService {
             );
         }
 
-        long highestCustomerNumber = Long.parseLong(latestCustomer.get().customerNumber());
         for (int attempt = 0; attempt < randomRetryLimit; attempt++) {
-            String generatedCustomerNumber = randomCustomerNumberGenerator.nextCustomerNumber(highestCustomerNumber);
+            String generatedCustomerNumber = randomCustomerNumberGenerator.nextCustomerNumber(highestCustomerNumber.get());
             Optional<CustomerRecord> found = customerRepository.findBySortCodeAndCustomerNumber(sortCode, generatedCustomerNumber);
             if (found.isPresent()) {
                 return toSuccessResponse(LookupMode.RANDOM, found.get());
@@ -92,6 +92,40 @@ public class CustomerInquiryService {
                 null,
                 null
         );
+    }
+
+    private Optional<Long> resolveHighestCustomerNumber(String sortCode) {
+        Optional<CustomerRecord> latestCustomer = customerRepository.findLatestBySortCode(sortCode);
+        if (latestCustomer.isPresent()) {
+            Optional<Long> latestValue = parseCustomerNumber(latestCustomer.get().customerNumber());
+            if (latestValue.isPresent()) {
+                return latestValue;
+            }
+        }
+
+        List<CustomerRecord> customers = customerRepository.findBySortCode(sortCode);
+        return customers.stream()
+                .map(record -> parseCustomerNumber(record.customerNumber()))
+                .flatMap(Optional::stream)
+                .max(Long::compareTo);
+    }
+
+    private Optional<Long> parseCustomerNumber(String customerNumber) {
+        if (customerNumber == null) {
+            return Optional.empty();
+        }
+
+        String value = customerNumber.strip();
+        if (value.isEmpty()) {
+            return Optional.empty();
+        }
+
+        try {
+            long parsed = Long.parseLong(value);
+            return parsed > 0 ? Optional.of(parsed) : Optional.empty();
+        } catch (NumberFormatException exception) {
+            return Optional.empty();
+        }
     }
 
     private CustomerInquiryResponse buildResponse(

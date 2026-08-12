@@ -47,4 +47,9 @@ public class CustomerInquiryController {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
+
+    @GetMapping({"", "/", "/{sortCode}"})
+    public ResponseEntity<CustomerInquiryResponse> getCustomerInquiryWithMissingPathSegments() {
+        throw new IllegalArgumentException("sortCode and customerNumber are required path parameters");
+    }
 }

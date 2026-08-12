@@ -99,6 +99,45 @@ class CustomerCreateControllerTest {
     }
 
     @Test
+    void malformedJsonReturns400() throws Exception {
+        String malformed = "{\"title\":\"Mr\"";
+
+        mockMvc.perform(post("/v1/customers")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
+                        .header("X-Correlation-ID", "corr-create-2b")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(malformed))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-ID", "corr-create-2b"))
+                .andExpect(jsonPath("$.error.code").value("ERR-001"))
+                .andExpect(jsonPath("$.error.legacyFailCode").value("0"));
+    }
+
+    @Test
+    void dobYearBefore1601Returns400WithLegacyFailCode0() throws Exception {
+        CreateCustomerRequest badDobRequest = new CreateCustomerRequest(
+                "Mr",
+                "John",
+                "Smith",
+                new DateParts(1, 1, 1500),
+                new DateParts(22, 7, 2026),
+                "4165550101",
+                new com.bankofz.mainframemodernization.crecust.domain.CreateCustomerAddressRequest("1 Main", "", "Toronto", "M5H2N2", "Canada"),
+                "ACTIVE"
+        );
+
+        mockMvc.perform(post("/v1/customers")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token")
+                        .header("X-Correlation-ID", "corr-create-2c")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(badDobRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(header().string("X-Correlation-ID", "corr-create-2c"))
+                .andExpect(jsonPath("$.error.code").value("ERR-001"))
+                .andExpect(jsonPath("$.error.legacyFailCode").value("0"));
+    }
+
+    @Test
     void businessRuleFailureReturns422() throws Exception {
         when(customerCreateService.createCustomer(any())).thenThrow(
                 new CustomerCreateException("Invalid title", "ERR-101", "T", HttpStatus.UNPROCESSABLE_ENTITY)

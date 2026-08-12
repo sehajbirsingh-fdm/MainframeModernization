@@ -154,6 +154,22 @@ class AccountInquiryControllerTest {
                 .andExpect(jsonPath("$.error.code").value("ERR-006"));
     }
 
+        @Test
+        void shouldReturn400WhenAccountNumberPathSegmentIsMissing() throws Exception {
+                mockMvc.perform(get("/v1/accounts/543210")
+                                                .header("Authorization", "Bearer valid-inqacc-inquirer-token"))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error.code").value("ERR-001"));
+        }
+
+        @Test
+        void shouldReturn400WhenSortcodePathSegmentIsMissing() throws Exception {
+                mockMvc.perform(get("/v1/accounts//12345678")
+                                                .header("Authorization", "Bearer valid-inqacc-inquirer-token"))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error.code").value("ERR-001"));
+        }
+
     @Test
     void shouldPropagateCorrelationIdToErrorEnvelopeAndHeader() throws Exception {
         doThrow(new AccountNotFoundException("Account record not found"))

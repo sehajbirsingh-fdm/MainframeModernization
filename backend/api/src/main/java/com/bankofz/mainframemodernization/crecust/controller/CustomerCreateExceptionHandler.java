@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -30,7 +31,14 @@ public class CustomerCreateExceptionHandler {
     public ResponseEntity<CreateCustomerErrorResponse> handleValidationException(Exception exception) {
         String correlationId = correlationId();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(error("ERR-001", "Invalid request payload", " ", correlationId));
+                .body(error("ERR-001", "Invalid request payload", "0", correlationId));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<CreateCustomerErrorResponse> handleMalformedJson(HttpMessageNotReadableException exception) {
+        String correlationId = correlationId();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(error("ERR-001", "Invalid request payload", "0", correlationId));
     }
 
     @ExceptionHandler(Exception.class)
