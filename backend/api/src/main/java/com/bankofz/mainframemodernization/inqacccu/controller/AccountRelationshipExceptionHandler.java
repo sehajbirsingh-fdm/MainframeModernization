@@ -32,6 +32,16 @@ public class AccountRelationshipExceptionHandler {
             )));
     }
 
+            @ExceptionHandler(IllegalArgumentException.class)
+            public ResponseEntity<ApiError> handleMissingPathParameter(IllegalArgumentException exception) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError(new ApiError.ErrorPayload(
+                    "VALIDATION_ERROR",
+                    "Validation failed",
+                    List.of(new ValidationError("customerNumber", exception.getMessage()))
+                )));
+            }
+
     @ExceptionHandler(RepositoryUnavailableException.class)
     public ResponseEntity<ApiError> handleRepositoryUnavailable(RepositoryUnavailableException exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

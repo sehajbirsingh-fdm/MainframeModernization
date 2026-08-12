@@ -208,6 +208,7 @@ All business outcomes use this same business response structure: successful retr
 - HTTP 200 is returned for all business outcomes: successful retrieval with accounts, successful retrieval with zero accounts, customer-not-found, and retrieval failure outcomes represented through `legacyStatus`.
 - HTTP 400 is returned for request validation failures and uses the validation error response schema.
 - HTTP 500 is returned for infrastructure failures and uses the infrastructure error response schema.
+- Missing required request path components (for example omitted `customerNumber`) are treated as validation failures and return HTTP 400.
 
 ## Infrastructure error contract
 

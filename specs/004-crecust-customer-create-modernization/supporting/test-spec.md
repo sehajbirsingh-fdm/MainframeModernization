@@ -15,7 +15,7 @@
 ## 3. Service Integration Tests
 - Happy path create.
 - Fail code `T` path.
-- Fail code `O`/`Z`/`Y` DOB paths.
+- Fail code `0`/`Z`/`Y` DOB paths.
 - Fail code `4` control-state failure path.
 - Fail code `1` persistence failure path.
 - Representative credit fail-code paths (`A`..`H`).

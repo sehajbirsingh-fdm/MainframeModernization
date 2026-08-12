@@ -37,4 +37,9 @@ public class AccountRelationshipController {
     ) {
         return service.inquire(customerNumber);
     }
+
+    @GetMapping("/accounts")
+    public AccountRelationshipResponse inquireWithMissingCustomerNumber() {
+        throw new IllegalArgumentException("customerNumber is required path parameter");
+    }
 }

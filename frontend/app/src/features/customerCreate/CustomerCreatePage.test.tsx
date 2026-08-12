@@ -81,4 +81,49 @@ describe('CustomerCreatePage', () => {
     expect(screen.getByText('0000000006')).toBeInTheDocument()
     expect(screen.getByText('corr-create-1')).toBeInTheDocument()
   })
+
+  it('renders backend validation error details for create failures', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: {
+            code: 'ERR-001',
+            message: 'Invalid request payload',
+            legacyFailCode: '0',
+            correlationId: 'corr-create-err',
+            timestamp: '2026-08-12T00:00:00Z',
+          },
+        }),
+        {
+          status: 400,
+          headers: {
+            'content-type': 'application/json',
+            'X-Correlation-ID': 'corr-create-err',
+          },
+        },
+      ),
+    )
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.type(screen.getByLabelText('First Name'), 'John')
+    await user.type(screen.getByLabelText('Last Name'), 'Smith')
+    await user.type(screen.getByLabelText('DOB day'), '01')
+    await user.type(screen.getByLabelText('DOB month'), '01')
+    await user.type(screen.getByLabelText('DOB year'), '1990')
+    await user.type(screen.getByLabelText('Phone'), '4165550101')
+    await user.type(screen.getByLabelText('Address Line 1'), '1 Main')
+    await user.type(screen.getByLabelText('City'), 'Toronto')
+    await user.type(screen.getByLabelText('Postcode'), 'M5H2N2')
+    await user.type(screen.getByLabelText('Country'), 'Canada')
+
+    await user.click(screen.getByRole('button', { name: 'Create Customer' }))
+
+    expect(await screen.findByText('Invalid request payload')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Error Details' })).toBeInTheDocument()
+    expect(screen.getByText('ERR-001')).toBeInTheDocument()
+    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.getByText('corr-create-err')).toBeInTheDocument()
+  })
 })

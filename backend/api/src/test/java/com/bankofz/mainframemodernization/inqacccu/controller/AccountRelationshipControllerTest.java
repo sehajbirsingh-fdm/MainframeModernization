@@ -95,6 +95,15 @@ class AccountRelationshipControllerTest {
     }
 
         @Test
+        void shouldReturnBadRequestWhenCustomerNumberPathSegmentIsMissing() throws Exception {
+                mockMvc.perform(get("/api/v1/customers/accounts").accept(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error.type").value("VALIDATION_ERROR"))
+                                .andExpect(jsonPath("$.error.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.error.details[0].field").value("customerNumber"));
+        }
+
+        @Test
         void shouldReturnBusinessNotFoundPayloadForFailCode1() throws Exception {
                 when(service.inquire("0000000999")).thenReturn(businessFailureResponse("0000000999", "1", "N"));
 
