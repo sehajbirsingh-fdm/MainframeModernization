@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         REPO_URL    = 'https://github.com/Mayank1619/MainframeModernization.git'
-        APP_BRANCH  = 'feature-testing-jenkins'      // branch with the Spring Boot app
+        APP_BRANCH  = 'dev'      // branch with the Spring Boot app
         API_POM     = 'app/backend/api/pom.xml'
         APP_PORT    = '8080'
     }
