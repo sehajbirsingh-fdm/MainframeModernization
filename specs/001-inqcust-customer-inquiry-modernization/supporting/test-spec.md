@@ -28,6 +28,12 @@ Given `0000000000` triggers random command mode and random selector returns a cu
 ### TC-006 Random customer retry failure
 Given random selector never returns an existing customer within retry limit, when random lookup is requested, then response has inquirySuccess `N` and fail code `1`.
 
+### TC-006a Random lookup skips malformed candidate and continues
+Given random selector first returns a customer number for a malformed record and then a valid record, when random lookup is requested, then response returns the valid customer with inquirySuccess `Y` and no HTTP 400.
+
+### TC-006b Random lookup with only malformed candidates returns not found
+Given all random candidates hit malformed records until retry limit is reached, when random lookup is requested, then response has inquirySuccess `N` and fail code `1` (not HTTP 400).
+
 ### TC-007 Date conversion success
 Given legacy date integer `19750101`, when converted, then result is `1975-01-01`.
 
@@ -68,6 +74,9 @@ GET `/api/v1/customers/123456/9999999999` returns latest customer.
 
 ### CT-006 Random request returns HTTP 200 or 404 based on deterministic selector setup
 Test random behavior at service level to avoid flaky controller tests.
+
+### CT-006a Random route never returns HTTP 400 for malformed candidate data
+GET `/api/v1/customers/123456/0000000000` does not return 400 due to malformed candidate records; 400 remains reserved for invalid path parameters.
 
 ### CT-007 Suspended customer returns HIGH risk
 GET `/api/v1/customers/123456/0000000003` returns 200 and `riskAssessment.riskRating = HIGH` with reason `STATUS_SUSPENDED`.

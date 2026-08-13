@@ -80,9 +80,16 @@ public class CustomerInquiryService {
 
         for (int attempt = 0; attempt < randomRetryLimit; attempt++) {
             String generatedCustomerNumber = randomCustomerNumberGenerator.nextCustomerNumber(highestCustomerNumber.get());
-            Optional<CustomerRecord> found = customerRepository.findBySortCodeAndCustomerNumber(sortCode, generatedCustomerNumber);
-            if (found.isPresent()) {
-                return toSuccessResponse(LookupMode.RANDOM, found.get());
+            try {
+                Optional<CustomerRecord> found = customerRepository.findBySortCodeAndCustomerNumber(sortCode, generatedCustomerNumber);
+                if (found.isPresent()) {
+                    Optional<CustomerInquiryResponse> validResponse = toValidRandomResponse(found.get());
+                    if (validResponse.isPresent()) {
+                        return validResponse.get();
+                    }
+                }
+            } catch (IllegalArgumentException exception) {
+                // Random mode must skip malformed candidate records and continue retries.
             }
         }
 
@@ -148,5 +155,14 @@ public class CustomerInquiryService {
                 customerResponse,
                 riskAssessmentService.assess(customerResponse)
         );
+    }
+
+    private Optional<CustomerInquiryResponse> toValidRandomResponse(CustomerRecord customerRecord) {
+        try {
+            return Optional.of(toSuccessResponse(LookupMode.RANDOM, customerRecord));
+        } catch (RuntimeException exception) {
+            // Random mode must ignore malformed records and keep searching.
+            return Optional.empty();
+        }
     }
 }

@@ -64,6 +64,7 @@ And risk reasons explain the rule that triggered the result.
 - **FR-003**: The system SHALL validate `customerNumber` as exactly ten digits using `^[0-9]{10}$`.
 - **FR-004**: The system SHALL perform a specific lookup when `customerNumber` is neither `0000000000` nor `9999999999`.
 - **FR-005**: The system SHALL perform a random customer lookup when `customerNumber` is `0000000000`.
+- **FR-005a**: During random lookup retries, the system SHALL treat malformed candidate records as non-match candidates and continue retrying until a valid record is found or retry limit is reached.
 - **FR-006**: The system SHALL perform a latest customer lookup when `customerNumber` is `9999999999`.
 - **FR-007**: The system SHALL return legacy inquiry status values in every successful or not-found customer inquiry response.
 - **FR-008**: The system SHALL map customer fields according to the supporting mapping matrix.
@@ -85,6 +86,7 @@ And risk reasons explain the rule that triggered the result.
 - **BR-005**: Latest customer not found returns `inquirySuccess = N` and `inquiryFailCode = 9`.
 - **BR-006**: Random customer not found after retry limit returns `inquirySuccess = N` and `inquiryFailCode = 1`.
 - **BR-007**: Random retry limit defaults to 1000 and must be configurable.
+- **BR-007a**: Random lookup SHALL not return HTTP 400 for malformed data in candidate records; only request-shape validation failures can return HTTP 400.
 - **BR-008**: Risk rating is `HIGH` when status is `SUSPENDED` or credit score is below 600.
 - **BR-009**: Risk rating is `MEDIUM` when score is between 600 and 699 inclusive and no HIGH rule applies.
 - **BR-010**: Risk rating is `LOW` when status is `ACTIVE`, score is at least 700, and review date is not stale.

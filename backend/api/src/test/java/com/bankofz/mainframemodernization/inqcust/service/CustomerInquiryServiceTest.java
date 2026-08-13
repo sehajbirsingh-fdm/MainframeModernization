@@ -20,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -228,6 +229,80 @@ class CustomerInquiryServiceTest {
     assertEquals("Y", response.legacyStatus().inquirySuccess());
     assertEquals("0000000003", response.customer().customerNumber());
     verify(randomCustomerNumberGenerator).nextCustomerNumber(7L);
+    }
+
+    @Test
+    void randomLookupSkipsMalformedRecordAndReturnsValidRecord() {
+    when(customerRepository.findLatestBySortCode("123456"))
+        .thenReturn(Optional.of(record("123456", "0000000002", "ACTIVE", 700, 20260110)));
+    when(randomCustomerNumberGenerator.nextCustomerNumber(2L))
+        .thenReturn("0000000001", "0000000002");
+    when(customerRepository.findBySortCodeAndCustomerNumber("123456", "0000000001"))
+        .thenReturn(Optional.of(record("123456", "0000000001", "ACTIVE", 650, 20251340)));
+    when(customerRepository.findBySortCodeAndCustomerNumber("123456", "0000000002"))
+        .thenReturn(Optional.of(record("123456", "0000000002", "ACTIVE", 700, 20260110)));
+
+    CustomerInquiryResponse response = service.inquire("123456", "0000000000");
+
+    assertEquals(LookupMode.RANDOM, response.lookupMode());
+    assertEquals("Y", response.legacyStatus().inquirySuccess());
+    assertEquals("0000000002", response.customer().customerNumber());
+    verify(randomCustomerNumberGenerator, times(2)).nextCustomerNumber(2L);
+    }
+
+    @Test
+    void randomLookupReturnsNotFoundWhenOnlyMalformedRecordsAreHitWithinRetryLimit() {
+    when(customerRepository.findLatestBySortCode("123456"))
+        .thenReturn(Optional.of(record("123456", "0000000001", "ACTIVE", 650, 20260110)));
+    when(randomCustomerNumberGenerator.nextCustomerNumber(1L))
+        .thenReturn("0000000001", "0000000001", "0000000001");
+    when(customerRepository.findBySortCodeAndCustomerNumber("123456", "0000000001"))
+        .thenReturn(Optional.of(record("123456", "0000000001", "ACTIVE", 650, 20251340)));
+
+    CustomerInquiryResponse response = assertDoesNotThrow(() -> service.inquire("123456", "0000000000"));
+
+    assertEquals(LookupMode.RANDOM, response.lookupMode());
+    assertEquals("N", response.legacyStatus().inquirySuccess());
+    assertEquals("1", response.legacyStatus().inquiryFailCode());
+    assertNull(response.customer());
+    verify(randomCustomerNumberGenerator, times(3)).nextCustomerNumber(1L);
+    }
+
+    @Test
+    void randomLookupSkipsRepositoryMalformedCandidateExceptionAndReturnsValidRecord() {
+    when(customerRepository.findLatestBySortCode("123456"))
+        .thenReturn(Optional.of(record("123456", "0000000002", "ACTIVE", 700, 20260110)));
+    when(randomCustomerNumberGenerator.nextCustomerNumber(2L))
+        .thenReturn("0000000001", "0000000002");
+    when(customerRepository.findBySortCodeAndCustomerNumber("123456", "0000000001"))
+        .thenThrow(new IllegalArgumentException("malformed candidate"));
+    when(customerRepository.findBySortCodeAndCustomerNumber("123456", "0000000002"))
+        .thenReturn(Optional.of(record("123456", "0000000002", "ACTIVE", 700, 20260110)));
+
+    CustomerInquiryResponse response = assertDoesNotThrow(() -> service.inquire("123456", "0000000000"));
+
+    assertEquals(LookupMode.RANDOM, response.lookupMode());
+    assertEquals("Y", response.legacyStatus().inquirySuccess());
+    assertEquals("0000000002", response.customer().customerNumber());
+    verify(randomCustomerNumberGenerator, times(2)).nextCustomerNumber(2L);
+    }
+
+    @Test
+    void randomLookupReturnsNotFoundWhenRepositoryThrowsMalformedCandidateExceptionAcrossRetries() {
+    when(customerRepository.findLatestBySortCode("123456"))
+        .thenReturn(Optional.of(record("123456", "0000000001", "ACTIVE", 650, 20260110)));
+    when(randomCustomerNumberGenerator.nextCustomerNumber(1L))
+        .thenReturn("0000000001", "0000000001", "0000000001");
+    when(customerRepository.findBySortCodeAndCustomerNumber("123456", "0000000001"))
+        .thenThrow(new IllegalArgumentException("malformed candidate"));
+
+    CustomerInquiryResponse response = assertDoesNotThrow(() -> service.inquire("123456", "0000000000"));
+
+    assertEquals(LookupMode.RANDOM, response.lookupMode());
+    assertEquals("N", response.legacyStatus().inquirySuccess());
+    assertEquals("1", response.legacyStatus().inquiryFailCode());
+    assertNull(response.customer());
+    verify(randomCustomerNumberGenerator, times(3)).nextCustomerNumber(1L);
     }
 
     private static CustomerRecord record(String sortCode, String number, String status, int score, int reviewDate) {
