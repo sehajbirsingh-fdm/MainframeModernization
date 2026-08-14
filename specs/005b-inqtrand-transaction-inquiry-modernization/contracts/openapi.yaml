@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: Feature 00B INQTRAND Transaction Detail Inquiry
+  version: 1.0.0
+  description: >
+    Feature contract for exact five-part transaction detail inquiry.
+    A missing transaction is a successful 200 response with found=false.
+paths:
+  /api/v1/accounts/{sortCode}/{accountNumber}/transactions/{date}/{time}/{reference}:
+    get:
+      summary: Get transaction detail
+      operationId: getTransactionDetail
+      tags:
+        - Transaction Inquiry
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sortCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{6}$'
+          example: '123456'
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{8}$'
+          example: '12345678'
+        - name: date
+          in: path
+          required: true
+          description: Legacy-compatible eight-digit transaction date representation. No additional calendar-validity rule is imposed by this contract.
+          schema:
+            type: string
+            pattern: '^[0-9]{8}$'
+          example: '20260814'
+        - name: time
+          in: path
+          required: true
+          description: Six-digit transaction time representation. No additional clock-range rule is imposed by this contract.
+          schema:
+            type: string
+            pattern: '^[0-9]{6}$'
+          example: '142530'
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{12}$'
+          example: '000000000123'
+      responses:
+        '200':
+          description: Transaction found or successfully not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionDetailInquiryResponse'
+              examples:
+                found:
+                  value:
+                    found: true
+                    transaction:
+                      transactionId: '123456-12345678-20260814-142530-000000000123'
+                      sortCode: '123456'
+                      accountNumber: '12345678'
+                      date: '20260814'
+                      time: '142530'
+                      reference: '000000000123'
+                      type: 'DBT'
+                      description: 'Sample transaction'
+                      amount: 125.50
+                notFound:
+                  value:
+                    found: false
+                    transaction: null
+        '400':
+          description: Path validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required.
+        '403':
+          description: Authenticated caller lacks required account inquiry authorization.
+        '500':
+          description: Technical failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    TransactionDetailInquiryResponse:
+      type: object
+      required:
+        - found
+        - transaction
+      properties:
+        found:
+          type: boolean
+        transaction:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/TransactionDetail'
+    TransactionDetail:
+      type: object
+      required:
+        - transactionId
+        - sortCode
+        - accountNumber
+        - date
+        - time
+        - reference
+        - type
+        - description
+        - amount
+      properties:
+        transactionId:
+          type: string
+          pattern: '^[0-9]{6}-[0-9]{8}-[0-9]{8}-[0-9]{6}-[0-9]{12}$'
+        sortCode:
+          type: string
+          pattern: '^[0-9]{6}$'
+        accountNumber:
+          type: string
+          pattern: '^[0-9]{8}$'
+        date:
+          type: string
+          pattern: '^[0-9]{8}$'
+        time:
+          type: string
+          pattern: '^[0-9]{6}$'
+        reference:
+          type: string
+          pattern: '^[0-9]{12}$'
+        type:
+          type: string
+          maxLength: 3
+        description:
+          type: string
+          maxLength: 40
+        amount:
+          type: number
+          description: Exact decimal business value; implementation must use an exact decimal type rather than binary floating point.
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - correlationId
+      properties:
+        code:
+          type: string
+          example: ERR-500
+        message:
+          type: string
+        correlationId:
+          type: string
