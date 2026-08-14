@@ -1,4 +1,4 @@
-# Program Analysis — 00B INQTRAND Transaction Detail Inquiry
+# Program Analysis — 005B INQTRAND Transaction Detail Inquiry
 
 ## Document Purpose
 Establish the authoritative technical understanding of the supplied legacy `INQTRAND` capability. This artifact describes legacy execution only; REST, Java, frontend, and modernization choices are excluded.

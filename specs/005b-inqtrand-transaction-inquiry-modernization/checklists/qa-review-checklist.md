@@ -1,4 +1,4 @@
-# QA Review Checklist — 00B INQTRAND Transaction Detail Inquiry
+# QA Review Checklist — 005B INQTRAND Transaction Detail Inquiry
 
 > Pre-implementation QA gate template. No runtime item is passed until executable evidence exists.
 
@@ -8,7 +8,7 @@
 - [ ] Deterministic H2 data present.
 
 ## Requirements Coverage
-- [ ] FR-001..FR-013 executed/covered.
+- [ ] FR-001..FR-013 have required executable/review evidence according to the approved Test Specification and Traceability Matrix.
 - [ ] NFR/SEC/OPS/COMP/MOD obligations with executable impact verified.
 
 ## Business Rule Coverage
@@ -24,9 +24,18 @@
 ## API Contract Verification
 - [ ] TS-019 passes against runtime OpenAPI.
 - [ ] 200 found/not-found schemas match feature contract.
+- [ ] Found path verifies HTTP 200 + `found=true` + complete transaction detail.
+- [ ] Successful absence verifies HTTP 200 + `found=false` + `transaction=null` and is not 404.
+- [ ] Malformed structural input verifies HTTP 400 + `ERR-001`.
+- [ ] Unauthenticated request verifies 401.
+- [ ] Authenticated caller without required role verifies 403.
+- [ ] Actual technical/persistence failure verifies HTTP 500 + `ERR-500` + correlationId.
 
 ## Validation
-- [ ] TS-006..TS-012 executed.
+- [ ] TS-006..TS-012, TS-012a, TS-012b executed.
+- [ ] Structural validation boundary confirms exact 6/8/8/6/12 digit constraints with malformed structural input rejection.
+- [ ] Leading-zero preservation and no numeric coercion are verified where applicable.
+- [ ] No invented Gregorian/calendar, HHMMSS semantic clock-range, account-existence, or transaction-reference business validation is introduced.
 
 ## Positive Scenarios
 - [ ] TS-001, TS-003, TS-004, TS-005 executed.
@@ -49,9 +58,13 @@
 ## Persistence
 - [ ] TS-017 and TS-018 executed.
 - [ ] No transaction mutation observed.
+- [ ] Implementation shows exact five-key lookup without arbitrary ordering, first-duplicate selection, or invented duplicate-resolution behavior.
+- [ ] Implementation does not claim production DB2 physical uniqueness as proven; if duplicate physical matches are discovered, a data/integration issue is recorded for explicit resolution.
 
 ## Frontend
-- [ ] TS-020 and TS-021 executed.
+- [ ] TS-020, TS-021, and TS-021a executed.
+- [ ] Required list-to-detail integration is verified: transaction list row -> five decomposed identity components -> detail navigation -> existing transaction API client -> approved INQTRAND endpoint -> found-detail or successful-absence presentation.
+- [ ] Required list-to-detail integration does not alter existing INQTRANL list behavior.
 
 ## E2E
 - [ ] TS-022 found case executed.
@@ -89,7 +102,15 @@ Record test command, build/commit, report path, screenshots/logs, defects and st
 
 ## Artifact Relationships
 
-- **Upstream Inputs:** `supporting/test-spec.md`, `supporting/traceability-matrix.md`, `spec.md`, `contracts/openapi.yaml`, implementation/test evidence when available.
+- **Upstream Inputs:**
+	- Approved behavior authorities: `supporting/requirements.md`, `spec.md`.
+	- Implementation architecture/strategy authorities: `supporting/architecture.md`, `plan.md`.
+	- Operational work authority: `tasks.md`.
+	- External contract authority: `contracts/openapi.yaml`.
+	- Planned verification authority: `supporting/test-spec.md`.
+	- Requirements-to-verification linkage authority: `supporting/traceability-matrix.md`.
+	- Code-conformance review evidence authority: `checklists/code-review-checklist.md`.
+	- Executable proof: implementation/test evidence when available.
 - **Downstream Consumers:** Final completion decision, Quickstart validation, build-prompt completion report.
 - **Authority Boundary:** Authoritative for post-implementation QA acceptance status only.
-- **Conflict Handling:** Missing/failed/blocked evidence remains visible and cannot be converted to PASS without execution.
+- **Conflict Handling:** Supporting Requirements/Specification remain authoritative for behavior. OpenAPI, Test Specification, and Traceability Matrix are verification artifacts and must not silently redefine conflicting behavior. Missing/failed/blocked evidence remains visible and cannot be converted to PASS without execution.

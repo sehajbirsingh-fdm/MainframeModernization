@@ -1,17 +1,17 @@
-# Modernization Report — 00B INQTRAND Transaction Detail Inquiry
+# Modernization Report — 005B INQTRAND Transaction Detail Inquiry
 
 ## Executive Summary
 
-Feature 00B has a well-supported legacy behavior baseline and a repository-aligned modernization design. INQTRAND is an exact, read-only, five-part transaction-detail inquiry. It performs one fetch, treats SQLCODE 100 as a successful not-found result, constructs a deterministic composite transaction ID, and separates technical DB2 failure from normal absence.
+Feature 005B has a well-supported legacy behavior baseline and a repository-aligned modernization design. INQTRAND is an exact, read-only, five-part transaction-detail inquiry. It performs one fetch, treats SQLCODE 100 as a successful not-found result, constructs a deterministic composite transaction ID, and separates technical DB2 failure from normal absence.
 
-The existing application already implements INQTRANL transaction list inquiry. 00B should extend those modern transaction foundations without importing INQTRANL's list-only range, count, ordering, pagination, or modern null-default behavior.
+The existing application already implements INQTRANL transaction list inquiry. 005B should extend those modern transaction foundations without importing INQTRANL's list-only range, count, ordering, pagination, or modern null-default behavior.
 
-This package is **ready for implementation planning**, but it does not claim implementation/QA completion.
+This package is **ready for implementation** under the frozen Plan/Tasks/contract/test/traceability set. Runtime implementation is not completed, code review is not executed, QA is not executed, and executable Quickstart commands/runtime details remain pending direct verification.
 
 ## Capability Overview
 
 - **Legacy program:** INQTRAND.
-- **Business outcome:** retrieve zero or one transaction detail by exact identity.
+- **Business outcome:** expose a zero-or-one detail result abstraction by exact identity: legacy behavior performs one fetch with all five equality predicates, while supplied production DB2 DDL/index evidence does not prove physical uniqueness of that five-part key.
 - **Identity:** sort code + account number + date + time + reference.
 - **Mode:** read-only.
 - **Normal outcomes:** found success or successful absence.
@@ -97,7 +97,12 @@ The feature remains read-only and shares the current transaction subsystem.
 - 400 ERR-001 transport-shape validation.
 - existing 401/403 security.
 - 500 ERR-500 modern technical-error convention with correlation ID.
+- structural validation boundary is exact and string-based: `sortCode` 6 digits, `accountNumber` 8 digits, `date` 8 digits, `time` 6 digits, `reference` 12 digits.
+- preserve identity strings and leading zeroes with no numeric coercion.
+- malformed structural input returns 400 ERR-001.
+- no invented Gregorian/calendar date validation, HHMMSS semantic clock-range validation, account-existence validation, or transaction-reference business validation.
 - reuse current `inqtran`, JDBC/H2, frontend and testing structures.
+- remain within `com.bankofz.mainframemodernization.inqtran`; extend existing `TransactionRepository` and `JdbcTransactionRepository`; reuse existing H2 DB2-mode `PROCTRAN`; reuse existing transaction frontend/client structure; avoid an unnecessary parallel top-level `inqtrand` backend/repository hierarchy.
 - feature contract drives runtime OpenAPI reconciliation.
 
 These are modernization choices, not claims about the legacy interface.
@@ -124,6 +129,8 @@ JDBC -> H2 PROCTRAN
 ```
 
 No second backend, frontend or transaction database is planned.
+
+Implementation guardrail: modern zero-or-one behavior must not be presented as proof of production DB2 physical uniqueness. Do not add arbitrary ordering, silently select a first duplicate, or invent duplicate-resolution semantics; if duplicate physical matches are discovered during implementation/testing, record a data/integration issue requiring explicit resolution.
 
 ## Business Value
 
@@ -191,8 +198,8 @@ No duration estimate is asserted because no delivery estimate evidence was suppl
 
 - H2 PROCTRAN remains the POC persistence store.
 - Existing repository conventions remain the integration target.
-- List rows provide the decomposed key components if list-to-detail navigation is used.
-- No production mainframe connection is required for 00B POC.
+- Existing INQTRANL list rows expose/provide the five identity components in usable form for required list-row -> detail navigation -> existing transaction client -> approved INQTRAND endpoint -> found-detail or successful-absence presentation; existing INQTRANL list behavior remains unchanged.
+- No production mainframe connection is required for 005B POC.
 
 ## Open Questions
 
@@ -223,7 +230,7 @@ INQTRANL has not been re-modernized. No list semantics have been attributed to I
 
 ## Artifact Relationships
 
-- **Upstream Inputs:** `supporting/program-analysis.md`, `supporting/dependency-map.md`, `supporting/intended-system.md`, `supporting/architecture.md`, `research.md`, `supporting/requirements.md`, `spec.md`, `plan.md`, repository discovery.
+- **Upstream Inputs:** `supporting/program-analysis.md`, `supporting/dependency-map.md`, `supporting/business-rules.md`, `supporting/mapping-matrix.md`, `supporting/intended-system.md`, `supporting/architecture.md`, `research.md`, `data-model.md`, `supporting/requirements.md`, `spec.md`, `plan.md`, `tasks.md`, `contracts/openapi.yaml`, `supporting/test-spec.md`, `supporting/traceability-matrix.md`, `checklists/code-review-checklist.md`, `checklists/qa-review-checklist.md`, `quickstart.md`, repository evidence.
 - **Downstream Consumers:** Client/SME review, implementation readiness decision, `supporting/copilot-build-prompt.md`.
 - **Authority Boundary:** Authoritative as a client-facing synthesis only; it is not a new requirements source.
-- **Conflict Handling:** Detailed upstream artifacts win on conflict and this report must be corrected.
+- **Conflict Handling:** Detailed frozen source artifacts win on conflict and this report must be corrected; implementation status or local runtime behavior cannot be used to silently redefine approved Requirements/Specification/OpenAPI behavior.

@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Feature 00B INQTRAND Transaction Detail Inquiry
+  title: Feature 005B INQTRAND Transaction Detail Inquiry
   version: 1.0.0
   description: >
     Feature contract for exact five-part transaction detail inquiry.
@@ -9,6 +9,11 @@ paths:
   /api/v1/accounts/{sortCode}/{accountNumber}/transactions/{date}/{time}/{reference}:
     get:
       summary: Get transaction detail
+      description: >
+        Structural path validation only. Identity components remain string-based digit fields
+        (6/8/8/6/12) with leading zeroes preserved. This contract does not introduce
+        Gregorian calendar validation, HHMMSS semantic clock-range validation,
+        account-existence validation, or transaction-reference business validation.
       operationId: getTransactionDetail
       tags:
         - Transaction Inquiry
@@ -78,21 +83,33 @@ paths:
                     found: false
                     transaction: null
         '400':
-          description: Path validation failure.
+          description: Path syntax/shape validation failure (ERR-001).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidPathShape:
+                  value:
+                    code: ERR-001
+                    message: Path parameter validation failed
+                    correlationId: 9f8f9d3d7a2a4f0a8f0f2f9aa2f9e1b1
         '401':
           description: Authentication required.
         '403':
           description: Authenticated caller lacks required account inquiry authorization.
         '500':
-          description: Technical failure.
+          description: Technical failure (ERR-500) with correlationId.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                technicalFailure:
+                  value:
+                    code: ERR-500
+                    message: Technical failure during transaction detail lookup
+                    correlationId: 8a6d1f4a7b3c4f5e9d0c1b2a3e4f5d6c
 components:
   securitySchemes:
     bearerAuth:

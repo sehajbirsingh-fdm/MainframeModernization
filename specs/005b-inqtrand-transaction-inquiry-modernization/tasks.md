@@ -1,4 +1,4 @@
-# Tasks — 00B INQTRAND Transaction Detail Inquiry
+# Tasks — 005B INQTRAND Transaction Detail Inquiry
 
 ## Execution Rules
 - Execute in dependency order.
@@ -26,8 +26,8 @@ T001
 - **Dependencies:** none.
 - **References:** Plan repository summary; Architecture.
 - **Requirements:** NFR-001, OPS-003, SEC-003.
-- **Work:** inspect current inqtran Java classes/tests, schema/data, both OpenAPI files, frontend transaction files, package scripts/README, and security setup.
-- **Done:** exact files/classes/commands/ports and auth mechanism are recorded; no contradictions ignored.
+- **Work:** inspect current inqtran Java classes/tests, schema/data, both OpenAPI files, frontend transaction files, package scripts/README, and security setup; confirm extension remains inside `com.bankofz.mainframemodernization.inqtran` by extending existing `TransactionRepository` and `JdbcTransactionRepository` with H2/`PROCTRAN`/JDBC reuse.
+- **Done:** exact files/classes/commands/ports and auth mechanism are recorded; no contradictions ignored; no parallel top-level `inqtrand` repository hierarchy is introduced without demonstrated architectural need.
 - **Evidence:** inspection notes/commit diff references.
 
 ## Backend Domain and Mapping
@@ -55,12 +55,12 @@ T001
 - **Dependencies:** T002, T004.
 - **References:** BR-002, BR-009..BR-012.
 - **Requirements:** FR-002, FR-008..FR-010, NFR-003.
-- **Done:** prepared SQL constrains all five keys; no count/order/pagination/range/eyecatcher/delete/type filter.
+- **Done:** prepared SQL constrains all five keys using equality and extends existing `TransactionRepository`/`JdbcTransactionRepository` within `com.bankofz.mainframemodernization.inqtran`; no count/order/pagination/range/eyecatcher/delete/type filter; no arbitrary ordering/first-row selection/duplicate-resolution behavior is introduced.
 
 ### T006 — Repository tests
 - **Dependencies:** T005.
 - **Requirements:** FR-002..FR-004, FR-009..FR-011, NFR-004.
-- **Done:** found, absent, leading-zero, exact-key, and relevant null/error scenarios tested.
+- **Done:** found, absent, leading-zero, exact-key, and relevant null/error scenarios tested; zero-or-one result abstraction is verified without asserting proven production DB2 physical uniqueness; any discovered duplicate-physical-match risk is recorded as a data/integration issue requiring explicit resolution.
 
 ## Service Layer
 
@@ -78,11 +78,11 @@ T001
 ### T009 — Add detail GET controller operation
 - **Dependencies:** T007.
 - **Requirements:** FR-012, FR-011, OPS-001, OPS-002.
-- **Done:** approved path and width validation; no list query params.
+- **Done:** approved path and structural digit-shape/width validation (`sortCode` 6, `accountNumber` 8, `date` 8, `time` 6, `reference` 12) with leading-zero preservation and no numeric coercion; no list query params.
 
 ### T010 — Controller/error tests
 - **Dependencies:** T009.
-- **Done:** 200 found, 200 absence, 400 validation, 500 technical and correlation response verified.
+- **Done:** 200 found, 200 absence, 400 validation, 500 technical and correlation response verified; validation tests cover exact 6/8/8/6/12 digit constraints and confirm no introduced Gregorian/calendar, HHMMSS semantic-range, account-existence, or transaction-reference business validation; structurally valid but semantically unusual date/time proceeds through normal lookup behavior.
 
 ### T011 — Security tests
 - **Dependencies:** T009.
@@ -99,7 +99,7 @@ T001
 
 ### T013 — Extend OpenAPI conformance test
 - **Dependencies:** T012.
-- **Done:** test checks path, parameters, response codes, required schemas/constraints.
+- **Done:** test checks path, parameters, response codes, and required schemas/constraints reconciled to approved Spec/Requirements/Plan authorities.
 
 ## Frontend Client
 
@@ -119,10 +119,10 @@ T001
 - **Requirements:** FR-013.
 - **Done:** found detail, not-found, loading and error states rendered in existing transaction feature.
 
-### T017 — Add optional list-to-detail navigation
+### T017 — Add required list-to-detail navigation
 - **Dependencies:** T016.
 - **Requirements:** MOD-004.
-- **Done:** if implemented, uses decomposed key and does not alter INQTRANL inquiry behavior.
+- **Done:** implement required list-to-detail integration using decomposed key flow (transaction list row -> five identity components -> detail navigation -> existing transaction API client -> INQTRAND detail endpoint -> found-detail or successful-absence presentation) and do not alter INQTRANL inquiry behavior.
 
 ### T018 — Frontend component tests
 - **Dependencies:** T016, T017.
@@ -155,7 +155,7 @@ T001
 
 ## Artifact Relationships
 
-- **Upstream Inputs:** `plan.md`, `spec.md`, `supporting/requirements.md`, `contracts/openapi.yaml` expectations, `supporting/test-spec.md` expectations.
+- **Upstream Inputs:** `plan.md`, `spec.md`, `supporting/requirements.md`, `supporting/architecture.md`, `research.md`, `data-model.md`, `supporting/mapping-matrix.md`, `supporting/business-rules.md`, repository evidence.
 - **Downstream Consumers:** Implementation agent, `supporting/traceability-matrix.md`, review checklists, `supporting/copilot-build-prompt.md`.
 - **Authority Boundary:** Authoritative for executable work order/done criteria, not requirements.
-- **Conflict Handling:** If a task would require changing Specification/Requirements, stop and reconcile upstream rather than expanding the task.
+- **Conflict Handling:** Spec/Requirements own behavior and Plan owns implementation strategy; `contracts/openapi.yaml` and `supporting/test-spec.md` are reconciliation/verification targets and must not override approved Spec/Plan. If a task would require changing approved authorities, stop and reconcile upstream rather than expanding the task.

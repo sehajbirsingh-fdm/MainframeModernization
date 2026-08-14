@@ -1,4 +1,4 @@
-# Quickstart — 00B INQTRAND Transaction Detail Inquiry
+# Quickstart — 005B INQTRAND Transaction Detail Inquiry
 
 ## Purpose
 Provide a safe run/verification guide without inventing commands, ports, credentials, or runtime behavior that the supplied repository discovery did not verify.
@@ -16,7 +16,8 @@ Exact supported local tool versions beyond Java 21 must be confirmed from curren
 Repository discovery reported the repository root as:
 `C:/Users/Alex/data/personal_stuff/jobs/fdm/spec_driven_development_pod/MainframeModernization`
 
-This path is discovery evidence from 2026-08-14 and may differ on another workstation.
+Begin from the root of your checked-out `MainframeModernization` repository.
+This absolute path is discovery evidence from 2026-08-14 only; it is not a required runtime location and may differ by workstation.
 
 ## Configuration
 Before running:
@@ -66,16 +67,39 @@ Use a complete key known not to exist.
 Expected: 200, `found=false`, `transaction=null`.
 
 ### Validation
-Use an incorrect-width key.
+Use malformed structural input against the exact string constraints:
+- `sortCode` 6 digits;
+- `accountNumber` 8 digits;
+- `date` 8 digits;
+- `time` 6 digits;
+- `reference` 12 digits.
+
+Malformed structural input can include incorrect width and/or non-digit content.
 
 Expected: 400 / ERR-001.
+
+Structurally valid but semantically unusual date/time values are not rejected by newly invented Gregorian/calendar or HHMMSS semantic validation alone and proceed through normal lookup behavior. Do not add account-existence or transaction-reference business validation at this boundary.
+
+### Technical failure
+Exercise this only where a technical/persistence failure is safely reproducible in the implementation environment.
+
+Expected: 500 / ERR-500 with correlationId.
+
+Normal transaction absence remains a successful 200 (`found=false`, `transaction=null`) and is not a technical failure.
 
 ### Security
 Exercise unauthenticated, unauthorized and authorized paths according to repository-approved dev authentication setup.
 
+Expected outcomes:
+- unauthenticated request -> 401;
+- authenticated caller without `ACCOUNT_INQUIRER` -> 403;
+- authenticated caller with `ACCOUNT_INQUIRER` -> allowed to reach normal feature behavior.
+
+Do not invent usernames, passwords, bearer tokens, or response-body details not established by repository/runtime evidence.
+
 ## Frontend Smoke Tests
 1. Open the existing transaction feature.
-2. Navigate/request a known detail.
+2. Verify required list-to-detail integration end-to-end: existing transaction list row -> five decomposed identity components (`sortCode`, `accountNumber`, `date`, `time`, `reference`) -> detail navigation -> existing transaction API client -> approved INQTRAND detail endpoint -> found-detail or successful-absence presentation.
 3. Confirm detail fields and composite ID.
 4. Request a missing detail and confirm normal not-found state.
 5. Confirm list inquiry still works unchanged.
@@ -113,7 +137,7 @@ Use the repository's verified process/container commands once identified. No shu
 
 ## Artifact Relationships
 
-- **Upstream Inputs:** `supporting/architecture.md`, `plan.md`, `tasks.md`, `contracts/openapi.yaml`, `supporting/test-spec.md`, repository discovery.
+- **Upstream Inputs:** `supporting/requirements.md`, `spec.md`, `supporting/architecture.md`, `plan.md`, `tasks.md`, `contracts/openapi.yaml`, `supporting/test-spec.md`, `supporting/traceability-matrix.md`, repository/runtime evidence.
 - **Downstream Consumers:** Developers, reviewers, QA, final implementation report.
-- **Authority Boundary:** Authoritative only for verified setup/run/verification instructions; currently unresolved commands are explicitly marked.
-- **Conflict Handling:** Implementation/runtime evidence wins over stale Quickstart text; update this file after execution instead of guessing.
+- **Authority Boundary:** Supporting Requirements + Specification remain authoritative for approved feature behavior; OpenAPI remains authoritative for the approved external REST contract; Architecture/Plan/Tasks define implementation direction/work; repository/runtime evidence determines actual commands, ports, environment configuration, and executable setup facts; Quickstart records verified operational instructions.
+- **Conflict Handling:** Current verified runtime evidence wins over stale Quickstart text for commands, ports, environment/configuration, and execution facts. Implementation/runtime behavior does not silently override conflicting frozen Requirements/Specification/OpenAPI behavior; behavioral conflicts must be reconciled rather than documented as new truth.

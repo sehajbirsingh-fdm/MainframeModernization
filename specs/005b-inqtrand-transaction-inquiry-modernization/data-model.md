@@ -1,4 +1,4 @@
-# Data Model — 00B INQTRAND Transaction Detail Inquiry
+# Data Model — 005B INQTRAND Transaction Detail Inquiry
 
 ## Purpose
 Define conceptual/query/result structures for zero-or-one detail lookup.
@@ -42,7 +42,7 @@ Representation constraints do not imply calendar/time semantic validity.
 Invariant: found=true → one transaction; found=false → transaction=null.
 
 ## Relationships and Cardinality
-One exact key returns zero or one transaction. No collection belongs to 00B.
+One exact key returns zero or one transaction. No collection belongs to 005B.
 
 ## Query and Result Models
 Only the five key fields are query inputs. Range dates, counts, sort order, limit and offset belong to INQTRANL and are excluded.

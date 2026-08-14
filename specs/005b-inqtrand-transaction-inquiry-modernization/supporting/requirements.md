@@ -1,4 +1,4 @@
-# Supporting Requirements — 00B INQTRAND Transaction Detail Inquiry
+# Supporting Requirements — 005B INQTRAND Transaction Detail Inquiry
 
 ## Executive Summary
 Modernize INQTRAND as an exact read-only five-part transaction detail inquiry within the existing application. Preserve successful absence and exclude list semantics.
@@ -13,22 +13,22 @@ Backend detail lookup, API, modern result, minimal frontend integration, securit
 INQTRANL reimplementation, transaction mutation, list filtering/pagination/count/order, real mainframe connectivity, unrelated transaction management.
 
 ## Functional Requirements
-- **FR-001:** require sortCode, accountNumber, date, time, reference.
+- **FR-001:** require all five transaction identity components with exact transport shapes: `sortCode` exactly 6 digits, `accountNumber` exactly 8 digits, `date` exactly 8 digits, `time` exactly 6 digits, `reference` exactly 12 digits.
 - **FR-002:** use all five for one exact read-only lookup; no list semantics.
 - **FR-003:** matching retrievable row → `found=true` + one transaction.
-- **FR-004:** no matching row → successful `found=false` + no transaction object.
+- **FR-004:** no matching row → successful absence with HTTP `200`, `found=false`, and `transaction=null` (not `404` and not technical failure).
 - **FR-005:** found detail fields: transactionId, sortCode, accountNumber, date, time, reference, type, description, amount.
 - **FR-006:** ID = `sortCode-accountNumber-date-time-reference`.
-- **FR-007:** external date uses 8-digit legacy-compatible representation; no new calendar-validity business rule.
+- **FR-007:** external identity-component validation is structural only; do not add calendar-date semantic validation, HHMMSS semantic time-range validation, account-existence validation, or transaction-reference business validation.
 - **FR-008:** no create/update/delete.
 - **FR-009:** do not add record-eyecatcher/logical-delete/type predicates without new authority.
 - **FR-010:** do not silently convert nullable detail data to invented zero/blank values.
-- **FR-011:** retain fixed widths and leading zeros.
+- **FR-011:** preserve exact identity-component digit widths and leading zeros for `sortCode`, `accountNumber`, `date`, `time`, and `reference`; do not broaden this into a requirement to preserve COBOL fixed-CHAR padding for all modern JSON detail strings.
 - **FR-012:** expose `GET /api/v1/accounts/{sortCode}/{accountNumber}/transactions/{date}/{time}/{reference}`.
-- **FR-013:** existing transaction UI can request and present found/not-found detail.
+- **FR-013:** existing transaction UI must support list-row to detail integration using the five transaction identity components, calling the existing transaction API client and the INQTRAND detail endpoint, and presenting found-detail or successful-absence states.
 
 ## Non-Functional Requirements
-- **NFR-001:** repository-first integration; no parallel app/hierarchy.
+- **NFR-001:** remain in the existing `com.bankofz.mainframemodernization.inqtran` vertical slice; extend existing `TransactionRepository` and `JdbcTransactionRepository`; reuse existing H2/`PROCTRAN`/JDBC foundations; do not introduce a parallel `inqtrand` repository hierarchy unless later architectural evidence requires it.
 - **NFR-002:** exact decimal precision.
 - **NFR-003:** prepared SQL and safe configured identifiers.
 - **NFR-004:** tests at touched backend/frontend/contract/E2E layers.
@@ -56,12 +56,12 @@ INQTRANL reimplementation, transaction mutation, list filtering/pagination/count
 - **MOD-001:** COMMAREA operation becomes REST/JSON.
 - **MOD-002:** five decomposed path segments are authoritative input.
 - **MOD-003:** response envelope has `found` + nullable `transaction`.
-- **MOD-004:** reuse existing `inqtran` backend/frontend foundations when compatible.
+- **MOD-004:** approved integration direction is to extend existing `inqtran` backend/frontend foundations, including the existing transaction repository boundary, rather than creating a parallel detail repository subsystem.
 - **MOD-005:** reuse security/correlation.
-- **MOD-006:** feature contract drives 00B runtime OpenAPI; historical broad detail endpoint is not automatically adopted.
+- **MOD-006:** feature contract drives 005B runtime OpenAPI; historical broad detail endpoint is not automatically adopted.
 
 ## Assumptions
-Existing H2 PROCTRAN remains POC store; repository paths remain available; list rows contain decomposed identity for optional navigation.
+Existing H2 PROCTRAN remains POC store; repository paths remain available; list rows contain (or can supply) decomposed five-part identity to support required detail navigation.
 
 ## Risks
 OpenAPI ambiguity, list null-default incompatibility, frontend auth gap, seed sufficiency, missing production DDL.
@@ -69,9 +69,11 @@ OpenAPI ambiguity, list null-default incompatibility, frontend auth gap, seed su
 ## Requirement Dependencies
 | Group | Upstream |
 |---|---|
-| FR-001..FR-011 | BR-002..BR-012, MM-001..MM-017 |
-| FR-012..FR-013 | Intended System, Research, repository evidence |
-| NFR-* | Architecture/repository conventions |
+| Confirmed legacy-behavior obligations (read-only exact five-part lookup, found vs successful absence semantics, at-most-one detail, no list semantics, no unapproved predicates/defaulting) | supporting/program-analysis.md, supporting/business-rules.md, supporting/mapping-matrix.md |
+| Approved modern behavior obligations (exact transport shapes, explicit successful-absence transport, endpoint contract, mandatory list-to-detail integration) | supporting/intended-system.md, research.md |
+| Architecture/integration obligations (existing slice/repository extension, H2/PROCTRAN/JDBC reuse, no parallel hierarchy without demonstrated need) | supporting/architecture.md, repository evidence |
+| Model/representation obligations (detail/result structure, transactionId composition, mapping semantics and resolved representation decisions) | supporting/mapping-matrix.md, data-model.md, supporting/intended-system.md, research.md, supporting/architecture.md |
+| NFR-* (except where explicitly tightened above) | Architecture/repository conventions |
 | SEC-* | repository security |
 | OPS-* | repository error/OpenAPI/H2 conventions |
 | COMP-* | confirmed legacy behavior |

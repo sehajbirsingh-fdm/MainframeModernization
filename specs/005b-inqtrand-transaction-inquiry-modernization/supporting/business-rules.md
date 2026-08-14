@@ -1,4 +1,4 @@
-# Business Rules — 00B INQTRAND Transaction Detail Inquiry
+# Business Rules — 005B INQTRAND Transaction Detail Inquiry
 
 ## Purpose and Ownership
 Record observable legacy-derived behavior without target implementation or HTTP semantics.

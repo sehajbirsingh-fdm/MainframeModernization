@@ -1,4 +1,4 @@
-# Plan — 00B INQTRAND Transaction Detail Inquiry
+# Plan — 005B INQTRAND Transaction Detail Inquiry
 
 ## Purpose
 Describe how the frozen Specification will be implemented in the existing repository without redefining behavior.
@@ -47,12 +47,14 @@ Relevant evidence-backed areas:
 
 ## Package and Placement Strategy
 Prefer extending existing classes/interfaces when responsibility remains coherent:
-- repository interface gains zero-or-one exact lookup;
-- JDBC repository gains matching prepared query;
+- remain within `com.bankofz.mainframemodernization.inqtran` and extend the existing `TransactionRepository` interface with a zero-or-one exact detail lookup;
+- extend the existing `JdbcTransactionRepository` with the matching prepared query, reusing existing H2/`PROCTRAN`/JDBC foundations;
 - service gains detail method;
 - controller gains detail GET;
 - mapper/domain types are reused or minimally extended;
 - frontend client/types/feature are extended.
+
+Do not introduce a parallel top-level `inqtrand` repository hierarchy unless later architectural evidence demonstrates necessity.
 
 Add dedicated detail-specific types/classes only when reuse would force list-only behavior (notably null defaults) or create unclear contracts.
 
@@ -77,7 +79,7 @@ Generate exact composite ID. Preserve exact amount. Ensure no list-specific null
 
 ## Data Flow
 1. path inputs retained as strings;
-2. validate widths;
+2. validate exact digit shape and width (`sortCode` 6, `accountNumber` 8, `date` 8, `time` 6, `reference` 12) while preserving leading zeroes and avoiding numeric coercion;
 3. convert date only as necessary for persistence representation, without new calendar business validation;
 4. execute exact query;
 5. map zero-or-one result;
@@ -88,22 +90,27 @@ Generate exact composite ID. Preserve exact amount. Ensure no list-specific null
 - reuse safe schema/table identifier handling;
 - use PreparedStatement;
 - return an optional/zero-or-one abstraction;
+- do not treat this abstraction as proof of production DB2 physical uniqueness of the five-part key;
+- if implementation/repository inspection reveals duplicate physical matches are possible, treat as a data/integration issue requiring explicit resolution;
+- do not invent arbitrary ordering, first-row selection, or duplicate-resolution behavior;
 - add deterministic seeds only when necessary for approved tests;
 - never add a hidden record-validity/type/delete filter.
 
 ## API Implementation Strategy
-Feature OpenAPI (`contracts/openapi.yaml`) is the approved 00B contract. Implement controller to it, then update `backend/api/src/main/resources/openapi.yaml` so runtime contract matches. Do not copy the broad historical endpoint by default.
+Feature OpenAPI (`contracts/openapi.yaml`) is the approved 005B contract. Implement controller to it, then update `backend/api/src/main/resources/openapi.yaml` so runtime contract matches. Do not copy the broad historical endpoint by default.
 
 ## Frontend Integration Strategy
 - extend `transactionInquiryClient.ts` with detail call;
 - extend `transactionTypes.ts` minimally;
 - add detail view/state under transaction feature;
 - add route consistent with `/transactions/:sortCode/:accountNumber/:date/:time/:reference`;
-- optionally link existing list rows using already-present key fields;
+- require list-to-detail integration using existing transaction list rows and the five identity components: list row -> detail navigation -> existing transaction API client -> approved INQTRAND detail endpoint -> found-detail or successful-absence presentation;
 - do not alter list filtering/pagination behavior.
 
 ## Validation Strategy
-Only fixed-width digit validation for external identity. No new Gregorian/calendar or clock-range semantics. Test leading zeros.
+External identity validation is structural only: `sortCode` exactly 6 digits, `accountNumber` exactly 8 digits, `date` exactly 8 digits, `time` exactly 6 digits, `reference` exactly 12 digits, with leading zeroes preserved.
+Do not add Gregorian/calendar semantic validation, HHMMSS semantic clock-range validation, account-existence validation, or transaction-reference business validation.
+A structurally valid but semantically unusual date/time proceeds through normal lookup behavior.
 
 ## Error Handling Strategy
 - 400 `ERR-001`: transport validation;
@@ -128,7 +135,7 @@ Confirm detail path falls under existing matcher and requires `ACCOUNT_INQUIRER`
 8. INQTRANL regression.
 
 ## Runtime OpenAPI Reconciliation
-The runtime resources OpenAPI currently lacks detail while a broad API file carries a historical detail signal. Treat feature contract as 00B source and update runtime resources contract; do not silently replace it with the historical path.
+The runtime resources OpenAPI currently lacks detail while a broad API file carries a historical detail signal. Treat feature contract as 005B source and update runtime resources contract; do not silently replace it with the historical path.
 
 ## Risks and Assumptions
 - Existing `TransactionRow` may embody list-specific null defaults indirectly; inspect before reuse.

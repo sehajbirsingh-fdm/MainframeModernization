@@ -1,4 +1,4 @@
-# Intended System — 00B INQTRAND Transaction Detail Inquiry
+# Intended System — 005B INQTRAND Transaction Detail Inquiry
 
 ## Purpose
 Bridge verified INQTRAND behavior to the approved future-state capability.

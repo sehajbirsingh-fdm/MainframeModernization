@@ -1,4 +1,4 @@
-# Mapping Matrix — 00B INQTRAND Transaction Detail Inquiry
+# Mapping Matrix — 005B INQTRAND Transaction Detail Inquiry
 
 ## Purpose
 Trace INQTRAND input → host/DB2 → output → approved modern representation without skipping intermediate transformations.

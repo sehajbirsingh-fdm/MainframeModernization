@@ -1,4 +1,4 @@
-# Code Review Checklist — 00B INQTRAND Transaction Detail Inquiry
+# Code Review Checklist — 005B INQTRAND Transaction Detail Inquiry
 
 > Pre-implementation checklist. Items remain unchecked until code exists and evidence is attached.
 
@@ -10,6 +10,8 @@
 ## Architecture
 - [ ] Controller is thin and service owns behavior.
 - [ ] JDBC repository boundary is preserved.
+- [ ] Implementation remains within `com.bankofz.mainframemodernization.inqtran` by extending existing `TransactionRepository` and `JdbcTransactionRepository`, reusing H2/`PROCTRAN`/JDBC foundations.
+- [ ] No parallel top-level `inqtrand` repository/backend hierarchy is introduced without demonstrated architectural need.
 - [ ] No JPA or real mainframe connectivity introduced.
 - [ ] Constructor injection follows repository convention.
 
@@ -26,6 +28,8 @@
 - [ ] No count/order/pagination/range clause.
 - [ ] No eyecatcher/logical-delete/type predicate added.
 - [ ] Absence returns zero-or-one result rather than exception.
+- [ ] No arbitrary ordering, first-duplicate selection, or invented duplicate-resolution logic is introduced to mask potential duplicate physical matches.
+- [ ] Code does not claim production DB2 physical uniqueness is proven; if duplicate physical matches are discovered, a data/integration issue is explicitly recorded for resolution.
 
 ## Service Layer
 - [ ] Found maps to found=true.
@@ -35,20 +39,23 @@
 
 ## Controller and API
 - [ ] Approved detail path implemented exactly.
-- [ ] Only digit-width validation is added for key semantics.
-- [ ] 200/400/401/403/500 behaviors match contract.
+- [ ] Structural validation is exact and string-based: `sortCode` 6 digits, `accountNumber` 8 digits, `date` 8 digits, `time` 6 digits, `reference` 12 digits; leading zeroes preserved; no numeric coercion.
+- [ ] Contract invariants are preserved: found -> HTTP 200 + `found=true` + complete detail; successful absence -> HTTP 200 + `found=false` + `transaction=null`; malformed structural input -> HTTP 400 + `ERR-001`; unauthenticated -> 401; authenticated without role -> 403; technical/persistence failure -> HTTP 500 + `ERR-500` + correlationId.
 - [ ] 404 is not used for normal absence.
 
 ## Frontend
 - [ ] Existing transaction client/types/feature structure reused.
 - [ ] Found/not-found/loading/error states are handled.
-- [ ] List-to-detail navigation, if added, uses decomposed key without altering list inquiry.
+- [ ] Required list-to-detail integration exists: transaction list row -> five decomposed identity components -> detail navigation -> existing transaction API client -> approved INQTRAND endpoint -> found-detail or successful-absence presentation.
+- [ ] Required list-to-detail integration does not alter existing INQTRANL list behavior.
 - [ ] No hard-coded bearer token.
 
 ## Validation and Errors
 - [ ] ERR-001 and ERR-500 conventions reused.
 - [ ] CorrelationId appears in technical/validation error payloads as repository conventions require.
 - [ ] Width-valid unusual date/time is not rejected by invented calendar/clock business validation.
+- [ ] Implementation does not introduce Gregorian/calendar semantic validation, HHMMSS semantic clock-range validation, account-existence validation, or transaction-reference business validation.
+- [ ] Structurally valid but semantically unusual date/time proceeds through normal lookup path; malformed structural values are still rejected.
 
 ## Security
 - [ ] Detail route is covered by existing security matcher.

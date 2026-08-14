@@ -1,10 +1,10 @@
-# Dependency Map — 00B INQTRAND Transaction Detail Inquiry
+# Dependency Map — 005B INQTRAND Transaction Detail Inquiry
 
 ## Purpose
 Classify normal runtime, failure-path, compile-time, indirect, and merely related dependencies.
 
 ## Program Boundary
-Primary boundary is `INQTRAND`. INQTRANL is a neighboring transaction-list capability and is outside 00B implementation scope.
+Primary boundary is `INQTRAND`. INQTRANL is a neighboring transaction-list capability and is outside 005B implementation scope.
 
 ## Inbound Runtime Dependencies
 - A CICS caller supplies an INQTRAND COMMAREA.

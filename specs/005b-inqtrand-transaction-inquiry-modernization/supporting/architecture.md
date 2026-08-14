@@ -1,4 +1,4 @@
-# Architecture — 00B INQTRAND Transaction Detail Inquiry
+# Architecture — 005B INQTRAND Transaction Detail Inquiry
 
 ## Purpose
 Define target structure, component boundaries, interfaces, and constraints using repository-first evidence.
