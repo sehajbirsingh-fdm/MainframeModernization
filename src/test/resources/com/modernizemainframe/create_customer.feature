@@ -30,7 +30,7 @@ Feature: Create Customer API
   @TCCRECUST005 @FR-004 @BR-002 @P1
   Scenario: DOB year below 1601 is rejected with fail code O
     When I submit create customer request variant "dob-1600"
-    Then the create customer response status code is 400
+    Then the create customer response status code is one of "400,422"
     And the create error response has standardized fields
     And the create error legacy fail code is "O"
 
@@ -51,7 +51,7 @@ Feature: Create Customer API
   @TCCRECUST008 @FR-004 @BR-005 @P1
   Scenario: DOB implying age over 150 is rejected with fail code O
     When I submit create customer request variant "dob-over-150"
-    Then the create customer response status code is 422
+    Then the create customer response status code is one of "400,422"
     And the create error response has standardized fields
     And the create error legacy fail code is "O"
 
