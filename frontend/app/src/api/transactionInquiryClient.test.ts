@@ -39,7 +39,11 @@ describe('inquireTransactions', () => {
 
     expect(fetchSpy).toHaveBeenCalledWith(
       '/api/v1/accounts/123456/00000001/transactions?limit=50&offset=0',
-      expect.any(Object),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer valid-inqacc-inquirer-token',
+        }),
+      }),
     )
     expect(result.type).toBe('success')
   })

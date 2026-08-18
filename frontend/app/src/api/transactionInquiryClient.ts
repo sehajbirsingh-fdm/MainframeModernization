@@ -1,4 +1,4 @@
-import { apiBaseUrl, requestTimeoutMs } from '../config/env'
+import { apiBaseUrl, inqaccDefaultToken, requestTimeoutMs } from '../config/env'
 import type { TransactionErrorResponse, TransactionInquiryRequest, TransactionInquiryResponse, TransactionInquiryResult } from '../domain/transactionTypes'
 
 export async function inquireTransactions(request: TransactionInquiryRequest): Promise<TransactionInquiryResult> {
@@ -23,7 +23,12 @@ export async function inquireTransactions(request: TransactionInquiryRequest): P
     const query = searchParams.toString()
     const url = `${apiBaseUrl}/api/v1/accounts/${request.sortCode}/${request.accountNumber}/transactions${query ? `?${query}` : ''}`
 
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${inqaccDefaultToken}`,
+      },
+    })
     const correlationId = response.headers.get('X-Correlation-ID') ?? ''
 
     if (response.status === 200) {
