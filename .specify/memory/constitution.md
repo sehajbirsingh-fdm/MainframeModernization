@@ -9,7 +9,7 @@ The specification is the source of truth. Code exists only to satisfy the approv
 The modernized service must preserve observable INQCUST inquiry behavior for supported POC flows: specific customer lookup, random customer lookup, latest customer lookup, inquiry success flag, and inquiry failure code.
 
 ### III. Bounded Strangler Replacement
-The project modernizes one bounded capability, INQCUST customer inquiry. It must not expand into full Bank of Z modernization, account management, customer update, authentication, or live mainframe integration.
+The project modernizes bounded capabilities explicitly approved in feature specifications under specs/. It must not expand into full Bank of Z modernization, uncontrolled domain sprawl, or live mainframe integration without approved scope artifacts.
 
 ### IV. Adapter Boundary Required
 All mainframe or data access must go through the CustomerRepository interface. The POC implementation uses mock data only. Future DB2, CICS, z/OS Connect, or MQ adapters may replace the mock repository without changing controller behavior.
