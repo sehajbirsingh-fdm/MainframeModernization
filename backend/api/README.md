@@ -12,6 +12,7 @@ Spring Boot 3 (Java 21) backend implementing:
 - `GET /api/v1/customers/{sortCode}/{customerNumber}`
 - `GET /v1/accounts/{sortcode}/{accountNumber}`
 - `GET /api/v1/customers/{customerNumber}/accounts`
+- `GET /api/v1/accounts/{sortCode}/{accountNumber}/statements/{period}`
 - `POST /v1/customers`
 
 ## Security

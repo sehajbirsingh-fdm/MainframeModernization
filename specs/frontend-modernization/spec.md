@@ -22,6 +22,8 @@ In scope:
   - `/customers/create` (CRECUST)
   - `/accounts` (INQACC)
   - `/customer-accounts` (INQACCCU)
+  - `/transactions` (INQTRAN)
+  - `/statements` (INQSTMT)
 - Apply consistent visual language and responsive behavior across all pages.
 
 Out of scope:
@@ -86,6 +88,8 @@ As a user, I want all feature screens to look cohesive so the app feels like one
 - `/customers/create` -> CRECUST
 - `/accounts` -> INQACC
 - `/customer-accounts` -> INQACCCU
+- `/transactions` -> INQTRAN
+- `/statements` -> INQSTMT
 - `/about` -> About page
 - `/license` -> License page
 

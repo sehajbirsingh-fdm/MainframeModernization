@@ -5,6 +5,8 @@ This frontend hosts both inquiry experiences in one React/Vite application:
 - INQCUST customer inquiry
 - INQACC account inquiry
 - INQACCCU customer-account relationship inquiry
+- INQTRAN transaction inquiry
+- INQSTMT statement inquiry
 
 ## Prerequisites
 
@@ -25,6 +27,8 @@ App runs by default on http://localhost:5173.
 - http://localhost:5173/customers for INQCUST
 - http://localhost:5173/accounts for INQACC
 - http://localhost:5173/customer-accounts for INQACCCU
+- http://localhost:5173/transactions for INQTRAN
+- http://localhost:5173/statements for INQSTMT
 
 ## Configuration
 
@@ -83,6 +87,10 @@ Directory and startup commands:
   - configured development token `valid-inqacc-inquirer-token` is accepted for inquiry access
   - `valid-inqacc-limited-token` is authenticated but forbidden (403) for inquiry role
   - this is a deterministic development authentication adapter for bearer-header and role-boundary behavior; it is not production OAuth2/JWT identity validation
+- INQSTMT inquiry:
+  - uses sort code, account number, and statement period (YYYYMM)
+  - calls `GET /api/v1/accounts/{sortCode}/{accountNumber}/statements/{period}`
+  - uses the same development bearer token conventions as INQACC for 401/403 behavior
 
 - INQACCCU inquiry:
 	- uses customer-number input only

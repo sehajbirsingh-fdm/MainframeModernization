@@ -1,38 +1,23 @@
 import { apiBaseUrl, inqaccDefaultToken, requestTimeoutMs } from '../config/env'
-import type { TransactionErrorResponse, TransactionInquiryRequest, TransactionInquiryResponse, TransactionInquiryResult } from '../domain/transactionTypes'
+import type { StatementErrorResponse, StatementInquiryResult, StatementRequest, StatementResponse } from '../domain/statementTypes'
 
-export async function inquireTransactions(request: TransactionInquiryRequest): Promise<TransactionInquiryResult> {
+export async function inquireStatement(request: StatementRequest): Promise<StatementInquiryResult> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), requestTimeoutMs)
 
   try {
-    const searchParams = new URLSearchParams()
-    if (request.fromDate) {
-      searchParams.set('fromDate', request.fromDate)
-    }
-    if (request.toDate) {
-      searchParams.set('toDate', request.toDate)
-    }
-    if (request.limit !== undefined) {
-      searchParams.set('limit', String(request.limit))
-    }
-    if (request.offset !== undefined) {
-      searchParams.set('offset', String(request.offset))
-    }
-
-    const query = searchParams.toString()
-    const url = `${apiBaseUrl}/api/v1/accounts/${request.sortCode}/${request.accountNumber}/transactions${query ? `?${query}` : ''}`
-
+    const url = `${apiBaseUrl}/api/v1/accounts/${request.sortCode}/${request.accountNumber}/statements/${request.period}`
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
         Authorization: `Bearer ${inqaccDefaultToken}`,
       },
     })
+
     const correlationId = response.headers.get('X-Correlation-ID') ?? ''
 
     if (response.status === 200) {
-      const data = (await response.json()) as TransactionInquiryResponse
+      const data = (await response.json()) as StatementResponse
       return {
         type: 'success',
         status: 200,
@@ -41,7 +26,7 @@ export async function inquireTransactions(request: TransactionInquiryRequest): P
       }
     }
 
-    if (response.status === 400 || response.status === 500) {
+    if (response.status === 400 || response.status === 401 || response.status === 403 || response.status === 404 || response.status === 500) {
       const error = await safeParseError(response, correlationId)
       return {
         type: 'backend-error',
@@ -63,7 +48,7 @@ export async function inquireTransactions(request: TransactionInquiryRequest): P
     }
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      return { type: 'timeout', message: 'The transaction inquiry request timed out. Please retry.' }
+      return { type: 'timeout', message: 'The statement inquiry request timed out. Please retry.' }
     }
 
     return { type: 'network-error', message: 'Network unavailable. Check connection and retry.' }
@@ -72,9 +57,9 @@ export async function inquireTransactions(request: TransactionInquiryRequest): P
   }
 }
 
-async function safeParseError(response: Response, correlationId: string): Promise<TransactionErrorResponse> {
+async function safeParseError(response: Response, correlationId: string): Promise<StatementErrorResponse> {
   try {
-    return (await response.json()) as TransactionErrorResponse
+    return (await response.json()) as StatementErrorResponse
   } catch {
     return {
       code: 'ERR-500',

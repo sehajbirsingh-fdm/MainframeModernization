@@ -5,6 +5,7 @@ import { AccountInquiryPage } from './features/accountInquiry/AccountInquiryPage
 import { CustomerCreatePage } from './features/customerCreate/CustomerCreatePage'
 import { CustomerAccountInquiryPage } from './features/customerAccountInquiry/CustomerAccountInquiryPage'
 import { TransactionInquiryPage } from './features/transactionInquiry/TransactionInquiryPage'
+import { StatementInquiryPage } from './features/statementInquiry/StatementInquiryPage'
 import { CustomerUpdatePage } from './features/customerUpdate/CustomerUpdatePage'
 
 interface SiteLink {
@@ -61,6 +62,7 @@ const featureLinks: SiteLink[] = [
   { to: '/accounts', label: 'Account Inquiry', code: 'INQACC' },
   { to: '/customer-accounts', label: 'Customer Accounts', code: 'INQACCCU' },
   { to: '/transactions', label: 'Transaction Inquiry', code: 'INQTRAN' },
+  { to: '/statements', label: 'Statement Inquiry', code: 'INQSTMT' },
 ]
 
 const infoLinks: SiteLink[] = [
@@ -170,6 +172,14 @@ function LandingPage() {
               Open Transaction Inquiry
             </NavLink>
           </article>
+
+          <article className="home-tile">
+            <h4>INQSTMT</h4>
+            <p>Retrieve monthly account statements with summary totals and period transaction entries.</p>
+            <NavLink to="/statements" className="text-link">
+              Open Statement Inquiry
+            </NavLink>
+          </article>
         </div>
       </section>
     </section>
@@ -231,6 +241,7 @@ function App() {
         <Route path="accounts" element={<AccountInquiryPage />} />
         <Route path="customer-accounts" element={<CustomerAccountInquiryPage />} />
         <Route path="transactions" element={<TransactionInquiryPage />} />
+        <Route path="statements" element={<StatementInquiryPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="license" element={<LicensePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

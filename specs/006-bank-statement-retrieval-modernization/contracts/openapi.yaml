@@ -24,7 +24,7 @@ paths:
           in: path
           required: true
           schema: { type: string, pattern: '^[0-9]{4}(0[1-9]|1[0-2])$' }
-          description: Statement period in YYYYMM.
+          description: Statement period in YYYYMM with calendar-valid month (01-12).
       responses:
         '200':
           description: Statement retrieved successfully.
@@ -76,7 +76,10 @@ components:
           properties:
             periodFrom: { type: string, pattern: '^[0-9]{8}$' }
             periodTo: { type: string, pattern: '^[0-9]{8}$' }
-            openingBalance: { type: number, format: double }
+            openingBalance:
+              type: number
+              format: double
+              description: Historical point-in-time balance at periodFrom.
             totalCredits: { type: number, format: double }
             totalDebits: { type: number, format: double }
             closingBalance: { type: number, format: double }
@@ -92,7 +95,10 @@ components:
         time: { type: string, pattern: '^[0-9]{6}$' }
         reference: { type: string, pattern: '^[0-9]{12}$' }
         type: { type: string, maxLength: 3 }
-        description: { type: string, maxLength: 40 }
+        description:
+          type: string
+          maxLength: 40
+          description: Transaction description; null source values are normalized to N/A.
         amount: { type: number, format: double }
     ErrorResponse:
       type: object
