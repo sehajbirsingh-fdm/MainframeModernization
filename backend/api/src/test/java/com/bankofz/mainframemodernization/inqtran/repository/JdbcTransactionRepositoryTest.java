@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -77,5 +78,51 @@ class JdbcTransactionRepositoryTest {
 
         assertThat(count).isEqualTo(5);
         assertThat(rows).isEmpty();
+    }
+
+    @Test
+    void shouldReturnFoundDetailForExactFivePartIdentity() {
+        Optional<TransactionRow> row = transactionRepository.findDetailByIdentity(
+                "123456",
+                "00000001",
+                "20260728",
+                "143015",
+                "000000000123"
+        );
+
+        assertThat(row).isPresent();
+        assertThat(row.get().sortCode()).isEqualTo("123456");
+        assertThat(row.get().accountNumber()).isEqualTo("00000001");
+        assertThat(row.get().date()).isEqualTo("20260728");
+        assertThat(row.get().time()).isEqualTo("143015");
+        assertThat(row.get().reference()).isEqualTo("000000000123");
+    }
+
+    @Test
+    void shouldReturnEmptyDetailForNonMatchingIdentity() {
+        Optional<TransactionRow> row = transactionRepository.findDetailByIdentity(
+                "123456",
+                "00000001",
+                "20990101",
+                "010101",
+                "999999999999"
+        );
+
+        assertThat(row).isEmpty();
+    }
+
+    @Test
+    void shouldPreserveLeadingZerosForDetailIdentity() {
+        Optional<TransactionRow> row = transactionRepository.findDetailByIdentity(
+                "123456",
+                "00000001",
+                "20260726",
+                "223000",
+                "000000000127"
+        );
+
+        assertThat(row).isPresent();
+        assertThat(row.get().accountNumber()).isEqualTo("00000001");
+        assertThat(row.get().reference()).isEqualTo("000000000127");
     }
 }

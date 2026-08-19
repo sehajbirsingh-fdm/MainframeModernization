@@ -1,6 +1,7 @@
 package com.bankofz.mainframemodernization.inqtran.service;
 
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionInquiryResponse;
+import com.bankofz.mainframemodernization.inqtran.domain.TransactionDetailInquiryResponse;
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionQueryCriteria;
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionRecord;
 import com.bankofz.mainframemodernization.inqtran.exception.TransactionRepositoryException;
@@ -71,6 +72,23 @@ public class TransactionInquiryService {
             );
         } catch (TransactionRepositoryException exception) {
             throw new TransactionTechnicalException("Transaction inquiry failed", exception);
+        }
+    }
+
+    public TransactionDetailInquiryResponse inquireDetail(
+            String sortCode,
+            String accountNumber,
+            String date,
+            String time,
+            String reference
+    ) {
+        try {
+            return transactionRepository.findDetailByIdentity(sortCode, accountNumber, date, time, reference)
+                    .map(transactionInquiryMapper::toRecord)
+                    .map(record -> new TransactionDetailInquiryResponse(true, record))
+                    .orElseGet(() -> new TransactionDetailInquiryResponse(false, null));
+        } catch (TransactionRepositoryException exception) {
+            throw new TransactionTechnicalException("Transaction detail inquiry failed", exception);
         }
     }
 

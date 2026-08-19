@@ -142,6 +142,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InqtranErrorResponse'
+  /api/v1/accounts/{sortCode}/{accountNumber}/transactions/{date}/{time}/{reference}:
+    get:
+      summary: Retrieve a transaction detail by exact five-part identity
+      operationId: getTransactionDetail
+      parameters:
+        - name: sortCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{6}$'
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{8}$'
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{8}$'
+        - name: time
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{6}$'
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{12}$'
+      responses:
+        '200':
+          description: Successful detail inquiry for found and not-found outcomes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqtrandDetailResponse'
+        '400':
+          description: Path syntax or shape validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqtranErrorResponse'
+        '401':
+          description: Authentication required
+        '403':
+          description: Caller lacks required role
+        '500':
+          description: Technical failure with ERR-500 and correlationId
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqtranErrorResponse'
   /api/v1/customers/{customerNumber}:
     put:
       summary: Update customer details (UPDCUST parity)
@@ -536,6 +594,16 @@ components:
         correlationId:
           type: string
           nullable: true
+    InqtrandDetailResponse:
+      type: object
+      required: [found, transaction]
+      properties:
+        found:
+          type: boolean
+        transaction:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/InqtranTransaction'
     UpdateCustomerRequest:
       type: object
       properties:

@@ -34,24 +34,27 @@ Repository discovery confirms H2 initialization through:
 It also reports an H2 file URL in DB2 mode. Do not change schema/data solely from this Quickstart; implementation T004 owns verification.
 
 ## Backend Startup
-The discovery report confirms Maven and a Spring Boot Maven plugin, and that the backend README contains Maven commands. **It does not record the exact startup command.**
+Verified in implementation runtime:
+1. `Set-Location backend/api`
+2. `mvn "-Djacoco.skip=true" spring-boot:run`
 
-Before implementation completion, T001/T020 must copy the exact current supported backend command from `backend/api/README.md` or the build configuration into this section and verify it by execution.
-
-**Status now:** unresolved by supplied evidence; no command invented.
+Notes:
+- This command was executed successfully and started the API on port 8080.
+- `-Djacoco.skip=true` is used in this local Java 25 environment to avoid JaCoCo instrumentation incompatibility during runtime/test startup.
 
 ## Frontend Startup
-The discovery report confirms React/Vite and `frontend/app/package.json`, but does not record an exact startup command or port.
+Verified in implementation runtime:
+1. `npm --prefix frontend/app run dev -- --host 127.0.0.1 --port 5173`
 
-T001/T020 must inspect current `package.json` scripts, record the supported command, and verify it.
-
-**Status now:** unresolved by supplied evidence; no command invented.
+This command was executed successfully and started Vite on `http://127.0.0.1:5173/`.
 
 ## Startup Order
 Expected architecture is database/bootstrap within backend, backend API, then frontend. Exact process behavior must be verified during implementation.
 
 ## Expected Runtime Ports
-Not established by the supplied discovery report. Do not assume 8080/5173. Populate after T001/T020 verification.
+Verified:
+- backend API: `http://127.0.0.1:8080`
+- frontend Vite: `http://127.0.0.1:5173`
 
 ## API Smoke Tests
 After implementation and runtime URL verification, exercise:
@@ -113,7 +116,16 @@ Do not invent usernames, passwords, bearer tokens, or response-body details not 
 - technical error only where safely reproducible.
 
 ## Automated Test Commands
-Exact Maven/npm/Playwright commands are not quoted because discovery did not record them. T020 must populate them from current `pom.xml`, `package.json`, README and test configuration after successful execution.
+Verified commands executed during implementation:
+1. Backend inqtran suite:
+	- `Set-Location backend/api`
+	- `mvn -q "-Djacoco.skip=true" "-Dtest=TransactionInquiryServiceTest,JdbcTransactionRepositoryTest,TransactionInquiryControllerTest,TransactionInquirySecurityTest,InqtranOpenApiConformanceTest" test`
+2. Frontend transaction unit/component suite:
+	- `Set-Location frontend/app`
+	- `npm test -- --run src/api/transactionInquiryClient.test.ts src/features/transactionInquiry/validation.test.ts src/features/transactionInquiry/TransactionInquiryPage.test.tsx src/features/transactionInquiry/TransactionDetailPage.test.tsx`
+3. INQTRAND E2E:
+	- `Set-Location frontend/app`
+	- `npx playwright test e2e/inqtran.e2e.spec.ts --browser=chromium`
 
 ## Expected Results
 All approved tests pass, or a scenario is explicitly FAIL/BLOCKED with evidence. Planned tests are never represented as executed passes.
@@ -121,7 +133,7 @@ All approved tests pass, or a scenario is explicitly FAIL/BLOCKED with evidence.
 ## Troubleshooting
 - If detail returns 404 for absence, behavior contradicts FR-004.
 - If amount becomes zero only because DB value is null, inspect detail mapper/repository against BR-012.
-- If frontend receives 401 while backend security is active, inspect the known frontend auth wiring gap; do not hard-code a token.
+- If frontend receives 401 while backend security is active, confirm transaction client uses the existing env-driven bearer token mechanism (`VITE_INQACC_BEARER_TOKEN`) and does not hard-code credentials.
 - If runtime OpenAPI lacks detail, reconcile T012/T013.
 - If list behavior changes, treat as regression.
 

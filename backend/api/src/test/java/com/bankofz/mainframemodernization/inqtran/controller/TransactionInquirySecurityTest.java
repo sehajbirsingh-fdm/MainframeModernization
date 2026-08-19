@@ -6,6 +6,7 @@ import com.bankofz.mainframemodernization.inqacc.security.BearerTokenAuthenticat
 import com.bankofz.mainframemodernization.inqacc.security.InqaccAccessDeniedHandler;
 import com.bankofz.mainframemodernization.inqacc.security.InqaccAuthenticationEntryPoint;
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionInquiryResponse;
+import com.bankofz.mainframemodernization.inqtran.domain.TransactionDetailInquiryResponse;
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionRecord;
 import com.bankofz.mainframemodernization.inqtran.service.TransactionInquiryService;
 import org.junit.jupiter.api.Test;
@@ -89,6 +90,48 @@ class TransactionInquirySecurityTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sortCode").value("123456"))
                 .andExpect(jsonPath("$.returnedCount").value(1))
+                .andExpect(header().exists("X-Correlation-ID"));
+    }
+
+    @Test
+    void shouldReturn401ForDetailWhenAuthorizationHeaderIsMissing() throws Exception {
+        mockMvc.perform(get("/api/v1/accounts/123456/00000001/transactions/20260728/143015/000000000123"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error.code").value("ERR-002"))
+                .andExpect(header().exists("X-Correlation-ID"));
+    }
+
+    @Test
+    void shouldReturn403ForDetailWithInsufficientRole() throws Exception {
+        mockMvc.perform(get("/api/v1/accounts/123456/00000001/transactions/20260728/143015/000000000123")
+                        .header("Authorization", "Bearer valid-inqacc-limited-token"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ERR-003"))
+                .andExpect(header().exists("X-Correlation-ID"));
+    }
+
+    @Test
+    void shouldAllowAuthorizedRequestToReachDetailEndpoint() throws Exception {
+        when(transactionInquiryService.inquireDetail(any(), any(), any(), any(), any()))
+                .thenReturn(new TransactionDetailInquiryResponse(
+                        true,
+                        new TransactionRecord(
+                                "123456-00000001-20260728-143015-000000000123",
+                                "123456",
+                                "00000001",
+                                "20260728",
+                                "143015",
+                                "000000000123",
+                                "CRD",
+                                "Payroll deposit",
+                                new BigDecimal("125.50")
+                        )
+                ));
+
+        mockMvc.perform(get("/api/v1/accounts/123456/00000001/transactions/20260728/143015/000000000123")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.found").value(true))
                 .andExpect(header().exists("X-Correlation-ID"));
     }
 }

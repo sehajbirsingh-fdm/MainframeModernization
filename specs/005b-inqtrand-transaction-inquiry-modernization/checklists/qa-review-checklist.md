@@ -98,8 +98,17 @@
 ## Evidence Register
 Record test command, build/commit, report path, screenshots/logs, defects and status.
 
+Execution evidence recorded (2026-08-19):
+- Backend tests: `mvn -q "-Djacoco.skip=true" "-Dtest=TransactionInquiryServiceTest,JdbcTransactionRepositoryTest,TransactionInquiryControllerTest,TransactionInquirySecurityTest,InqtranOpenApiConformanceTest" test`.
+- Frontend tests: `npm test -- --run src/api/transactionInquiryClient.test.ts src/features/transactionInquiry/validation.test.ts src/features/transactionInquiry/TransactionInquiryPage.test.tsx src/features/transactionInquiry/TransactionDetailPage.test.tsx`.
+- INQTRAND E2E: `npx playwright test e2e/inqtran.e2e.spec.ts --browser=chromium`.
+- AC-017 chain evidence: `AC-017 -> OPS-002 -> TS-015` tracked in `supporting/test-spec.md` and `supporting/traceability-matrix.md` with executable technical-failure coverage in backend tests.
+
 ## Final QA Decision
-**NOT EXECUTED / PENDING IMPLEMENTATION.** This is the correct pre-implementation status; no planned scenario is presented as a pass.
+**EXECUTED FOR 005B IMPLEMENTATION SCOPE (2026-08-19): PASS WITH CAVEAT.**
+
+Caveat:
+- TS-016 is explicitly schema/data dependent and must remain documented as executed-if-reproducible or constrained by current reproducibility limits.
 
 
 ## Artifact Relationships

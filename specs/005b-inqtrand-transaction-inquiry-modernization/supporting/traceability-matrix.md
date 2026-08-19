@@ -66,14 +66,46 @@ Trace source evidence and approved decisions through rules/mappings, requirement
 FR-013 / MOD-004 link existing `frontend/app/src/features/transactionInquiry/`, `transactionInquiryClient.ts`, `transactionTypes.ts`, and `App.tsx` through T014-T018 and TS-020..TS-022,TS-021a. Required list-to-detail integration is verified and INQTRANL list behavior remains unchanged. No new frontend root is authorized.
 
 ## Implementation Evidence Columns
-All implementation evidence is **Pending** because this package is pre-implementation. Populate with commit/file/test references only after executable work exists.
+Implementation evidence has been captured for 005B execution on 2026-08-19.
+
+### Implementation Evidence Snapshot (2026-08-19)
+- Backend implementation evidence:
+	- `backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/controller/TransactionInquiryController.java`
+	- `backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/service/TransactionInquiryService.java`
+	- `backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/repository/TransactionRepository.java`
+	- `backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/repository/JdbcTransactionRepository.java`
+	- `backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/domain/TransactionDetailInquiryResponse.java`
+	- `backend/api/src/main/resources/openapi.yaml`
+- Backend test evidence:
+	- `backend/api/src/test/java/com/bankofz/mainframemodernization/inqtran/service/TransactionInquiryServiceTest.java` (7 run, 0 fail)
+	- `backend/api/src/test/java/com/bankofz/mainframemodernization/inqtran/repository/JdbcTransactionRepositoryTest.java` (6 run, 0 fail)
+	- `backend/api/src/test/java/com/bankofz/mainframemodernization/inqtran/controller/TransactionInquiryControllerTest.java` (8 run, 0 fail)
+	- `backend/api/src/test/java/com/bankofz/mainframemodernization/inqtran/controller/TransactionInquirySecurityTest.java` (6 run, 0 fail)
+	- `backend/api/src/test/java/com/bankofz/mainframemodernization/inqtran/contract/InqtranOpenApiConformanceTest.java` (3 run, 0 fail)
+- Frontend implementation evidence:
+	- `frontend/app/src/api/transactionInquiryClient.ts`
+	- `frontend/app/src/domain/transactionTypes.ts`
+	- `frontend/app/src/features/transactionInquiry/TransactionInquiryPage.tsx`
+	- `frontend/app/src/features/transactionInquiry/TransactionDetailPage.tsx`
+	- `frontend/app/src/App.tsx`
+- Frontend/E2E test evidence:
+	- `frontend/app/src/api/transactionInquiryClient.test.ts` (4 run, 0 fail)
+	- `frontend/app/src/features/transactionInquiry/validation.test.ts` (2 run, 0 fail)
+	- `frontend/app/src/features/transactionInquiry/TransactionInquiryPage.test.tsx` (5 run, 0 fail)
+	- `frontend/app/src/features/transactionInquiry/TransactionDetailPage.test.tsx` (3 run, 0 fail)
+	- `frontend/app/e2e/inqtran.e2e.spec.ts` (2 run, 0 fail)
+- AC-017 chain evidence:
+	- `AC-017 -> OPS-002 -> TS-015` established in planned traceability.
+	- 500 technical-path behavior is executable in controller/security/service tests and mapped to `ERR-500` with correlation handling.
+- Remaining verification caveat:
+	- TS-016 remains data/schema dependent and should be explicitly documented as executed-if-reproducible or constrained by current schema/data.
 
 ## Coverage Summary
 - Requirements traced: all FR-001..FR-013, NFR-001..NFR-005, SEC-001..SEC-003, OPS-001..OPS-004, COMP-001..COMP-005, MOD-001..MOD-006.
 - Legacy rule identifiers represented/accounted for in traceability: BR-001..BR-012 (including legacy-only/non-exposed mechanics where applicable).
 - Mapping identifiers represented/accounted for in traceability: MM-001..MM-017 (including preserved semantics and non-exposed mappings where applicable).
 - Planned tests: TS-001..TS-022, TS-012a, TS-012b, TS-021a.
-- Implementation evidence: 0 complete / pending by design.
+- Implementation evidence: populated for executed backend/frontend/E2E scope above.
 
 ## Gaps and Exceptions
 - BR-001 COMMAREA eyecatcher normalization has no direct REST field; it is retained as legacy analysis but intentionally not exposed by MOD-001.

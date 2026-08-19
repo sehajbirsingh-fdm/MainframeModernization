@@ -10,6 +10,11 @@ export interface Transaction {
   amount: number
 }
 
+export interface TransactionDetailResponse {
+  found: boolean
+  transaction: Transaction | null
+}
+
 export interface TransactionInquiryResponse {
   sortCode: string
   accountNumber: string
@@ -37,6 +42,14 @@ export interface TransactionInquiryRequest {
   offset?: number
 }
 
+export interface TransactionDetailRequest {
+  sortCode: string
+  accountNumber: string
+  date: string
+  time: string
+  reference: string
+}
+
 export type TransactionInquiryResult =
   | {
       type: 'success'
@@ -46,7 +59,29 @@ export type TransactionInquiryResult =
     }
   | {
       type: 'backend-error'
-      status: 400 | 500
+      status: 400 | 401 | 403 | 500
+      error: TransactionErrorResponse
+      correlationId: string
+    }
+  | {
+      type: 'timeout'
+      message: string
+    }
+  | {
+      type: 'network-error'
+      message: string
+    }
+
+export type TransactionDetailResult =
+  | {
+      type: 'success'
+      status: 200
+      data: TransactionDetailResponse
+      correlationId: string
+    }
+  | {
+      type: 'backend-error'
+      status: 400 | 401 | 403 | 500
       error: TransactionErrorResponse
       correlationId: string
     }

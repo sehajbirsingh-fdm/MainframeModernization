@@ -1,6 +1,7 @@
 package com.bankofz.mainframemodernization.inqtran.controller;
 
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionInquiryResponse;
+import com.bankofz.mainframemodernization.inqtran.domain.TransactionDetailInquiryResponse;
 import com.bankofz.mainframemodernization.inqtran.service.TransactionInquiryService;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
@@ -46,6 +47,29 @@ public class TransactionInquiryController {
     ) {
         return ResponseEntity.ok(
                 transactionInquiryService.inquire(sortCode, accountNumber, fromDate, toDate, limit, offset)
+        );
+    }
+
+    @GetMapping("/{sortCode}/{accountNumber}/transactions/{date}/{time}/{reference}")
+    public ResponseEntity<TransactionDetailInquiryResponse> getTransactionDetail(
+            @PathVariable
+            @Pattern(regexp = "^[0-9]{6}$", message = "sortCode must match ^[0-9]{6}$")
+            String sortCode,
+            @PathVariable
+            @Pattern(regexp = "^[0-9]{8}$", message = "accountNumber must match ^[0-9]{8}$")
+            String accountNumber,
+            @PathVariable
+            @Pattern(regexp = "^[0-9]{8}$", message = "date must match ^[0-9]{8}$")
+            String date,
+            @PathVariable
+            @Pattern(regexp = "^[0-9]{6}$", message = "time must match ^[0-9]{6}$")
+            String time,
+            @PathVariable
+            @Pattern(regexp = "^[0-9]{12}$", message = "reference must match ^[0-9]{12}$")
+            String reference
+    ) {
+        return ResponseEntity.ok(
+                transactionInquiryService.inquireDetail(sortCode, accountNumber, date, time, reference)
         );
     }
 }

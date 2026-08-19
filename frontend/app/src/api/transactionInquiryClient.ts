@@ -1,5 +1,13 @@
-import { apiBaseUrl, requestTimeoutMs } from '../config/env'
-import type { TransactionErrorResponse, TransactionInquiryRequest, TransactionInquiryResponse, TransactionInquiryResult } from '../domain/transactionTypes'
+import { apiBaseUrl, inqaccDefaultToken, requestTimeoutMs } from '../config/env'
+import type {
+  TransactionDetailRequest,
+  TransactionDetailResponse,
+  TransactionDetailResult,
+  TransactionErrorResponse,
+  TransactionInquiryRequest,
+  TransactionInquiryResponse,
+  TransactionInquiryResult,
+} from '../domain/transactionTypes'
 
 export async function inquireTransactions(request: TransactionInquiryRequest): Promise<TransactionInquiryResult> {
   const controller = new AbortController()
@@ -23,7 +31,12 @@ export async function inquireTransactions(request: TransactionInquiryRequest): P
     const query = searchParams.toString()
     const url = `${apiBaseUrl}/api/v1/accounts/${request.sortCode}/${request.accountNumber}/transactions${query ? `?${query}` : ''}`
 
-    const response = await fetch(url, { signal: controller.signal })
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${inqaccDefaultToken}`,
+      },
+    })
     const correlationId = response.headers.get('X-Correlation-ID') ?? ''
 
     if (response.status === 200) {
@@ -36,7 +49,7 @@ export async function inquireTransactions(request: TransactionInquiryRequest): P
       }
     }
 
-    if (response.status === 400 || response.status === 500) {
+    if (response.status === 400 || response.status === 401 || response.status === 403 || response.status === 500) {
       const error = await safeParseError(response, correlationId)
       return {
         type: 'backend-error',
@@ -59,6 +72,62 @@ export async function inquireTransactions(request: TransactionInquiryRequest): P
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       return { type: 'timeout', message: 'The transaction inquiry request timed out. Please retry.' }
+    }
+
+    return { type: 'network-error', message: 'Network unavailable. Check connection and retry.' }
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+export async function inquireTransactionDetail(request: TransactionDetailRequest): Promise<TransactionDetailResult> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), requestTimeoutMs)
+
+  try {
+    const url = `${apiBaseUrl}/api/v1/accounts/${request.sortCode}/${request.accountNumber}/transactions/${request.date}/${request.time}/${request.reference}`
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${inqaccDefaultToken}`,
+      },
+    })
+    const correlationId = response.headers.get('X-Correlation-ID') ?? ''
+
+    if (response.status === 200) {
+      const data = (await response.json()) as TransactionDetailResponse
+      return {
+        type: 'success',
+        status: 200,
+        data,
+        correlationId,
+      }
+    }
+
+    if (response.status === 400 || response.status === 401 || response.status === 403 || response.status === 500) {
+      const error = await safeParseError(response, correlationId)
+      return {
+        type: 'backend-error',
+        status: response.status,
+        error,
+        correlationId,
+      }
+    }
+
+    return {
+      type: 'backend-error',
+      status: 500,
+      error: {
+        code: 'ERR-500',
+        message: 'Service unavailable due to infrastructure failure',
+        correlationId,
+      },
+      correlationId,
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return { type: 'timeout', message: 'The transaction detail request timed out. Please retry.' }
     }
 
     return { type: 'network-error', message: 'Network unavailable. Check connection and retry.' }

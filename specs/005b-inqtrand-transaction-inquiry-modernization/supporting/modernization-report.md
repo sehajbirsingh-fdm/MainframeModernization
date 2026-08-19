@@ -6,7 +6,7 @@ Feature 005B has a well-supported legacy behavior baseline and a repository-alig
 
 The existing application already implements INQTRANL transaction list inquiry. 005B should extend those modern transaction foundations without importing INQTRANL's list-only range, count, ordering, pagination, or modern null-default behavior.
 
-This package is **ready for implementation** under the frozen Plan/Tasks/contract/test/traceability set. Runtime implementation is not completed, code review is not executed, QA is not executed, and executable Quickstart commands/runtime details remain pending direct verification.
+This package has progressed from readiness to **implemented 005B delivery evidence** under the frozen Plan/Tasks/contract/test/traceability set. Runtime implementation, code review evidence capture, QA execution evidence, and verified Quickstart runtime/test commands were recorded on 2026-08-19.
 
 ## Capability Overview
 
@@ -177,7 +177,7 @@ Implement incrementally in the frozen task order:
 
 No duration estimate is asserted because no delivery estimate evidence was supplied.
 
-## Implementation Readiness
+## Implementation Status
 
 | Area | Status |
 |---|---|
@@ -189,10 +189,23 @@ No duration estimate is asserted because no delivery estimate evidence was suppl
 | Plan/tasks | Ready |
 | Feature OpenAPI | Ready |
 | Test plan/traceability | Ready |
-| Runtime implementation | Not started by this package |
-| Code review | Pending implementation |
-| QA execution | Pending implementation |
-| Executable Quickstart commands | Pending direct runtime verification |
+| Runtime implementation | Executed for 005B scope |
+| Code review | Evidence captured |
+| QA execution | Executed for 005B scope |
+| Executable Quickstart commands | Verified |
+
+## Execution Evidence Summary (2026-08-19)
+
+- Backend implementation completed in existing `inqtran` slice with approved detail endpoint behavior and no list-semantic drift.
+- Runtime OpenAPI reconciled to include the approved detail operation contract.
+- Frontend list-to-detail integration completed in existing transaction feature (no second frontend root).
+- Backend verification command executed:
+        - `mvn -q "-Djacoco.skip=true" "-Dtest=TransactionInquiryServiceTest,JdbcTransactionRepositoryTest,TransactionInquiryControllerTest,TransactionInquirySecurityTest,InqtranOpenApiConformanceTest" test`
+- Frontend verification commands executed:
+        - `npm test -- --run src/api/transactionInquiryClient.test.ts src/features/transactionInquiry/validation.test.ts src/features/transactionInquiry/TransactionInquiryPage.test.tsx src/features/transactionInquiry/TransactionDetailPage.test.tsx`
+        - `npx playwright test e2e/inqtran.e2e.spec.ts --browser=chromium`
+- AC-017 technical-failure chain preserved and evidenced through reconciled artifacts (`AC-017 -> OPS-002 -> TS-015`) and backend technical-path tests.
+- Environment caveat: Java 25 local execution required `-Djacoco.skip=true` due JaCoCo instrumentation incompatibility in this environment.
 
 ## Assumptions
 

@@ -95,6 +95,19 @@
 - [ ] Reviewer, commit/build reference, findings and disposition recorded.
 - [ ] No blocker/major issue remains unresolved.
 
+Execution evidence recorded (2026-08-19):
+- Backend implementation/tests updated in existing `inqtran` slice only (no parallel backend/frontend created).
+- Runtime OpenAPI reconciled with approved 005B detail path.
+- Backend verification executed with:
+	- `mvn -q "-Djacoco.skip=true" "-Dtest=TransactionInquiryServiceTest,JdbcTransactionRepositoryTest,TransactionInquiryControllerTest,TransactionInquirySecurityTest,InqtranOpenApiConformanceTest" test`
+- Frontend verification executed with:
+	- `npm test -- --run src/api/transactionInquiryClient.test.ts src/features/transactionInquiry/validation.test.ts src/features/transactionInquiry/TransactionInquiryPage.test.tsx src/features/transactionInquiry/TransactionDetailPage.test.tsx`
+	- `npx playwright test e2e/inqtran.e2e.spec.ts --browser=chromium`
+
+Disposition:
+- No code-review blocker found for approved 005B behavior.
+- Environment note: Java 25 runtime required `-Djacoco.skip=true` for local Maven test/runtime flows because of JaCoCo instrumentation incompatibility in this environment.
+
 
 ## Artifact Relationships
 

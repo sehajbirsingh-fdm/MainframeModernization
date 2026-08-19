@@ -29,40 +29,42 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 class InqtranOpenApiConformanceTest {
 
-    private static final String INQTRAN_PATH = "/api/v1/accounts/{sortCode}/{accountNumber}/transactions";
+    private static final String INQTRAND_PATH = "/api/v1/accounts/{sortCode}/{accountNumber}/transactions/{date}/{time}/{reference}";
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    void featureContractShouldDefineInqtranOperationStructure() throws Exception {
-        Path contractPath = Path.of("..", "..", "specs", "005-inqtran-transaction-inquiry-modernization", "contracts", "openapi.yaml");
+    void featureContractShouldDefineInqtrandOperationStructure() throws Exception {
+        Path contractPath = Path.of("..", "..", "specs", "005b-inqtrand-transaction-inquiry-modernization", "contracts", "openapi.yaml");
         Map<String, Object> openApi = parseYaml(contractPath);
 
-        assertInqtranOperationContract(openApi, "TransactionListResponse", "ErrorResponse");
+        assertInqtrandOperationContract(openApi, "TransactionDetailInquiryResponse", "ErrorResponse");
     }
 
     @Test
-    void runtimeOpenApiPublicationShouldDefineInqtranOperationStructure() throws Exception {
+    void runtimeOpenApiPublicationShouldDefineInqtrandOperationStructure() throws Exception {
         Path runtimePath = Path.of("src", "main", "resources", "openapi.yaml");
         Map<String, Object> openApi = parseYaml(runtimePath);
 
-        assertInqtranOperationContract(openApi, "InqtranTransactionListResponse", "InqtranErrorResponse");
+        assertInqtrandOperationContract(openApi, "InqtrandDetailResponse", "InqtranErrorResponse");
     }
 
     @Test
-    void successPayloadShouldExposeApprovedTransactionListFields() throws Exception {
-        mockMvc.perform(get("/api/v1/accounts/123456/00000001/transactions")
+    void successPayloadShouldExposeApprovedFoundAndNotFoundDetailOutcomes() throws Exception {
+        mockMvc.perform(get("/api/v1/accounts/123456/00000001/transactions/20260728/143015/000000000123")
                 .header("Authorization", "Bearer valid-inqacc-inquirer-token"))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("X-Correlation-ID"))
-                .andExpect(jsonPath("$.sortCode").value("123456"))
-                .andExpect(jsonPath("$.accountNumber").value("00000001"))
-                .andExpect(jsonPath("$.limit").value(50))
-                .andExpect(jsonPath("$.offset").value(0))
-                .andExpect(jsonPath("$.totalCount").isNumber())
-                .andExpect(jsonPath("$.returnedCount").isNumber())
-                .andExpect(jsonPath("$.transactions").isArray());
+                .andExpect(jsonPath("$.found").value(true))
+                .andExpect(jsonPath("$.transaction.transactionId").value("123456-00000001-20260728-143015-000000000123"));
+
+        mockMvc.perform(get("/api/v1/accounts/123456/00000001/transactions/20990101/000000/999999999999")
+                        .header("Authorization", "Bearer valid-inqacc-inquirer-token"))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("X-Correlation-ID"))
+                .andExpect(jsonPath("$.found").value(false))
+                .andExpect(jsonPath("$.transaction").isEmpty());
     }
 
     @SuppressWarnings("unchecked")
@@ -74,27 +76,26 @@ class InqtranOpenApiConformanceTest {
     }
 
     @SuppressWarnings("unchecked")
-    private void assertInqtranOperationContract(
+    private void assertInqtrandOperationContract(
             Map<String, Object> openApi,
             String successSchemaName,
             String errorSchemaName
     ) {
         Map<String, Object> paths = (Map<String, Object>) openApi.get("paths");
-        assertThat(paths).containsKey(INQTRAN_PATH);
+        assertThat(paths).containsKey(INQTRAND_PATH);
 
-        Map<String, Object> inqtranPathItem = (Map<String, Object>) paths.get(INQTRAN_PATH);
-        assertThat(inqtranPathItem).containsKey("get");
+        Map<String, Object> inqtrandPathItem = (Map<String, Object>) paths.get(INQTRAND_PATH);
+        assertThat(inqtrandPathItem).containsKey("get");
 
-        Map<String, Object> get = (Map<String, Object>) inqtranPathItem.get("get");
+        Map<String, Object> get = (Map<String, Object>) inqtrandPathItem.get("get");
         List<Map<String, Object>> parameters = (List<Map<String, Object>>) get.get("parameters");
-        assertThat(parameters).hasSize(6);
+        assertThat(parameters).hasSize(5);
 
         assertParameter(parameters, "sortCode", "path", true, "string", "^[0-9]{6}$", null, null);
         assertParameter(parameters, "accountNumber", "path", true, "string", "^[0-9]{8}$", null, null);
-        assertParameter(parameters, "fromDate", "query", false, "string", "^[0-9]{8}$", null, null);
-        assertParameter(parameters, "toDate", "query", false, "string", "^[0-9]{8}$", null, null);
-        assertParameter(parameters, "limit", "query", false, "integer", null, 0, 50);
-        assertParameter(parameters, "offset", "query", false, "integer", null, 0, 0);
+        assertParameter(parameters, "date", "path", true, "string", "^[0-9]{8}$", null, null);
+        assertParameter(parameters, "time", "path", true, "string", "^[0-9]{6}$", null, null);
+        assertParameter(parameters, "reference", "path", true, "string", "^[0-9]{12}$", null, null);
 
         Map<String, Object> responses = (Map<String, Object>) get.get("responses");
         assertThat(responses).containsKeys("200", "400", "500");
@@ -108,26 +109,10 @@ class InqtranOpenApiConformanceTest {
 
         Map<String, Object> successSchema = (Map<String, Object>) schemas.get(successSchemaName);
         List<String> required = (List<String>) successSchema.get("required");
-        assertThat(required).contains(
-                "sortCode",
-                "accountNumber",
-                "limit",
-                "offset",
-                "totalCount",
-                "returnedCount",
-                "transactions"
-        );
+        assertThat(required).contains("found", "transaction");
 
         Map<String, Object> properties = (Map<String, Object>) successSchema.get("properties");
-        assertThat(properties).containsKeys(
-                "fromDate",
-                "toDate",
-                "limit",
-                "offset",
-                "totalCount",
-                "returnedCount",
-                "transactions"
-        );
+        assertThat(properties).containsKeys("found", "transaction");
     }
 
     @SuppressWarnings("unchecked")
