@@ -47,7 +47,7 @@ Trace source evidence and approved decisions through rules/mappings, requirement
 | SEC-002 | Repository role evidence | — | Security | Security Strategy | T011 | bearerAuth | security scenarios | Pending |
 | SEC-003 | Repository auth gap | — | US-004 | Frontend/Security | T001,T014 | bearerAuth | TS-020,TS-022 | Pending |
 | OPS-001 | Repository validation convention | — | Error Responses | Error Strategy | T009,T010 | 400/ErrorResponse | TS-006..TS-012 | Pending |
-| OPS-002 | BR-008; repository ERR-500 | — | BS-005 | Error Strategy | T007,T010 | 500/ErrorResponse | TS-015,TS-016 | Pending |
+| OPS-002 | BR-008; repository ERR-500 | — | BS-005; AC-017 | Error Strategy | T007,T010 | 500/ErrorResponse | TS-015,TS-016 | Pending |
 | OPS-003 | Repository OpenAPI ambiguity | — | AC-015 | Runtime OpenAPI | T012,T013 | entire contract | TS-019 | Pending |
 | OPS-004 | Repository H2 convention | — | Scope | Persistence Strategy | T004,T005 | — | repository tests | Pending |
 | COMP-001 | BR-002 | MM-001..MM-005 | BS-001/BS-002 | Persistence | T005 | path | TS-001,TS-017 | Pending |

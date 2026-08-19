@@ -42,6 +42,7 @@
 - [ ] Structural validation is exact and string-based: `sortCode` 6 digits, `accountNumber` 8 digits, `date` 8 digits, `time` 6 digits, `reference` 12 digits; leading zeroes preserved; no numeric coercion.
 - [ ] Contract invariants are preserved: found -> HTTP 200 + `found=true` + complete detail; successful absence -> HTTP 200 + `found=false` + `transaction=null`; malformed structural input -> HTTP 400 + `ERR-001`; unauthenticated -> 401; authenticated without role -> 403; technical/persistence failure -> HTTP 500 + `ERR-500` + correlationId.
 - [ ] 404 is not used for normal absence.
+- [ ] No test-only production error endpoint (for example `/force500`, `/test-error`, `/error`, `/simulate-failure`) is introduced; technical-failure verification uses the approved detail endpoint and repository/persistence failure simulation/substitution.
 
 ## Frontend
 - [ ] Existing transaction client/types/feature structure reused.

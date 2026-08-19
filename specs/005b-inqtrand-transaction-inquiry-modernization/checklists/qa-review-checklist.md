@@ -52,8 +52,10 @@
 - [ ] No 404/500 solely for absence.
 
 ## Technical Failures
+- [ ] Traceability chain `AC-017 -> OPS-002 -> TS-015` is explicitly evidenced.
 - [ ] TS-015 executed.
 - [ ] TS-016 executed where schema/data can reproduce it, or limitation documented.
+- [ ] TS-015 verifies an authenticated and authorized caller, structurally valid five-part identity, invocation of the approved detail endpoint, actual or appropriately simulated repository/persistence technical failure, and HTTP 500 + `ERR-500` + correlationId.
 
 ## Persistence
 - [ ] TS-017 and TS-018 executed.

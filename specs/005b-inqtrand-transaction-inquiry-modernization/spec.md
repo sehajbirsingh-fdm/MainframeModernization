@@ -15,24 +15,24 @@ Provide an implementation-ready, observable behavior contract for transaction de
 ## Scope
 
 ### In Scope
-- exact five-part transaction lookup;
-- found and not-found result presentation;
-- transaction detail fields and derived transactionId;
-- fixed-width path input;
-- REST/JSON contract;
-- existing account inquiry security/correlation;
-- minimal existing-frontend integration;
-- tests and OpenAPI alignment.
+- This feature includes exact transaction-detail lookup by the complete five-part identity.
+- This feature includes presentation of both found and not-found outcomes.
+- This feature includes the approved transaction detail fields and derived `transactionId` representation.
+- This feature includes fixed-width path input handling at the transport boundary.
+- This feature includes the approved REST/JSON contract for transaction-detail inquiry.
+- This feature includes existing account inquiry security and correlation behavior.
+- This feature includes minimal integration with the existing frontend transaction flow.
+- This feature includes alignment of tests and OpenAPI with the approved feature contract.
 
 ### Out of Scope
-- transaction list modernization;
-- date-range filtering;
-- pagination/limit/offset/count/order;
-- transaction create/update/delete;
-- type-code management;
-- hidden deletion/eyecatcher filtering;
-- production DB2 connectivity;
-- unrelated account/customer capability changes.
+- This feature excludes transaction list modernization.
+- This feature excludes date-range filtering behavior.
+- This feature excludes pagination, limit, offset, count, and ordering behavior.
+- This feature excludes transaction create, update, and delete operations.
+- This feature excludes transaction type-code management.
+- This feature excludes hidden deletion or eyecatcher filtering behavior.
+- This feature excludes production DB2 connectivity.
+- This feature excludes unrelated account or customer capability changes.
 
 ## Actors
 
@@ -121,15 +121,15 @@ No request in this feature mutates transaction state.
 ## Business Rules
 
 This specification applies the relevant confirmed legacy behavioral rules while keeping modernization transport, architecture, error, and security mechanisms under their approved modern authorities. The transport-visible rules most directly expressed here are:
-- BR-002 exact five-part lookup;
-- BR-003 date reshaping only;
-- BR-004 found success;
-- BR-005 not-found success;
-- BR-006 composite ID;
-- BR-009 read-only;
-- BR-010 no list semantics;
-- BR-011 no hidden record filter;
-- BR-012 no unsupported null default.
+- BR-002: The transaction-detail lookup uses exact equality on all five identity components.
+- BR-003: Date handling is limited to approved reshaping/representation behavior and does not introduce new semantic calendar validation.
+- BR-004: When a matching transaction is retrieved, the inquiry returns a successful found response.
+- BR-005: When no matching transaction is retrieved, the inquiry returns a successful not-found response rather than an error.
+- BR-006: The `transactionId` is the exact composite of the five identity components using the approved hyphenated format.
+- BR-009: Transaction-detail inquiry behavior is strictly read-only and performs no mutation.
+- BR-010: Transaction-detail inquiry does not apply list-query semantics such as range, ordering, pagination, or count behavior.
+- BR-011: The lookup does not apply hidden-record filtering predicates such as eyecatcher or logical-delete metadata filters.
+- BR-012: Matched nullable detail values are not silently defaulted using unsupported list-style null substitution behavior.
 
 ## Validation Rules
 
@@ -243,34 +243,35 @@ An 8-digit date or 6-digit time with unusual calendar/clock values is not reject
 
 ## Feature Invariants
 
-- INV-001: exactly five identity components.
-- INV-002: found=false implies transaction=null.
-- INV-003: found=true implies a complete transaction detail result.
-- INV-004: transactionId reflects the returned five identity fields exactly.
-- INV-005: no list query semantics.
-- INV-006: operation is read-only.
-- INV-007: absence is successful.
-- INV-008: technical failure is not absence.
-- INV-009: modernization transport decisions are not mislabeled as legacy behavior.
+- INV-001: The transaction-detail identity always consists of exactly five components.
+- INV-002: Whenever `found=false`, the response `transaction` value is `null`.
+- INV-003: Whenever `found=true`, the response contains a complete approved transaction detail result.
+- INV-004: The `transactionId` always reflects the returned five identity fields exactly in approved composition order.
+- INV-005: The operation never introduces list-query semantics.
+- INV-006: The operation remains read-only for all requests.
+- INV-007: Transaction absence is always represented as a successful inquiry outcome.
+- INV-008: Technical failure is always represented distinctly from transaction absence.
+- INV-009: Approved modernization transport decisions are not represented as confirmed legacy behavior.
 
 ## Acceptance Criteria
 
-- **AC-001 / FR-001:** request cannot omit any key component.
-- **AC-002 / FR-002:** repository lookup constrains all five key columns and contains no list count/order/pagination behavior.
-- **AC-003 / FR-003:** seeded matching transaction produces 200, found true, one detail.
-- **AC-004 / FR-004:** non-matching complete key produces 200, found false, null transaction.
-- **AC-005 / FR-005:** found response contains all nine approved detail fields.
-- **AC-006 / FR-006:** ID equals exact hyphenated five-part composition.
-- **AC-007 / FR-007:** transport validation remains structural: `date` is exactly 8 digits and `time` is exactly 6 digits; no invented Gregorian-calendar or HHMMSS semantic-range validation, no account-existence validation, and no transaction-reference business validation.
-- **AC-008 / FR-008:** no transaction mutation path exists.
-- **AC-009 / FR-009:** SQL adds no eyecatcher/delete/type predicate.
-- **AC-010 / FR-010:** matched nullable-detail handling is not silently defaulted to list behavior.
-- **AC-011 / FR-011:** leading-zero keys round-trip correctly.
-- **AC-012 / FR-012:** feature contract exposes the approved GET path.
-- **AC-013 / FR-013:** existing transaction frontend supports required list-row to detail navigation using the five identity components, invokes the existing transaction API client and approved detail endpoint, and renders found-detail or successful-absence states.
-- **AC-014 / SEC-001..SEC-003:** endpoint demonstrates 401/403/authorized behavior through existing security.
-- **AC-015 / OPS-003:** runtime OpenAPI includes a contract-equivalent 005B path and schemas.
-- **AC-016 / NFR-004:** required backend/frontend/contract/E2E tests pass or are explicitly blocked with evidence.
+- **AC-001 / FR-001:** Given a caller prepares a transaction-detail request, when the caller omits any one of the five key path components, then the request is not accepted as a valid feature request because all five components are mandatory.
+- **AC-002 / FR-002:** Given a structurally valid five-part transaction identity, when the backend executes the detail lookup, then the repository query constrains all five key columns by equality and contains no list count, order, range, pagination, limit, or offset behavior.
+- **AC-003 / FR-003:** Given a seeded transaction that exactly matches all five identity components, when the caller invokes the detail endpoint, then the response is HTTP 200 with `found=true` and one transaction detail object.
+- **AC-004 / FR-004:** Given a structurally valid five-part identity that matches no stored transaction, when the caller invokes the detail endpoint, then the response is HTTP 200 with `found=false` and `transaction=null`.
+- **AC-005 / FR-005:** Given a successful found transaction-detail response, when the response payload is inspected, then the transaction object contains all nine approved detail fields.
+- **AC-006 / FR-006:** Given a successful found transaction-detail response, when `transactionId` is evaluated, then it equals the exact hyphenated composition of the returned five identity components.
+- **AC-007 / FR-007:** Given a detail request, when transport validation is applied, then validation remains structural only: `date` must be exactly 8 digits and `time` must be exactly 6 digits, with no invented Gregorian-calendar or HHMMSS semantic-range validation, no account-existence validation, and no transaction-reference business validation.
+- **AC-008 / FR-008:** Given any transaction-detail request, when the request is processed, then no transaction mutation path is executed.
+- **AC-009 / FR-009:** Given a structurally valid five-part identity, when the repository lookup is generated, then SQL adds no eyecatcher, logical-delete, or transaction-type predicate.
+- **AC-010 / FR-010:** Given a matched row with nullable detail values, when the response is mapped, then nullable-detail handling is not silently defaulted to list behavior.
+- **AC-011 / FR-011:** Given a request that includes leading zeros in identity components, when the request is processed and echoed through detail behavior, then leading-zero key values round-trip without numeric coercion.
+- **AC-012 / FR-012:** Given the 005B feature contract, when the transaction-detail operation is published, then it exposes the approved GET path `GET /api/v1/accounts/{sortCode}/{accountNumber}/transactions/{date}/{time}/{reference}`.
+- **AC-013 / FR-013:** Given a user selects a transaction row in the existing transaction frontend flow, when detail navigation is performed, then the frontend uses the five identity components, invokes the existing transaction API client and approved detail endpoint, and renders either found-detail or successful-absence state.
+- **AC-014 / SEC-001..SEC-003:** Given the approved endpoint security configuration, when unauthenticated, unauthorized, and authorized requests are exercised, then the endpoint demonstrates existing 401, 403, and authorized-access behavior.
+- **AC-015 / OPS-003:** Given the runtime API description, when OpenAPI is produced for 005B, then it includes a contract-equivalent detail path and schemas.
+- **AC-016 / NFR-004:** Given the required backend, frontend, contract, and E2E verification scope, when the test suite is executed, then all required tests pass or are explicitly blocked with evidence.
+- **AC-017 / OPS-002:** Given an authenticated and authorized caller supplies a structurally valid five-part transaction identity and the transaction persistence operation encounters an actual technical failure, when the caller invokes `GET /api/v1/accounts/{sortCode}/{accountNumber}/transactions/{date}/{time}/{reference}`, then the system returns HTTP 500 using the existing structured technical-error response with `ERR-500` and a `correlationId`.
 
 ## Non-Goals
 

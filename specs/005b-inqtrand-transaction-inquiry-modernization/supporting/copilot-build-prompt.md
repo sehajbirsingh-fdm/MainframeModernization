@@ -142,6 +142,8 @@ Implement/execute approved scenarios TS-001..TS-022, TS-012a, TS-012b, and TS-02
 - INQTRANL regression.
 - E2E evidence exists or explicit BLOCKED status is recorded with evidence.
 
+Do not add, require, or document a test-only production endpoint (for example `/force500`, `/test-error`, `/error`, `/simulate-failure`) to exercise HTTP 500 behavior. Verify technical failure through the existing approved detail endpoint using appropriate repository/persistence failure simulation or substitution.
+
 If E2E is blocked by existing auth configuration, report BLOCKED with evidence instead of faking success.
 
 ## Stop Conditions

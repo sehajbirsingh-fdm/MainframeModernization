@@ -50,7 +50,7 @@ Do not invent production DB2 data assumptions.
 - Assert absence is not 404 or 500.
 
 ## Technical Failure Scenarios
-- **TS-015:** repository SQL exception → 500 ERR-500 with correlationId.
+- **TS-015:** given an authenticated and authorized caller supplies a structurally valid five-part transaction identity, when `GET /api/v1/accounts/{sortCode}/{accountNumber}/transactions/{date}/{time}/{reference}` is invoked and the persistence/repository operation encounters an actual or appropriately simulated technical failure, then the response is HTTP 500 with `ERR-500` and `correlationId`.
 - **TS-016:** matched row with unsupported nullable selected data, where reproducible → technical path, not fabricated zero/blank result.
 
 ## Persistence Scenarios
@@ -90,7 +90,7 @@ Existing INQTRANL list tests and E2E behavior must remain unchanged, including l
 | TS-006..TS-011 | FR-001, FR-011, OPS-001 |
 | TS-012, TS-012a, TS-012b, TS-013 | FR-007, FR-011 |
 | TS-014 | FR-005, MM-012, MM-013 |
-| TS-015..TS-016 | FR-010, OPS-002, BR-008, BR-012 |
+| TS-015..TS-016 | FR-010, OPS-002, AC-017, BR-008, BR-012 |
 | TS-017..TS-018 | FR-002, FR-009, BR-010, BR-011 |
 | TS-019 | FR-012, OPS-003, MOD-006 |
 | TS-020..TS-022, TS-021a | FR-013, SEC-003, MOD-004 |
