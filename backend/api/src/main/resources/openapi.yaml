@@ -142,6 +142,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/InqtranErrorResponse'
+  /api/v1/accounts/{sortCode}/{accountNumber}/statements/{period}:
+    get:
+      summary: Retrieve an account statement for a statement month
+      operationId: getAccountStatement
+      parameters:
+        - name: sortCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{6}$'
+        - name: accountNumber
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{8}$'
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{4}(0[1-9]|1[0-2])$'
+      responses:
+        '200':
+          description: Statement retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqstmtAccountStatementResponse'
+        '400':
+          description: Structural validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqstmtErrorResponse'
+        '401':
+          description: Unauthenticated request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqstmtErrorResponse'
+        '403':
+          description: Authenticated but unauthorized request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqstmtErrorResponse'
+        '404':
+          description: Account not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqstmtErrorResponse'
+        '500':
+          description: Technical retrieval failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqstmtErrorResponse'
   /api/v1/accounts/{sortCode}/{accountNumber}/transactions/{date}/{time}/{reference}:
     get:
       summary: Retrieve a transaction detail by exact five-part identity
@@ -192,8 +252,16 @@ paths:
                 $ref: '#/components/schemas/InqtranErrorResponse'
         '401':
           description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqtranErrorResponse'
         '403':
           description: Caller lacks required role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InqtranErrorResponse'
         '500':
           description: Technical failure with ERR-500 and correlationId
           content:
@@ -603,6 +671,83 @@ components:
           nullable: true
           allOf:
             - $ref: '#/components/schemas/InqtranTransaction'
+    InqstmtAccountStatementResponse:
+      type: object
+      required: [sortCode, accountNumber, period, summary, entries]
+      properties:
+        sortCode:
+          type: string
+          pattern: '^[0-9]{6}$'
+        accountNumber:
+          type: string
+          pattern: '^[0-9]{8}$'
+        period:
+          type: string
+          pattern: '^[0-9]{4}(0[1-9]|1[0-2])$'
+        summary:
+          $ref: '#/components/schemas/InqstmtStatementSummary'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/InqstmtStatementEntry'
+    InqstmtStatementSummary:
+      type: object
+      required: [periodFrom, periodTo, openingBalance, totalCredits, totalDebits, closingBalance, transactionCount]
+      properties:
+        periodFrom:
+          type: string
+          pattern: '^[0-9]{8}$'
+        periodTo:
+          type: string
+          pattern: '^[0-9]{8}$'
+        openingBalance:
+          type: number
+          format: double
+        totalCredits:
+          type: number
+          format: double
+        totalDebits:
+          type: number
+          format: double
+        closingBalance:
+          type: number
+          format: double
+        transactionCount:
+          type: integer
+          minimum: 0
+    InqstmtStatementEntry:
+      type: object
+      required: [date, time, reference, type, description, amount]
+      properties:
+        date:
+          type: string
+          pattern: '^[0-9]{8}$'
+        time:
+          type: string
+          pattern: '^[0-9]{6}$'
+        reference:
+          type: string
+          pattern: '^[0-9]{12}$'
+        type:
+          type: string
+          maxLength: 3
+        description:
+          type: string
+          maxLength: 40
+        amount:
+          type: number
+          format: double
+    InqstmtErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        correlationId:
+          type: string
+          nullable: true
     UpdateCustomerRequest:
       type: object
       properties:

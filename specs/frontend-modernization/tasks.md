@@ -47,6 +47,12 @@ Format: [ID] [P?] Description
 - [x] T124 Use Title dropdown in Create Customer with default value `Mr`.
 - [x] T125 Update spec/supporting docs for active-state and compact create-form behavior.
 
+## Phase 7: Statement Frontend Coverage
+
+- [x] T126 Add Statement Inquiry route `/statements` and navigation entry.
+- [x] T127 Implement statement inquiry form, validation, and API wiring.
+- [x] T128 Add statement frontend unit tests (client, validation, page).
+
 ## Exit Criteria
 
 - [x] QG-101 Website shell visible on all routes.
