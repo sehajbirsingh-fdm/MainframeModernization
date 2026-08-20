@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Repository
@@ -106,6 +107,60 @@ public class JdbcTransactionRepository implements TransactionRepository {
         }
     }
 
+    @Override
+    public Optional<TransactionRow> findDetailByIdentity(
+            String sortCode,
+            String accountNumber,
+            String date,
+            String time,
+            String reference
+    ) {
+        String sql = """
+                SELECT
+                    PROCTRAN_SORTCODE,
+                    PROCTRAN_NUMBER,
+                    PROCTRAN_DATE,
+                    PROCTRAN_TIME,
+                    PROCTRAN_REF,
+                    PROCTRAN_TYPE,
+                    PROCTRAN_DESC,
+                    PROCTRAN_AMOUNT
+                FROM %s
+                WHERE PROCTRAN_SORTCODE = ?
+                  AND PROCTRAN_NUMBER = ?
+                  AND PROCTRAN_DATE = ?
+                  AND PROCTRAN_TIME = ?
+                  AND PROCTRAN_REF = ?
+                """.formatted(tableReference);
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, sortCode);
+            statement.setString(2, accountNumber);
+            statement.setString(3, date);
+            statement.setString(4, time);
+            statement.setString(5, reference);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    return Optional.empty();
+                }
+
+                TransactionRow firstRow = mapDetailRow(resultSet);
+                if (resultSet.next()) {
+                    throw new TransactionRepositoryException(
+                            "Duplicate physical matches detected for transaction detail identity",
+                            null
+                    );
+                }
+
+                return Optional.of(firstRow);
+            }
+        } catch (SQLException exception) {
+            throw new TransactionRepositoryException("Failed transaction-detail lookup", exception);
+        }
+    }
+
     private void bindCommonCriteria(PreparedStatement statement, TransactionQueryCriteria criteria) throws SQLException {
         statement.setString(1, criteria.sortCode());
         statement.setString(2, criteria.accountNumber());
@@ -121,6 +176,31 @@ public class JdbcTransactionRepository implements TransactionRepository {
 
         String safeSchema = validateIdentifier(schema, "app.inqtran.db.schema");
         return safeSchema + "." + safeTableName;
+    }
+
+    private TransactionRow mapDetailRow(ResultSet resultSet) throws SQLException {
+        BigDecimal amount = resultSet.getBigDecimal("PROCTRAN_AMOUNT");
+        if (amount == null) {
+            throw new TransactionRepositoryException("Matched detail row contains null PROCTRAN_AMOUNT", null);
+        }
+
+        return new TransactionRow(
+                requireColumn(resultSet.getString("PROCTRAN_SORTCODE"), "PROCTRAN_SORTCODE"),
+                requireColumn(resultSet.getString("PROCTRAN_NUMBER"), "PROCTRAN_NUMBER"),
+                requireColumn(resultSet.getString("PROCTRAN_DATE"), "PROCTRAN_DATE"),
+                requireColumn(resultSet.getString("PROCTRAN_TIME"), "PROCTRAN_TIME"),
+                requireColumn(resultSet.getString("PROCTRAN_REF"), "PROCTRAN_REF"),
+                requireColumn(resultSet.getString("PROCTRAN_TYPE"), "PROCTRAN_TYPE"),
+                requireColumn(resultSet.getString("PROCTRAN_DESC"), "PROCTRAN_DESC"),
+                amount
+        );
+    }
+
+    private String requireColumn(String value, String column) {
+        if (value == null) {
+            throw new TransactionRepositoryException("Matched detail row contains null " + column, null);
+        }
+        return value.stripTrailing();
     }
 
     private String validateIdentifier(String value, String fieldName) {

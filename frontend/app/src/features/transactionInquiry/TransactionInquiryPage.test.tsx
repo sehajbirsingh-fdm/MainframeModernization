@@ -91,6 +91,8 @@ describe('TransactionInquiryPage', () => {
     expect(screen.getByText('Result Metadata')).toBeInTheDocument()
     expect(screen.getByText('Transactions')).toBeInTheDocument()
     expect(screen.getByText('123456-00000001-20260728-143015-000000000123')).toBeInTheDocument()
+    const detailLink = screen.getByRole('link', { name: 'View Detail' })
+    expect(detailLink).toHaveAttribute('href', '/transactions/123456/00000001/20260728/143015/000000000123')
   })
 
   it('renders empty-success state', async () => {

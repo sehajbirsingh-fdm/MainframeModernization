@@ -6,6 +6,7 @@ import { CustomerCreatePage } from './features/customerCreate/CustomerCreatePage
 import { CustomerAccountInquiryPage } from './features/customerAccountInquiry/CustomerAccountInquiryPage'
 import { TransactionInquiryPage } from './features/transactionInquiry/TransactionInquiryPage'
 import { StatementInquiryPage } from './features/statementInquiry/StatementInquiryPage'
+import { TransactionDetailPage } from './features/transactionInquiry/TransactionDetailPage'
 import { CustomerUpdatePage } from './features/customerUpdate/CustomerUpdatePage'
 
 interface SiteLink {
@@ -242,6 +243,7 @@ function App() {
         <Route path="customer-accounts" element={<CustomerAccountInquiryPage />} />
         <Route path="transactions" element={<TransactionInquiryPage />} />
         <Route path="statements" element={<StatementInquiryPage />} />
+        <Route path="transactions/:sortCode/:accountNumber/:date/:time/:reference" element={<TransactionDetailPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="license" element={<LicensePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
