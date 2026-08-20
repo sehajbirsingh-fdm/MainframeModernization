@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('INQTRAN integrated inquiry flow', () => {
-  test('renders populated transaction inquiry result', async ({ page }) => {
+  test('renders populated transaction inquiry result and list-to-detail navigation', async ({ page }) => {
     await page.goto('http://localhost:5173/transactions')
 
     await page.getByLabel('Sort Code').fill('123456')
@@ -11,6 +11,12 @@ test.describe('INQTRAN integrated inquiry flow', () => {
     await expect(page.getByText('Transaction inquiry successful.')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Result Metadata' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Transactions' })).toBeVisible()
+    await expect(page.getByText('123456-00000001-20260728-143015-000000000123')).toBeVisible()
+
+    await page.getByRole('link', { name: 'View Detail' }).first().click()
+
+    await expect(page.getByRole('heading', { name: 'Transaction Detail Inquiry' })).toBeVisible()
+    await expect(page.getByText('Transaction detail retrieved successfully.')).toBeVisible()
     await expect(page.getByText('123456-00000001-20260728-143015-000000000123')).toBeVisible()
   })
 

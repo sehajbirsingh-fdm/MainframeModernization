@@ -1,5 +1,6 @@
 import { type FormEvent, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { inquireTransactions } from '../../api/transactionInquiryClient'
 import type { TransactionInquiryRequest, TransactionInquiryResponse } from '../../domain/transactionTypes'
 import { type TransactionInquiryValidationErrors, validateTransactionInquiryInput } from './validation'
@@ -293,6 +294,7 @@ export function TransactionInquiryPage() {
               <table className="accounts-table">
                 <thead>
                   <tr>
+                    <th>Action</th>
                     <th>Transaction ID</th>
                     <th>Sort Code</th>
                     <th>Account Number</th>
@@ -307,6 +309,14 @@ export function TransactionInquiryPage() {
                 <tbody>
                   {result.transactions.map((row) => (
                     <tr key={transactionKey(row)}>
+                      <td>
+                        <Link
+                          to={`/transactions/${row.sortCode}/${row.accountNumber}/${row.date}/${row.time}/${row.reference}`}
+                          className="text-link"
+                        >
+                          View Detail
+                        </Link>
+                      </td>
                       <td>{row.transactionId}</td>
                       <td>{row.sortCode}</td>
                       <td>{row.accountNumber}</td>

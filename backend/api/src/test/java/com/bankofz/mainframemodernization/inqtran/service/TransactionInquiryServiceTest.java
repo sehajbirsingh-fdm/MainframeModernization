@@ -1,6 +1,7 @@
 package com.bankofz.mainframemodernization.inqtran.service;
 
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionInquiryResponse;
+import com.bankofz.mainframemodernization.inqtran.domain.TransactionDetailInquiryResponse;
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionQueryCriteria;
 import com.bankofz.mainframemodernization.inqtran.exception.TransactionRepositoryException;
 import com.bankofz.mainframemodernization.inqtran.exception.TransactionTechnicalException;
@@ -13,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -102,4 +104,65 @@ class TransactionInquiryServiceTest {
                 .isInstanceOf(TransactionTechnicalException.class)
                 .hasMessage("Transaction inquiry failed");
     }
+
+            @Test
+            void shouldMapFoundDetailResponse() {
+            when(transactionRepository.findDetailByIdentity("123456", "00000001", "20260728", "143015", "000000000123"))
+                .thenReturn(Optional.of(new TransactionRow(
+                    "123456",
+                    "00000001",
+                    "20260728",
+                    "143015",
+                    "000000000123",
+                    "CRD",
+                    "Payroll deposit",
+                    new BigDecimal("125.50")
+                )));
+
+            TransactionDetailInquiryResponse response = transactionInquiryService.inquireDetail(
+                "123456",
+                "00000001",
+                "20260728",
+                "143015",
+                "000000000123"
+            );
+
+            assertThat(response.found()).isTrue();
+            assertThat(response.transaction()).isNotNull();
+            assertThat(response.transaction().transactionId())
+                .isEqualTo("123456-00000001-20260728-143015-000000000123");
+            }
+
+            @Test
+            void shouldMapNotFoundDetailResponseAsSuccessfulAbsence() {
+            when(transactionRepository.findDetailByIdentity("123456", "00000001", "20990101", "120000", "000000009999"))
+                .thenReturn(Optional.empty());
+
+            TransactionDetailInquiryResponse response = transactionInquiryService.inquireDetail(
+                "123456",
+                "00000001",
+                "20990101",
+                "120000",
+                "000000009999"
+            );
+
+            assertThat(response.found()).isFalse();
+            assertThat(response.transaction()).isNull();
+            }
+
+            @Test
+            void shouldMapDetailRepositoryFailureAsTechnicalFailure() {
+            when(transactionRepository.findDetailByIdentity("123456", "00000001", "20260728", "143015", "000000000123"))
+                .thenThrow(new TransactionRepositoryException("failed", new RuntimeException("db down")));
+
+            assertThatThrownBy(() -> transactionInquiryService.inquireDetail(
+                "123456",
+                "00000001",
+                "20260728",
+                "143015",
+                "000000000123"
+            ))
+                .isInstanceOf(TransactionTechnicalException.class)
+                .hasMessage("Transaction detail inquiry failed");
+            }
 }
