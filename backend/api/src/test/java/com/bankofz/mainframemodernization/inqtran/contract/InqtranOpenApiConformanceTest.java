@@ -39,7 +39,7 @@ class InqtranOpenApiConformanceTest {
         Path contractPath = Path.of("..", "..", "specs", "005b-inqtrand-transaction-inquiry-modernization", "contracts", "openapi.yaml");
         Map<String, Object> openApi = parseYaml(contractPath);
 
-        assertInqtrandOperationContract(openApi, "TransactionDetailInquiryResponse", "ErrorResponse");
+        assertInqtrandOperationContract(openApi, "TransactionDetailInquiryResponse", "TransactionDetail", "ErrorResponse");
     }
 
     @Test
@@ -47,7 +47,7 @@ class InqtranOpenApiConformanceTest {
         Path runtimePath = Path.of("src", "main", "resources", "openapi.yaml");
         Map<String, Object> openApi = parseYaml(runtimePath);
 
-        assertInqtrandOperationContract(openApi, "InqtrandDetailResponse", "InqtranErrorResponse");
+        assertInqtrandOperationContract(openApi, "InqtrandDetailResponse", "InqtranTransaction", "InqtranErrorResponse");
     }
 
     @Test
@@ -79,6 +79,7 @@ class InqtranOpenApiConformanceTest {
     private void assertInqtrandOperationContract(
             Map<String, Object> openApi,
             String successSchemaName,
+            String transactionSchemaName,
             String errorSchemaName
     ) {
         Map<String, Object> paths = (Map<String, Object>) openApi.get("paths");
@@ -98,7 +99,7 @@ class InqtranOpenApiConformanceTest {
         assertParameter(parameters, "reference", "path", true, "string", "^[0-9]{12}$", null, null);
 
         Map<String, Object> responses = (Map<String, Object>) get.get("responses");
-        assertThat(responses).containsKeys("200", "400", "500");
+        assertThat(responses).containsKeys("200", "400", "401", "403", "500");
 
         assertResponseSchemaRef(responses, "200", successSchemaName);
         assertResponseSchemaRef(responses, "400", errorSchemaName);
@@ -113,6 +114,29 @@ class InqtranOpenApiConformanceTest {
 
         Map<String, Object> properties = (Map<String, Object>) successSchema.get("properties");
         assertThat(properties).containsKeys("found", "transaction");
+
+        Map<String, Object> transactionSchema = (Map<String, Object>) schemas.get(transactionSchemaName);
+        assertThat(transactionSchema).isNotNull();
+        Map<String, Object> transactionProperties = (Map<String, Object>) transactionSchema.get("properties");
+        assertThat(transactionProperties).containsKeys("transactionId", "reference");
+
+        Map<String, Object> transactionIdProperty = (Map<String, Object>) transactionProperties.get("transactionId");
+        assertThat(transactionIdProperty.get("pattern"))
+            .isEqualTo("^[0-9]{6}-[0-9]{8}-[0-9]{8}-[0-9]{6}-[0-9]{12}$");
+
+        Map<String, Object> referenceProperty = (Map<String, Object>) transactionProperties.get("reference");
+        assertThat(referenceProperty.get("pattern")).isEqualTo("^[0-9]{12}$");
+
+        Map<String, Object> errorSchema = (Map<String, Object>) schemas.get(errorSchemaName);
+        assertThat(errorSchema).isNotNull();
+        List<String> errorRequired = (List<String>) errorSchema.get("required");
+        assertThat(errorRequired).contains("code", "message", "correlationId");
+
+        Map<String, Object> errorProperties = (Map<String, Object>) errorSchema.get("properties");
+        assertThat(errorProperties).containsKey("correlationId");
+        Map<String, Object> correlationIdProperty = (Map<String, Object>) errorProperties.get("correlationId");
+        assertThat(correlationIdProperty.get("type")).isEqualTo("string");
+        assertThat(correlationIdProperty.get("nullable")).isNotEqualTo(true);
     }
 
     @SuppressWarnings("unchecked")

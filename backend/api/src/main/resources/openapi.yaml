@@ -557,7 +557,7 @@ components:
       properties:
         transactionId:
           type: string
-          maxLength: 50
+          pattern: '^[0-9]{6}-[0-9]{8}-[0-9]{8}-[0-9]{6}-[0-9]{12}$'
         sortCode:
           type: string
           pattern: '^[0-9]{6}$'
@@ -572,7 +572,7 @@ components:
           pattern: '^[0-9]{6}$'
         reference:
           type: string
-          maxLength: 12
+          pattern: '^[0-9]{12}$'
         type:
           type: string
           maxLength: 3
@@ -585,7 +585,7 @@ components:
           multipleOf: 0.01
     InqtranErrorResponse:
       type: object
-      required: [code, message]
+      required: [code, message, correlationId]
       properties:
         code:
           type: string
@@ -593,7 +593,6 @@ components:
           type: string
         correlationId:
           type: string
-          nullable: true
     InqtrandDetailResponse:
       type: object
       required: [found, transaction]

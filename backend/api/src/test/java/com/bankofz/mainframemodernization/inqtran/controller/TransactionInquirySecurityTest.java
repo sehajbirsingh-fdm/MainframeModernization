@@ -8,6 +8,7 @@ import com.bankofz.mainframemodernization.inqacc.security.InqaccAuthenticationEn
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionInquiryResponse;
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionDetailInquiryResponse;
 import com.bankofz.mainframemodernization.inqtran.domain.TransactionRecord;
+import com.bankofz.mainframemodernization.inqtran.exception.TransactionTechnicalException;
 import com.bankofz.mainframemodernization.inqtran.service.TransactionInquiryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,4 +135,17 @@ class TransactionInquirySecurityTest {
                 .andExpect(jsonPath("$.found").value(true))
                 .andExpect(header().exists("X-Correlation-ID"));
     }
+
+        @Test
+        void shouldReturn500Err500WithCorrelationIdForAuthorizedDetailTechnicalFailure() throws Exception {
+                when(transactionInquiryService.inquireDetail(any(), any(), any(), any(), any()))
+                                .thenThrow(new TransactionTechnicalException("failed", new RuntimeException("db down")));
+
+                mockMvc.perform(get("/api/v1/accounts/123456/00000001/transactions/20260728/143015/000000000123")
+                                                .header("Authorization", "Bearer valid-inqacc-inquirer-token"))
+                                .andExpect(status().isInternalServerError())
+                                .andExpect(jsonPath("$.code").value("ERR-500"))
+                                .andExpect(jsonPath("$.correlationId").isString())
+                                .andExpect(header().exists("X-Correlation-ID"));
+        }
 }
