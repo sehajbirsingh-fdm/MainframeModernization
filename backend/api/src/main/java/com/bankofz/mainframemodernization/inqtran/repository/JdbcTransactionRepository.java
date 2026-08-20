@@ -21,6 +21,13 @@ import java.util.regex.Pattern;
 public class JdbcTransactionRepository implements TransactionRepository {
 
     private static final Pattern SAFE_IDENTIFIER_PATTERN = Pattern.compile("^[A-Za-z_][A-Za-z0-9_$]*$");
+    private static final String COL_SORTCODE = "PROCTRAN_SORTCODE";
+    private static final String COL_NUMBER = "PROCTRAN_NUMBER";
+    private static final String COL_DATE = "PROCTRAN_DATE";
+    private static final String COL_TIME = "PROCTRAN_TIME";
+    private static final String COL_REF = "PROCTRAN_REF";
+    private static final String COL_TYPE = "PROCTRAN_TYPE";
+    private static final String COL_DESC = "PROCTRAN_DESC";
 
     private final DataSource dataSource;
     private final String tableReference;
@@ -39,11 +46,11 @@ public class JdbcTransactionRepository implements TransactionRepository {
         String sql = """
                 SELECT COUNT(*)
                 FROM %s
-                WHERE PROCTRAN_SORTCODE = ?
-                  AND PROCTRAN_NUMBER = ?
-                  AND PROCTRAN_DATE >= ?
-                  AND PROCTRAN_DATE <= ?
-                """.formatted(tableReference);
+                                WHERE %s = ?
+                                    AND %s = ?
+                                    AND %s >= ?
+                                    AND %s <= ?
+                                """.formatted(tableReference, COL_SORTCODE, COL_NUMBER, COL_DATE, COL_DATE);
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -63,22 +70,37 @@ public class JdbcTransactionRepository implements TransactionRepository {
     public List<TransactionRow> findByCriteria(TransactionQueryCriteria criteria) {
         String sql = """
                 SELECT
-                    PROCTRAN_SORTCODE,
-                    PROCTRAN_NUMBER,
-                    PROCTRAN_DATE,
-                    PROCTRAN_TIME,
-                    PROCTRAN_REF,
-                    PROCTRAN_TYPE,
-                    PROCTRAN_DESC,
+                                        %s,
+                                        %s,
+                                        %s,
+                                        %s,
+                                        %s,
+                                        %s,
+                                        %s,
                     PROCTRAN_AMOUNT
                 FROM %s
-                WHERE PROCTRAN_SORTCODE = ?
-                  AND PROCTRAN_NUMBER = ?
-                  AND PROCTRAN_DATE >= ?
-                  AND PROCTRAN_DATE <= ?
-                ORDER BY PROCTRAN_DATE DESC, PROCTRAN_TIME DESC
+                                WHERE %s = ?
+                                    AND %s = ?
+                                    AND %s >= ?
+                                    AND %s <= ?
+                                ORDER BY %s DESC, %s DESC
                 OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-                """.formatted(tableReference);
+                                """.formatted(
+                                COL_SORTCODE,
+                                COL_NUMBER,
+                                COL_DATE,
+                                COL_TIME,
+                                COL_REF,
+                                COL_TYPE,
+                                COL_DESC,
+                                tableReference,
+                                COL_SORTCODE,
+                                COL_NUMBER,
+                                COL_DATE,
+                                COL_DATE,
+                                COL_DATE,
+                                COL_TIME
+                );
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -90,13 +112,13 @@ public class JdbcTransactionRepository implements TransactionRepository {
                 List<TransactionRow> rows = new ArrayList<>();
                 while (resultSet.next()) {
                     rows.add(new TransactionRow(
-                            trim(resultSet.getString("PROCTRAN_SORTCODE")),
-                            trim(resultSet.getString("PROCTRAN_NUMBER")),
-                            trim(resultSet.getString("PROCTRAN_DATE")),
-                            trim(resultSet.getString("PROCTRAN_TIME")),
-                            trim(resultSet.getString("PROCTRAN_REF")),
-                            trim(resultSet.getString("PROCTRAN_TYPE")),
-                            trim(resultSet.getString("PROCTRAN_DESC")),
+                            trim(resultSet.getString(COL_SORTCODE)),
+                            trim(resultSet.getString(COL_NUMBER)),
+                            trim(resultSet.getString(COL_DATE)),
+                            trim(resultSet.getString(COL_TIME)),
+                            trim(resultSet.getString(COL_REF)),
+                            trim(resultSet.getString(COL_TYPE)),
+                            trim(resultSet.getString(COL_DESC)),
                             defaultAmount(resultSet.getBigDecimal("PROCTRAN_AMOUNT"))
                     ));
                 }
@@ -117,21 +139,35 @@ public class JdbcTransactionRepository implements TransactionRepository {
     ) {
         String sql = """
                 SELECT
-                    PROCTRAN_SORTCODE,
-                    PROCTRAN_NUMBER,
-                    PROCTRAN_DATE,
-                    PROCTRAN_TIME,
-                    PROCTRAN_REF,
-                    PROCTRAN_TYPE,
-                    PROCTRAN_DESC,
+                                        %s,
+                                        %s,
+                                        %s,
+                                        %s,
+                                        %s,
+                                        %s,
+                                        %s,
                     PROCTRAN_AMOUNT
                 FROM %s
-                WHERE PROCTRAN_SORTCODE = ?
-                  AND PROCTRAN_NUMBER = ?
-                  AND PROCTRAN_DATE = ?
-                  AND PROCTRAN_TIME = ?
-                  AND PROCTRAN_REF = ?
-                """.formatted(tableReference);
+                                WHERE %s = ?
+                                    AND %s = ?
+                                    AND %s = ?
+                                    AND %s = ?
+                                    AND %s = ?
+                                """.formatted(
+                                COL_SORTCODE,
+                                COL_NUMBER,
+                                COL_DATE,
+                                COL_TIME,
+                                COL_REF,
+                                COL_TYPE,
+                                COL_DESC,
+                                tableReference,
+                                COL_SORTCODE,
+                                COL_NUMBER,
+                                COL_DATE,
+                                COL_TIME,
+                                COL_REF
+                );
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -185,13 +221,13 @@ public class JdbcTransactionRepository implements TransactionRepository {
         }
 
         return new TransactionRow(
-                requireColumn(resultSet.getString("PROCTRAN_SORTCODE"), "PROCTRAN_SORTCODE"),
-                requireColumn(resultSet.getString("PROCTRAN_NUMBER"), "PROCTRAN_NUMBER"),
-                requireColumn(resultSet.getString("PROCTRAN_DATE"), "PROCTRAN_DATE"),
-                requireColumn(resultSet.getString("PROCTRAN_TIME"), "PROCTRAN_TIME"),
-                requireColumn(resultSet.getString("PROCTRAN_REF"), "PROCTRAN_REF"),
-                requireColumn(resultSet.getString("PROCTRAN_TYPE"), "PROCTRAN_TYPE"),
-                requireColumn(resultSet.getString("PROCTRAN_DESC"), "PROCTRAN_DESC"),
+            requireColumn(resultSet.getString(COL_SORTCODE), COL_SORTCODE),
+            requireColumn(resultSet.getString(COL_NUMBER), COL_NUMBER),
+            requireColumn(resultSet.getString(COL_DATE), COL_DATE),
+            requireColumn(resultSet.getString(COL_TIME), COL_TIME),
+            requireColumn(resultSet.getString(COL_REF), COL_REF),
+            requireColumn(resultSet.getString(COL_TYPE), COL_TYPE),
+            requireColumn(resultSet.getString(COL_DESC), COL_DESC),
                 amount
         );
     }
