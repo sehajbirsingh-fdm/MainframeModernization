@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: Bank of Z deterministic code-chunk retrieval evaluation
+
+prompts:
+  - "{{question}}"
+
+providers:
+  - id: file://rag_provider.py:retrieve_only
+    label: CodeRankEmbed + LanceDB retrieval
+    config:
+      top_k: 10
+
+defaultTest:
+  options:
+    disableVarExpansion: true
+  assert:
+    - type: python
+      value: file://retrieval_assertions.py:hit_at_k
+      metric: Hit@K
+    - type: python
+      value: file://retrieval_assertions.py:recall_at_k
+      threshold: 0.5
+      metric: Recall@K
+    - type: python
+      value: file://retrieval_assertions.py:precision_at_k
+      metric: LabeledPrecision@K
+    - type: python
+      value: file://retrieval_assertions.py:reciprocal_rank
+      metric: MRR
+    - type: python
+      value: file://retrieval_assertions.py:ndcg_at_k
+      threshold: 0.2
+      metric: nDCG@K
+
+tests: file://eval_cases.yaml

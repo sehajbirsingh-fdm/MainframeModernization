@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: Bank of Z end-to-end grounded answer evaluation
+
+prompts:
+  - "{{question}}"
+
+providers:
+  - id: file://rag_provider.py:answer_with_context
+    label: CodeRankEmbed top-20 + unique summaries + GPT-OSS-120B
+    config:
+      pipeline_version: top20-raw-unique-summary-gemini-3.5-flash-lite-judge-v1
+      top_k: 20
+      max_context_characters: 26000
+      answer_model: openai/gpt-oss-120b
+
+defaultTest:
+  options:
+    disableVarExpansion: true
+  assert:
+    - type: python
+      value: file://answer_evaluation.py:grade_answer
+      metric: FinalAnswerQuality
+
+evaluateOptions:
+  maxConcurrency: 1
+  delay: 1500
+  cache: true
+
+tests: file://eval_cases.yaml

@@ -7,3 +7,8 @@ output/
 input_embeddings/
 vector_store/
 results.json
+rag_evaluation/node_modules/
+rag_evaluation/.promptfoo/
+rag_evaluation/evaluation-results/
+rag_evaluation/runtime_logs/*.jsonl
+.codex-build/

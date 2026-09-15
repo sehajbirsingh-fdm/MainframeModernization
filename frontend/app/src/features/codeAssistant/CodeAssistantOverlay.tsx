@@ -28,6 +28,7 @@ export function CodeAssistantOverlay() {
   const [question, setQuestion] = useState('')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingStatus, setLoadingStatus] = useState('Checking the request...')
   const [error, setError] = useState<string | null>(null)
   const [failedRequest, setFailedRequest] = useState<FailedRequest | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -70,11 +71,12 @@ export function CodeAssistantOverlay() {
     }
 
     setIsLoading(true)
+    setLoadingStatus('Checking the request...')
     setError(null)
     setFailedRequest(null)
 
     try {
-      const response = await askCodeAssistant(submittedQuestion, history)
+      const response = await askCodeAssistant(submittedQuestion, history, setLoadingStatus)
       setMessages((current) => [
         ...current,
         {
@@ -221,7 +223,7 @@ export function CodeAssistantOverlay() {
           {isLoading ? (
             <div className="rag-assistant-loading" role="status">
               <LoaderCircle size={18} aria-hidden="true" />
-              <span>Searching the codebase...</span>
+              <span>{loadingStatus}</span>
             </div>
           ) : null}
         </div>

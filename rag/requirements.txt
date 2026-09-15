@@ -6,6 +6,9 @@ cocoindex[litellm]==1.0.20
 # File/node summaries and final retrieved answers.
 groq==1.6.0
 
+# Independent Gemini judge for Promptfoo final-answer evaluation.
+google-genai==2.22.0
+
 # Local HTTP endpoint used by the React code-assistant overlay.
 fastapi==0.141.1
 uvicorn==0.52.4
@@ -18,5 +21,11 @@ lancedb==0.37.1
 sentence-transformers==6.0.0
 einops==0.8.1
 
+# Local code-specific reranker runtime (rag/RAG_lexical only).
+onnxruntime==1.29.0
+
 # Local configuration loaded from an uncommitted .env file.
 python-dotenv==1.2.3
+
+# Manual retrieval evaluation dataset and analytics runner.
+PyYAML==6.0.3

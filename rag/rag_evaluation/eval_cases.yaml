@@ -1,0 +1,1730 @@
+- description: INQACC button end-to-end workflow
+  vars:
+    question: What does the Inquire Account button do and how does the request reach the backend?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx
+        relevance: 3
+        must_contain: ["executeInquiry"]
+      - file_id: frontend/app/src/api/accountInquiryClient.ts
+        relevance: 3
+        must_contain: ["/v1/accounts/"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/controller/AccountInquiryController.java
+        relevance: 2
+        must_contain: ["getAccount"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryService.java
+        relevance: 2
+        must_contain: ["inquireAccount"]
+    required_facts:
+      - The form validates a six-digit sort code and eight-digit account number.
+      - The client sends GET /v1/accounts/{sortcode}/{accountNumber} with a bearer token.
+      - The page renders success, not-found, backend, timeout, and network outcomes.
+    forbidden_claims: ["The button performs a POST request."]
+    reference_answer: The form validates the two identifiers and calls inquireAccount, which sends an authenticated GET to /v1/accounts/{sortcode}/{accountNumber}. The controller delegates to AccountInquiryService and the page maps the result into loading, success, not-found, or error UI state.
+  metadata: {feature: inqacc, layer: end-to-end, difficulty: hard}
+
+- description: INQACC highest account sentinel
+  vars:
+    question: How do I retrieve the highest account number for a sort code?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryService.java
+        relevance: 3
+        must_contain: ["99999999", "findHighestAccountNumberBySortcode"]
+      - file_id: frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx
+        relevance: 2
+        must_contain: ["99999999"]
+    required_facts:
+      - Account number 99999999 is the reserved highest-account sentinel.
+      - The service calls findHighestAccountNumberBySortcode instead of a specific lookup.
+    forbidden_claims: ["00000000 is the highest-account sentinel."]
+    reference_answer: Supply the normal six-digit sort code and account number 99999999. AccountInquiryService recognizes that reserved value and asks the repository for the highest account number under that sort code.
+  metadata: {feature: inqacc, layer: backend, difficulty: easy}
+
+- description: INQACC input validation
+  vars:
+    question: What formats are accepted for account inquiry sort codes and account numbers?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/accountInquiry/validation.ts
+        relevance: 3
+        must_contain: ["^\\d{6}$", "^\\d{8}$"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/validation/AccountInquiryValidator.java
+        relevance: 2
+        must_contain: ["exactly 6 numeric digits", "exactly 8 numeric digits"]
+    required_facts:
+      - Sort code must contain exactly six digits.
+      - Account number must contain exactly eight digits.
+      - Both frontend and backend enforce the formats.
+    forbidden_claims: []
+    reference_answer: Account inquiry accepts a six-digit numeric sort code and an eight-digit numeric account number. The React validator and backend AccountInquiryValidator enforce the same shapes.
+  metadata: {feature: inqacc, layer: validation, difficulty: easy}
+
+- description: INQACC bearer authentication
+  vars:
+    question: How is the account inquiry endpoint authenticated and authorized?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/security/BearerTokenAuthenticationFilter.java
+        relevance: 3
+        must_contain: ["ROLE_ACCOUNT_INQUIRER", "Bearer "]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/config/InqaccSecurityConfiguration.java
+        relevance: 3
+        must_contain: ["hasRole", "ACCOUNT_INQUIRER"]
+      - file_id: frontend/app/src/api/accountInquiryClient.ts
+        relevance: 2
+        must_contain: ["Authorization", "Bearer"]
+    required_facts:
+      - The frontend sends an Authorization Bearer header.
+      - The filter maps the inquirer token to ROLE_ACCOUNT_INQUIRER.
+      - GET /v1/accounts/** requires ACCOUNT_INQUIRER and sessions are stateless.
+    forbidden_claims: ["Authentication uses browser session cookies."]
+    reference_answer: The client sends a bearer token. A stateless Spring Security filter validates it and grants ROLE_ACCOUNT_INQUIRER for the accepted inquirer token; GET /v1/accounts/** requires that role.
+  metadata: {feature: inqacc, layer: security, difficulty: medium}
+
+- description: INQACC correlation identifiers
+  vars:
+    question: How are correlation IDs handled during an account inquiry?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/logging/CorrelationIdFilter.java
+        relevance: 3
+        must_contain: ["X-Correlation-ID"]
+      - file_id: frontend/app/src/api/accountInquiryClient.ts
+        relevance: 2
+        must_contain: ["X-Correlation-ID"]
+      - file_id: frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx
+        relevance: 2
+        must_contain: ["Correlation ID"]
+    required_facts:
+      - The backend uses the X-Correlation-ID header.
+      - The frontend reads the response header and displays it for tracing or errors.
+    forbidden_claims: []
+    reference_answer: The backend correlation filter accepts or establishes an X-Correlation-ID and returns it in the response. The account client reads that header, and AccountInquiryPage exposes it in trace or error details.
+  metadata: {feature: inqacc, layer: observability, difficulty: medium}
+
+- description: INQACC repository lookup selection
+  vars:
+    question: Which database lookup is used for a normal account inquiry versus the reserved lookup?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryService.java
+        relevance: 3
+        must_contain: ["findBySortcodeAndAccountNumber", "findHighestAccountNumberBySortcode"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/repository/JdbcAccountRepository.java
+        relevance: 2
+        must_contain: ["ACCOUNT_SORTCODE", "ACCOUNT_NUMBER"]
+    required_facts:
+      - Normal lookup uses both sort code and account number.
+      - Reserved 99999999 lookup selects the highest account for the sort code.
+      - Missing data produces AccountNotFoundException.
+    forbidden_claims: []
+    reference_answer: A normal request calls findBySortcodeAndAccountNumber. The 99999999 sentinel calls findHighestAccountNumberBySortcode, and either empty result is converted into AccountNotFoundException.
+  metadata: {feature: inqacc, layer: persistence, difficulty: medium}
+
+- description: INQACC stale response and duplicate request protection
+  vars:
+    question: How does AccountInquiryPage prevent duplicate requests and stale responses?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx
+        relevance: 3
+        must_contain: ["requestSequenceRef", "isDuplicatePending"]
+    required_facts:
+      - A duplicate in-flight request for the same input is ignored and the button is disabled.
+      - A sequence number prevents an older response from replacing newer state.
+    forbidden_claims: []
+    reference_answer: The page tracks the active input key and disables or ignores another submission for that same key while loading. It also increments requestSequenceRef and discards a response whose sequence is no longer current.
+  metadata: {feature: inqacc, layer: frontend, difficulty: medium}
+
+- description: INQCUST end-to-end customer inquiry
+  vars:
+    question: How does the React customer inquiry flow reach the backend and display a customer?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerInquiry/CustomerInquiryPage.tsx
+        relevance: 3
+        must_contain: ["inquireCustomer"]
+      - file_id: frontend/app/src/api/inquiryClient.ts
+        relevance: 3
+        must_contain: ["/api/v1/customers/"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/controller/CustomerInquiryController.java
+        relevance: 2
+        must_contain: ["customerInquiryService.inquire"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/CustomerInquiryService.java
+        relevance: 2
+        must_contain: ["LookupMode"]
+    required_facts:
+      - The client sends GET /api/v1/customers/{sortCode}/{customerNumber}.
+      - The service resolves specific, latest, or random lookup mode.
+      - HTTP 200 and 404 bodies are treated as structured inquiry responses.
+    forbidden_claims: []
+    reference_answer: After client validation, the React page calls inquiryClient, which GETs /api/v1/customers/{sortCode}/{customerNumber}. The controller delegates to CustomerInquiryService, which resolves the lookup mode and returns the customer, risk assessment, and legacy status when available.
+  metadata: {feature: inqcust, layer: end-to-end, difficulty: hard}
+
+- description: INQCUST random lookup sentinel
+  vars:
+    question: What customer number requests a random customer and what happens next?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/LookupModeResolver.java
+        relevance: 3
+        must_contain: ["0000000000", "RANDOM"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/CustomerInquiryService.java
+        relevance: 3
+        must_contain: ["randomLookup", "randomRetryLimit"]
+    required_facts:
+      - 0000000000 selects RANDOM mode.
+      - The service generates candidate customer numbers up to a configured retry limit.
+      - Malformed or absent candidates are skipped before returning random-not-found.
+    forbidden_claims: ["The UI sends a lookupMode query parameter.", "The React app has a Random button."]
+    reference_answer: Customer number 0000000000 is the random sentinel. The service finds an upper bound, generates candidates, looks each one up, skips invalid records, and returns random-not-found if the retry limit is exhausted.
+  metadata: {feature: inqcust, layer: backend, difficulty: medium}
+
+- description: INQCUST latest lookup sentinel
+  vars:
+    question: How can a user retrieve the latest customer under a sort code?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/LookupModeResolver.java
+        relevance: 3
+        must_contain: ["9999999999", "LATEST"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/repository/JdbcCustomerRepository.java
+        relevance: 2
+        must_contain: ["ORDER BY CUSTOMER_NUMBER DESC", "FETCH FIRST 1 ROW ONLY"]
+    required_facts:
+      - 9999999999 selects LATEST mode.
+      - The repository orders customer number descending and fetches the first row for the sort code.
+    forbidden_claims: ["99999999 is the latest-customer sentinel."]
+    reference_answer: Pass customer number 9999999999. LookupModeResolver selects LATEST, and the repository finds the first customer after sorting matching records by customer number descending.
+  metadata: {feature: inqcust, layer: persistence, difficulty: easy}
+
+- description: INQCUST high risk rules
+  vars:
+    question: Which customer conditions produce a HIGH risk assessment?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/RiskAssessmentService.java
+        relevance: 3
+        must_contain: ["STATUS_SUSPENDED", "CREDIT_SCORE_LT_600"]
+    required_facts:
+      - SUSPENDED status produces HIGH risk.
+      - A non-null credit score below 600 produces HIGH risk.
+      - A stale credit review is recorded separately as a reason and reviewRequired flag.
+    forbidden_claims: []
+    reference_answer: A suspended customer is HIGH risk, as is a customer with a credit score below 600. A missing or older-than-12-month review also sets reviewRequired and adds STALE_CREDIT_REVIEW.
+  metadata: {feature: inqcust, layer: business-logic, difficulty: easy}
+
+- description: INQCUST medium and low risk rules
+  vars:
+    question: When is customer risk LOW versus MEDIUM?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/RiskAssessmentService.java
+        relevance: 3
+        must_contain: ["CREDIT_SCORE_600_TO_699", "ACTIVE_SCORE_GE_700_REVIEW_CURRENT"]
+    required_facts:
+      - Scores from 600 through 699 produce MEDIUM.
+      - ACTIVE with score at least 700 and a current review produces LOW.
+      - Other non-high cases fall back to MEDIUM.
+    forbidden_claims: []
+    reference_answer: A score from 600 to 699 is MEDIUM. LOW requires ACTIVE status, score at least 700, and a review that is not stale; remaining non-high combinations default to MEDIUM.
+  metadata: {feature: inqcust, layer: business-logic, difficulty: medium}
+
+- description: INQCUST legacy date conversion
+  vars:
+    question: How are legacy integer dates converted in customer responses?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/LegacyDateConverter.java
+        relevance: 3
+        must_contain: ["%08d", "LocalDate.of"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/mapper/CustomerMapper.java
+        relevance: 2
+        must_contain: ["legacyDateConverter.toLocalDate"]
+    required_facts:
+      - The integer is zero-padded to eight digits and split into YYYY, MM, and DD.
+      - Invalid calendar values raise LegacyDateConversionException.
+      - CustomerMapper uses the converter for legacy date fields.
+    forbidden_claims: []
+    reference_answer: LegacyDateConverter formats an integer as eight digits, extracts year, month, and day, and builds a LocalDate. CustomerMapper applies it to customer dates, and invalid dates become LegacyDateConversionException.
+  metadata: {feature: inqcust, layer: mapping, difficulty: medium}
+
+- description: INQCUST customer validation and missing path
+  vars:
+    question: What validation is applied to customer inquiry identifiers and missing URL segments?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerInquiry/validation.ts
+        relevance: 3
+        must_contain: ["^[0-9]{6}$", "^[0-9]{10}$"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/controller/CustomerInquiryController.java
+        relevance: 2
+        must_contain: ["required path parameters"]
+    required_facts:
+      - Sort code must be six digits and customer number ten digits.
+      - The controller explicitly rejects requests missing either required path segment.
+    forbidden_claims: []
+    reference_answer: Both layers require a six-digit sort code and ten-digit customer number. The controller also has a missing-path handler that raises an invalid-argument error when either path value is omitted.
+  metadata: {feature: inqcust, layer: validation, difficulty: easy}
+
+- description: INQCUST not-found response semantics
+  vars:
+    question: Does a missing customer always become an exception, or is it represented in the inquiry response?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/CustomerInquiryService.java
+        relevance: 3
+        must_contain: ["notFoundStatus", "CustomerInquiryResponse"]
+      - file_id: frontend/app/src/api/inquiryClient.ts
+        relevance: 2
+        must_contain: ["response.status === 200 || response.status === 404"]
+    required_facts:
+      - The service can return a response containing a legacy not-found status and no customer.
+      - The frontend parses both HTTP 200 and HTTP 404 as structured inquiry responses.
+    forbidden_claims: []
+    reference_answer: CustomerInquiryService represents an absent specific/latest/random result with the corresponding legacy not-found status and null customer data. inquiryClient intentionally parses both 200 and 404 bodies as CustomerInquiryResponse values.
+  metadata: {feature: inqcust, layer: error-handling, difficulty: medium}
+
+- description: INQACCCU end-to-end relationship inquiry
+  vars:
+    question: How does the application retrieve every account belonging to a customer?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/api/customerAccountInquiryClient.ts
+        relevance: 3
+        must_contain: ["/api/v1/customers/", "/accounts"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/controller/AccountRelationshipController.java
+        relevance: 3
+        must_contain: ["/{customerNumber}/accounts"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/service/AccountRelationshipService.java
+        relevance: 2
+        must_contain: ["findByCustomerNumber"]
+    required_facts:
+      - The client calls GET /api/v1/customers/{customerNumber}/accounts.
+      - Customer number must be exactly ten digits.
+      - The service maps a repository projection to success, not-found, or staged retrieval failure.
+    forbidden_claims: []
+    reference_answer: The React client GETs /api/v1/customers/{customerNumber}/accounts. The validated controller delegates to AccountRelationshipService, which maps repository data into a relationship response or a not-found/retrieval-failure legacy response.
+  metadata: {feature: inqacccu, layer: end-to-end, difficulty: hard}
+
+- description: INQACCCU customer number validation
+  vars:
+    question: What customer number format is required by the customer-accounts workflow?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerAccountInquiry/validation.ts
+        relevance: 3
+        must_contain: ["exactly 10 digits"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/controller/AccountRelationshipController.java
+        relevance: 2
+        must_contain: ["^[0-9]{10}$"]
+    required_facts:
+      - Customer number must be exactly ten numeric digits.
+      - Missing customerNumber is handled as an invalid request.
+    forbidden_claims: []
+    reference_answer: The workflow requires exactly ten numeric digits. The frontend blocks invalid values, while the controller applies the same pattern and explicitly rejects a missing customer-number path segment.
+  metadata: {feature: inqacccu, layer: validation, difficulty: easy}
+
+- description: INQACCCU staged repository retrieval
+  vars:
+    question: In what stages does the customer-account repository retrieve relationship data?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/repository/JdbcAccountRelationshipRepository.java
+        relevance: 3
+        must_contain: ["loadCustomer", "loadAccounts", "loadSimulationStage"]
+    required_facts:
+      - It obtains a connection and checks an optional simulation stage.
+      - It loads the customer before loading accounts.
+      - SQL errors become RepositoryUnavailableException.
+    forbidden_claims: []
+    reference_answer: The repository opens one connection, reads any configured simulation stage, loads the customer, then loads accounts ordered by account number. Stage failures are simulated around those reads, while SQL failures become RepositoryUnavailableException.
+  metadata: {feature: inqacccu, layer: persistence, difficulty: medium}
+
+- description: INQACCCU response account cap and mapping
+  vars:
+    question: How many accounts can a customer-account response contain and how are they normalized?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/service/AccountRelationshipMapper.java
+        relevance: 3
+        must_contain: ["MAX_ACCOUNTS = 20", "FIXED_SORT_CODE"]
+    required_facts:
+      - The mapper limits the response to 20 accounts.
+      - It emits eyecatcher ACCT and fixed sort code 987654.
+      - Legacy dates are converted to ISO dates.
+    forbidden_claims: []
+    reference_answer: AccountRelationshipMapper takes at most 20 account projections. It builds summaries with eyecatcher ACCT, fixed sort code 987654, trimmed values, and ISO-formatted dates.
+  metadata: {feature: inqacccu, layer: mapping, difficulty: easy}
+
+- description: INQACCCU not found legacy status
+  vars:
+    question: What response is returned when no customer-account relationship exists?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/service/AccountRelationshipMapper.java
+        relevance: 3
+        must_contain: ["toNotFoundResponse", "new LegacyStatus(\"N\", \"1\", \"N\")"]
+    required_facts:
+      - The response preserves the requested customer number.
+      - It returns zero accounts and an empty list.
+      - Legacy status is success N, fail code 1, incomplete N.
+    forbidden_claims: []
+    reference_answer: The mapper returns the requested customer number with count zero and an empty account list. Its legacy status is N/1/N rather than throwing a normal not-found exception.
+  metadata: {feature: inqacccu, layer: error-handling, difficulty: medium}
+
+- description: INQACCCU simulated stage failure
+  vars:
+    question: How are OPEN_FAILURE, FETCH_FAILURE, and CLOSE_FAILURE represented in customer-account inquiry?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/repository/JdbcAccountRelationshipRepository.java
+        relevance: 3
+        must_contain: ["OPEN_FAILURE", "FETCH_FAILURE", "CLOSE_FAILURE"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/service/AccountRelationshipService.java
+        relevance: 2
+        must_contain: ["toRetrievalFailureResponse"]
+    required_facts:
+      - Named simulation stages raise RetrievalStageFailureException with a fail code.
+      - The service catches that exception and returns a retrieval-failure response.
+    forbidden_claims: []
+    reference_answer: The JDBC repository consults RELATIONSHIP_SIMULATION and raises a stage-specific RetrievalStageFailureException for OPEN_FAILURE, FETCH_FAILURE, or CLOSE_FAILURE. The service catches it and maps the customer number and fail code into a legacy failure response.
+  metadata: {feature: inqacccu, layer: error-handling, difficulty: hard}
+
+- description: CRECUST end-to-end create workflow
+  vars:
+    question: What happens from submitting the Create Customer form through persistence?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerCreate/CustomerCreatePage.tsx
+        relevance: 3
+        must_contain: ["createCustomer"]
+      - file_id: frontend/app/src/api/customerCreateClient.ts
+        relevance: 3
+        must_contain: ["method: 'POST'", "/v1/customers"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/controller/CustomerCreateController.java
+        relevance: 2
+        must_contain: ["createCustomer"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/service/CustomerCreateService.java
+        relevance: 2
+        must_contain: ["repository.save"]
+    required_facts:
+      - The client POSTs JSON to /v1/customers with a bearer token.
+      - The service validates, performs a credit check, allocates a customer number, and saves a CustomerRecord.
+      - Success is HTTP 201 with the created customer response.
+    forbidden_claims: []
+    reference_answer: The validated form calls createCustomer, which POSTs JSON to /v1/customers with authorization. CustomerCreateService validates the request, assesses credit, allocates a number under a lock, persists the record, and the controller returns 201.
+  metadata: {feature: crecust, layer: end-to-end, difficulty: hard}
+
+- description: CRECUST frontend required fields and dates
+  vars:
+    question: Which Create Customer fields and dates are validated before submission?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerCreate/validation.ts
+        relevance: 3
+        must_contain: ["First name is required", "Date of birth year must be 1601 or later"]
+    required_facts:
+      - First name, last name, phone, address line 1, city, postcode, country, and status are required.
+      - Title must be in the legacy allow-list.
+      - Date of birth must be valid and year 1601 or later; created date must also be valid.
+    forbidden_claims: []
+    reference_answer: The frontend requires the main identity, phone, primary address, country, postcode, and status fields and restricts title to the legacy list. It validates both calendar dates and requires a DOB year of at least 1601.
+  metadata: {feature: crecust, layer: validation, difficulty: medium}
+
+- description: CRECUST credit check
+  vars:
+    question: How does credit checking affect customer creation?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/service/CustomerCreateService.java
+        relevance: 3
+        must_contain: ["creditCheckGateway.assess", "ERR-301"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/service/MockCreditCheckGateway.java
+        relevance: 2
+        must_contain: ["CreditCheckResult"]
+    required_facts:
+      - Credit assessment occurs before number allocation and persistence.
+      - An unusable credit result produces ERR-301 and HTTP 422.
+      - A successful result supplies score and review date stored in the record.
+    forbidden_claims: []
+    reference_answer: CustomerCreateService calls CreditCheckGateway before allocating or saving anything. Failure becomes ERR-301/422; success contributes the credit score and review date to the new legacy-compatible record.
+  metadata: {feature: crecust, layer: business-logic, difficulty: medium}
+
+- description: CRECUST number allocation lock
+  vars:
+    question: How does customer creation avoid allocating the same customer number concurrently?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/service/CustomerCreateService.java
+        relevance: 3
+        must_contain: ["tryLock"]
+    required_facts:
+      - A ReentrantLock is maintained per configured sort code.
+      - Failure to acquire it produces ERR-202.
+      - Number allocation happens while holding the lock and it is released in finally.
+    forbidden_claims: []
+    reference_answer: The service keeps a ReentrantLock per sort code and uses tryLock before asking the repository for the next number. It reports ERR-202 when unavailable and releases the lock in a finally block after allocation and persistence work.
+  metadata: {feature: crecust, layer: concurrency, difficulty: hard}
+
+- description: CRECUST legacy record normalization
+  vars:
+    question: How is a Create Customer request converted into the legacy CustomerRecord shape?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/service/CustomerCreateService.java
+        relevance: 3
+        must_contain: ["String.format(\"%010d\"", "toLegacyInt", "sanitize"]
+    required_facts:
+      - The new customer number is zero-padded to ten digits.
+      - Dates are stored as YYYYMMDD integers.
+      - Text fields are truncated to legacy maximum lengths and eyecatcher is CUST.
+    forbidden_claims: []
+    reference_answer: The service formats the allocated number as ten digits, converts LocalDate values to YYYYMMDD integers, truncates fields to their legacy lengths, and builds a CUST CustomerRecord before saving it.
+  metadata: {feature: crecust, layer: mapping, difficulty: medium}
+
+- description: CRECUST date-of-birth business rules
+  vars:
+    question: Which backend date-of-birth rules can reject customer creation?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/service/CustomerCreateService.java
+        relevance: 3
+        must_contain: ["Date of birth cannot be in the future", "greater than 150"]
+    required_facts:
+      - Year before 1601 is rejected.
+      - Invalid calendar dates and future dates are rejected.
+      - An age over 150 years is rejected.
+    forbidden_claims: []
+    reference_answer: The backend rejects a DOB before 1601, an impossible calendar date, a future date, or a DOB implying age over 150. These conditions map to legacy-compatible creation errors.
+  metadata: {feature: crecust, layer: validation, difficulty: easy}
+
+- description: CRECUST endpoint authorization
+  vars:
+    question: Is creating a customer publicly accessible?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/config/InqaccSecurityConfiguration.java
+        relevance: 3
+        must_contain: ["HttpMethod.POST", "/v1/customers/**"]
+      - file_id: frontend/app/src/api/customerCreateClient.ts
+        relevance: 2
+        must_contain: ["Authorization"]
+    required_facts:
+      - POST /v1/customers/** requires ACCOUNT_INQUIRER role.
+      - The frontend includes the configured bearer token.
+    forbidden_claims: ["Customer creation is permitAll."]
+    reference_answer: No. Spring Security requires ACCOUNT_INQUIRER for POST /v1/customers/**, and the frontend client supplies the configured bearer token in its Authorization header.
+  metadata: {feature: crecust, layer: security, difficulty: easy}
+
+- description: UPDCUST end-to-end update workflow
+  vars:
+    question: How does the Edit Customer page update a customer end to end?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerUpdate/CustomerUpdatePage.tsx
+        relevance: 3
+        must_contain: ["updateCustomer"]
+      - file_id: frontend/app/src/api/customerUpdateClient.ts
+        relevance: 3
+        must_contain: ["method: 'PUT'", "/api/v1/customers/"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/controller/UpdateCustomerController.java
+        relevance: 2
+        must_contain: ["@PutMapping"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/service/UpdateCustomerService.java
+        relevance: 2
+        must_contain: ["updateCustomerRepository.update"]
+    required_facts:
+      - The client PUTs JSON to /api/v1/customers/{customerNumber} with an optional sortCode query parameter.
+      - The service loads the existing customer, applies legacy update rules, and persists the changed record.
+      - The operation is bearer protected.
+    forbidden_claims: []
+    reference_answer: The edit page validates the payload and calls the update client, which sends an authenticated PUT to /api/v1/customers/{customerNumber}, optionally with sortCode. The service reads the existing record, applies legacy field rules, updates it, and returns the normalized response.
+  metadata: {feature: updcust, layer: end-to-end, difficulty: hard}
+
+- description: UPDCUST customer and sort-code normalization
+  vars:
+    question: How are customerNumber and sortCode normalized for customer updates?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/service/UpdateCustomerService.java
+        relevance: 3
+        must_contain: ["%010d", "defaultSortCode", "^[0-9]{6}$"]
+    required_facts:
+      - Customer number accepts one to ten digits and is normalized to ten digits with leading zeros.
+      - Blank or low-value sort code uses configured default 987654 unless overridden.
+      - A supplied sort code must be six digits.
+    forbidden_claims: []
+    reference_answer: The controller accepts a one-to-ten-digit customer number and the service parses and pads it to ten digits. A blank/low-value sort code resolves to the configured default, while a nonblank value must contain six digits.
+  metadata: {feature: updcust, layer: validation, difficulty: medium}
+
+- description: UPDCUST meaningful update and title rules
+  vars:
+    question: What makes an update payload meaningful and which titles are allowed?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/service/UpdateCustomerService.java
+        relevance: 3
+        must_contain: ["validateMeaningfulUpdate", "ALLOWED_TITLES"]
+      - file_id: frontend/app/src/features/customerUpdate/validation.ts
+        relevance: 2
+        must_contain: ["At least one meaningful update"]
+    required_facts:
+      - At least one of firstName, lastName, or addressLine1 must be meaningful.
+      - A leading space counts as legacy blank.
+      - Title must be from the legacy allow-list or blank.
+    forbidden_claims: []
+    reference_answer: The payload must provide a meaningful first name, last name, or first address line; blank or leading-space values do not count. Title is restricted to the defined legacy list, including blank.
+  metadata: {feature: updcust, layer: validation, difficulty: medium}
+
+- description: UPDCUST selective legacy field changes
+  vars:
+    question: How does UpdateCustomerService decide which existing fields to replace?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/service/UpdateCustomerService.java
+        relevance: 3
+        must_contain: ["applyLegacyUpdateRules", "firstCharacterNotSpace"]
+    required_facts:
+      - Name fields change as one group when firstName starts with a non-space.
+      - Phone, address group, status, and DOB update only when their trigger value is meaningful.
+      - Unchanged values are copied from the existing record.
+    forbidden_claims: []
+    reference_answer: The service begins with the existing record and conditionally replaces legacy field groups. A non-space first character triggers each text group, while a nonblank DOB is parsed separately; otherwise existing values remain.
+  metadata: {feature: updcust, layer: business-logic, difficulty: hard}
+
+- description: UPDCUST date conversion
+  vars:
+    question: What date format does customer update accept and how is it stored?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerUpdate/validation.ts
+        relevance: 2
+        must_contain: ["yyyy-MM-dd"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/service/UpdateCustomerService.java
+        relevance: 3
+        must_contain: ["LocalDate.parse", "toLegacyInt"]
+    required_facts:
+      - A provided DOB must use yyyy-MM-dd.
+      - The backend parses it as LocalDate and stores it as YYYYMMDD integer.
+      - Invalid parsing produces UPDCUST-400-DOB.
+    forbidden_claims: []
+    reference_answer: The update accepts DOB text in yyyy-MM-dd form. UpdateCustomerService parses it to LocalDate, converts it to a YYYYMMDD integer, and reports UPDCUST-400-DOB if parsing fails.
+  metadata: {feature: updcust, layer: mapping, difficulty: easy}
+
+- description: UPDCUST JDBC exact-row update
+  vars:
+    question: How does the update repository ensure exactly one customer row changed?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/repository/JdbcUpdateCustomerRepository.java
+        relevance: 3
+        must_contain: ["updatedRows != 1", "CUSTOMER_SORTCODE", "CUSTOMER_NUMBER"]
+    required_facts:
+      - The UPDATE predicate uses sort code and customer number.
+      - It checks executeUpdate returned exactly one row.
+      - Any other count or SQL failure becomes an IllegalStateException.
+    forbidden_claims: []
+    reference_answer: JdbcUpdateCustomerRepository updates by CUSTOMER_SORTCODE and CUSTOMER_NUMBER and requires executeUpdate to return exactly one. Zero or multiple rows, and SQL failures, are raised as repository errors.
+  metadata: {feature: updcust, layer: persistence, difficulty: medium}
+
+- description: INQTRAN list inquiry flow
+  vars:
+    question: How does the Transaction Inquiry form retrieve a page of transactions?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/transactionInquiry/TransactionInquiryPage.tsx
+        relevance: 3
+        must_contain: ["inquireTransactions"]
+      - file_id: frontend/app/src/api/transactionInquiryClient.ts
+        relevance: 3
+        must_contain: ["/transactions"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/controller/TransactionInquiryController.java
+        relevance: 2
+        must_contain: ["getTransactions"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/service/TransactionInquiryService.java
+        relevance: 2
+        must_contain: ["countByCriteria", "findByCriteria"]
+    required_facts:
+      - It requests GET /api/v1/accounts/{sortCode}/{accountNumber}/transactions.
+      - Optional date, limit, and offset values become query parameters.
+      - The backend returns totalCount, returnedCount, pagination values, and mapped records.
+    forbidden_claims: []
+    reference_answer: The form validates account and filter inputs and calls the transaction client. The backend builds criteria, counts all matches, fetches the requested page, maps rows, and returns counts plus the transaction records.
+  metadata: {feature: inqtran, layer: end-to-end, difficulty: hard}
+
+- description: INQTRAN defaults and limits
+  vars:
+    question: What defaults are used when transaction date and pagination filters are omitted?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/service/TransactionInquiryService.java
+        relevance: 3
+        must_contain: ["DEFAULT_LIMIT = 50", "MAX_LIMIT = 100", "00000000", "99999999"]
+    required_facts:
+      - Missing dates use 00000000 through 99999999.
+      - Missing or zero limit becomes 50 and values above 100 are capped at 100.
+      - Missing offset becomes zero.
+    forbidden_claims: []
+    reference_answer: The service uses all-date sentinels 00000000 and 99999999, defaults offset to zero, and uses a default limit of 50. Requested limits are capped at 100, and zero also means the default.
+  metadata: {feature: inqtran, layer: business-logic, difficulty: easy}
+
+- description: INQTRAN detail identity endpoint
+  vars:
+    question: Which fields uniquely identify a transaction-detail request?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/controller/TransactionInquiryController.java
+        relevance: 3
+        must_contain: ["transactions/{date}/{time}/{reference}", "^[0-9]{12}$"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/service/TransactionInquiryService.java
+        relevance: 2
+        must_contain: ["findDetailByIdentity"]
+    required_facts:
+      - Identity includes sort code, account number, date, time, and reference.
+      - Formats are 6, 8, 8, 6, and 12 digits respectively.
+      - Missing detail returns found false with null transaction rather than throwing not-found.
+    forbidden_claims: []
+    reference_answer: Detail lookup uses sortCode/accountNumber/date/time/reference in the URL, constrained to 6/8/8/6/12 digits. The service wraps a missing repository result as found=false with no transaction.
+  metadata: {feature: inqtran, layer: backend, difficulty: medium}
+
+- description: INQTRAN repository ordering and filters
+  vars:
+    question: How does the JDBC transaction query filter and order records?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/repository/JdbcTransactionRepository.java
+        relevance: 3
+        must_contain: ["ORDER BY"]
+    required_facts:
+      - It filters by account sort code, account number, and inclusive date range.
+      - Results are ordered deterministically by transaction date, time, and reference.
+      - Limit and offset are applied to the page query.
+    forbidden_claims: []
+    reference_answer: The repository constrains transactions to the account and inclusive date bounds, orders them by date/time/reference, and applies the requested limit and offset separately from the count query.
+  metadata: {feature: inqtran, layer: persistence, difficulty: medium}
+
+- description: INQTRAN frontend validation
+  vars:
+    question: What does the transaction inquiry UI validate before searching?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/transactionInquiry/validation.ts
+        relevance: 3
+        must_contain: ["YYYYMMDD", "non-negative integer"]
+    required_facts:
+      - Sort code is six digits and account number eight digits.
+      - Optional dates must be eight-digit YYYYMMDD strings.
+      - Optional limit and offset must be non-negative integers.
+    forbidden_claims: []
+    reference_answer: The UI requires a six-digit sort code and eight-digit account number. When supplied, from/to dates must be eight digits in YYYYMMDD form, and limit/offset must be non-negative integers.
+  metadata: {feature: inqtran, layer: validation, difficulty: easy}
+
+- description: INQTRAN result-to-detail navigation
+  vars:
+    question: How does a transaction row navigate to its detail page?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/transactionInquiry/TransactionInquiryPage.tsx
+        relevance: 3
+        must_contain: ["reference"]
+      - file_id: frontend/app/src/App.tsx
+        relevance: 2
+        must_contain: ["transactions/:sortCode/:accountNumber/:date/:time/:reference"]
+      - file_id: frontend/app/src/features/transactionInquiry/TransactionDetailPage.tsx
+        relevance: 2
+        must_contain: ["useParams"]
+    required_facts:
+      - The route includes sort code, account number, date, time, and reference.
+      - TransactionDetailPage reads those route parameters and requests the detail endpoint.
+    forbidden_claims: []
+    reference_answer: The inquiry result links to a route containing the complete transaction identity. App registers that route, and TransactionDetailPage reads the parameters and uses them to fetch the individual detail.
+  metadata: {feature: inqtran, layer: frontend, difficulty: medium}
+
+- description: INQTRAN technical and client errors
+  vars:
+    question: How are transaction repository, timeout, and network failures surfaced?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/service/TransactionInquiryService.java
+        relevance: 2
+        must_contain: ["TransactionTechnicalException"]
+      - file_id: frontend/app/src/api/transactionInquiryClient.ts
+        relevance: 3
+        must_contain: ["AbortError", "network-error"]
+    required_facts:
+      - Repository exceptions are translated to TransactionTechnicalException.
+      - AbortError becomes a timeout result.
+      - Other thrown client failures become network-error.
+    forbidden_claims: []
+    reference_answer: The backend wraps TransactionRepositoryException in TransactionTechnicalException. The browser client separately maps aborted requests to timeout and other thrown fetch errors to network-error.
+  metadata: {feature: inqtran, layer: error-handling, difficulty: medium}
+
+- description: INQSTMT Retrieve Statement workflow
+  vars:
+    question: What does the Retrieve Statement button do under the hood?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/statementInquiry/StatementInquiryPage.tsx
+        relevance: 3
+        must_contain: ["mutationFn: inquireStatement"]
+      - file_id: frontend/app/src/api/statementInquiryClient.ts
+        relevance: 3
+        must_contain: ["/statements/"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/controller/AccountStatementController.java
+        relevance: 2
+        must_contain: ["getStatement"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/service/AccountStatementService.java
+        relevance: 2
+        must_contain: ["retrieveStatement"]
+    required_facts:
+      - It validates sort code, account number, and YYYYMM period.
+      - The client sends authenticated GET /api/v1/accounts/{sortCode}/{accountNumber}/statements/{period}.
+      - The backend returns summary totals and period entries.
+    forbidden_claims: []
+    reference_answer: The button submits validated account and period values through a React Query mutation. The client performs an authenticated statement GET, and the backend calculates the monthly summary and entries for display.
+  metadata: {feature: inqstmt, layer: end-to-end, difficulty: hard}
+
+- description: INQSTMT period validation
+  vars:
+    question: What statement period format is valid?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/statementInquiry/validation.ts
+        relevance: 3
+        must_contain: ["month between 01 and 12"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/controller/AccountStatementController.java
+        relevance: 2
+        must_contain: ["^[0-9]{4}(0[1-9]|1[0-2])$"]
+    required_facts:
+      - Period is six digits in YYYYMM format.
+      - Month must be from 01 through 12.
+    forbidden_claims: []
+    reference_answer: A statement period is a six-digit YYYYMM value whose month is between 01 and 12. Both frontend validation and the controller enforce that pattern.
+  metadata: {feature: inqstmt, layer: validation, difficulty: easy}
+
+- description: INQSTMT balance calculations
+  vars:
+    question: How are opening balance, credits, debits, and closing balance calculated for a statement?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/service/AccountStatementService.java
+        relevance: 3
+        must_contain: ["totalCredits", "totalDebits", "closingBalance"]
+    required_facts:
+      - Opening balance is the sum before the first day of the period.
+      - Positive entries are credits and absolute negative entries are debits.
+      - Closing balance equals opening plus credits minus debits.
+    forbidden_claims: []
+    reference_answer: The repository supplies the sum before the period as opening balance. The service sums positive amounts as credits, absolute values of negative amounts as debits, and computes opening + credits - debits.
+  metadata: {feature: inqstmt, layer: business-logic, difficulty: medium}
+
+- description: INQSTMT blank descriptions
+  vars:
+    question: What description is shown for a statement entry whose description is blank?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/service/AccountStatementService.java
+        relevance: 3
+        must_contain: ["normalizeDescription"]
+    required_facts:
+      - Null or blank descriptions are normalized to N/A.
+    forbidden_claims: []
+    reference_answer: AccountStatementService replaces a null or blank transaction description with the literal N/A before returning the statement entry.
+  metadata: {feature: inqstmt, layer: mapping, difficulty: easy}
+
+- description: INQSTMT repository data access
+  vars:
+    question: Which database reads are performed to build a monthly statement?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/repository/JdbcStatementRepository.java
+        relevance: 3
+        must_contain: ["sumAmountsBeforeDate"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/service/AccountStatementService.java
+        relevance: 2
+        must_contain: ["periodFrom", "periodTo"]
+    required_facts:
+      - The repository verifies that the account exists.
+      - It sums amounts before the period start for opening balance.
+      - It fetches entries from the first through last day of the selected month.
+    forbidden_claims: []
+    reference_answer: Statement retrieval first verifies the account, then sums transaction amounts before the first day and loads entries between the month start and month end. Those reads provide the data for the summary and entries.
+  metadata: {feature: inqstmt, layer: persistence, difficulty: medium}
+
+- description: INQSTMT empty and error UI states
+  vars:
+    question: How does StatementInquiryPage display an empty statement versus an error?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/statementInquiry/StatementInquiryPage.tsx
+        relevance: 3
+        must_contain: ["No statement entries", "Error Details"]
+    required_facts:
+      - A successful response with no entries still displays the statement result and a no-entries message.
+      - Backend errors clear the result and display error code and correlation ID.
+      - Loading disables the submit button.
+    forbidden_claims: []
+    reference_answer: Empty entries are a successful statement result with a warning that no entries were returned. Backend failure removes the result and shows error details, while the button is disabled and labeled Loading during the mutation.
+  metadata: {feature: inqstmt, layer: frontend, difficulty: medium}
+
+- description: Application routes and feature navigation
+  vars:
+    question: Which banking workflows are available from the React operations console?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/App.tsx
+        relevance: 3
+        must_contain: ["INQCUST", "CRECUST", "INQACC", "INQACCCU", "INQTRAN", "INQSTMT"]
+    required_facts:
+      - Navigation includes customer inquiry/create, account inquiry, customer accounts, transactions, and statements.
+      - App maps those workflows to dedicated routes inside a shared layout.
+    forbidden_claims: ["Customer update is a primary sidebar item."]
+    reference_answer: The console exposes INQCUST, CRECUST, INQACC, INQACCCU, INQTRAN, and INQSTMT through the shared sidebar and routed pages. Customer update is reached through its parameterized edit route rather than a primary navigation item.
+  metadata: {feature: platform, layer: frontend, difficulty: easy}
+
+- description: Frontend API environment and CORS
+  vars:
+    question: How are the frontend API URL, timeout, token, and allowed browser origins configured?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/config/env.ts
+        relevance: 3
+        must_contain: ["VITE_API_BASE_URL", "VITE_API_TIMEOUT_MS", "VITE_INQACC_BEARER_TOKEN"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/support/WebCorsConfiguration.java
+        relevance: 2
+        must_contain: ["app.cors.allowed-origins", "http://localhost:5173"]
+    required_facts:
+      - Frontend defaults are empty base URL, 8000 ms timeout, and the development inquirer token.
+      - Backend CORS defaults to localhost port 5173 and covers /api/** and /v1/**.
+      - Allowed origins can be configured as a comma-separated property.
+    forbidden_claims: []
+    reference_answer: Vite variables control the API base URL, request timeout, and bearer token, with defaults of same-origin, 8000 ms, and the development inquirer token. Backend CORS reads a comma-separated origin property and defaults to http://localhost:5173 for both API path families.
+  metadata: {feature: platform, layer: configuration, difficulty: medium}
+
+- description: OpenAPI operations and z/OS assets
+  vars:
+    question: How do the API contract files and z/OS assets describe mainframe integrations?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/api/openapi.yaml
+        relevance: 3
+        must_contain: ["openapi:", "paths:"]
+      - file_id: backend/api/src/main/operations/%2Fcustomers%2F%7BcustomerId%7D/get/operation.yaml
+        relevance: 2
+        must_contain: ["zasset"]
+      - file_id: backend/api/src/main/zosAssets/INQCUST/zosAsset.yaml
+        relevance: 2
+        must_contain: ["INQCUST"]
+    required_facts:
+      - OpenAPI defines external paths, parameters, responses, and schemas.
+      - Per-operation YAML files define generated operation behavior and mappings.
+      - z/OS asset definitions and provider files describe mainframe request and response structures.
+    forbidden_claims: ["The React frontend directly executes COBOL copybooks."]
+    reference_answer: The OpenAPI document is the external REST contract, while encoded operation folders contain generated operation and mapping definitions. z/OS asset YAML, copybooks, schemas, and provider files describe the CICS/IMS-facing request and response data used by z/OS Connect tooling.
+  metadata: {feature: platform, layer: integration-contract, difficulty: hard}
+
+- description: INQACC response normalization and legacy dates
+  vars:
+    question: How does an account database record become the account inquiry API response?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/mapper/AccountResponseMapper.java
+        relevance: 3
+        must_contain: ["LEGACY_DATE_FORMAT"]
+    required_facts:
+      - The mapper trims fixed-width string values.
+      - Integer legacy dates are parsed as BASIC_ISO_DATE and returned in ISO form.
+      - Null dates remain null.
+    forbidden_claims: ["The frontend converts the database date fields."]
+    reference_answer: AccountResponseMapper trims fixed-width values and maps the persistence record into AccountResponse. It converts non-null YYYYMMDD integers through BASIC_ISO_DATE into ISO dates while preserving nulls.
+  metadata: {feature: inqacc, layer: mapping, difficulty: medium}
+
+- description: INQACC exception to HTTP status mapping
+  vars:
+    question: Which HTTP errors can account inquiry return for validation, authorization, missing data, and repository failures?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/controller/AccountInquiryExceptionHandler.java
+        relevance: 3
+        must_contain: ["handleRepositoryUnavailable"]
+    required_facts:
+      - Validation maps to 400, authentication to 401, authorization to 403, and missing accounts to 404.
+      - Repository unavailability maps to 503 and unexpected exceptions map to 500.
+      - Responses use the structured ErrorResponse envelope.
+    forbidden_claims: []
+    reference_answer: AccountInquiryExceptionHandler translates known failures into 400, 401, 403, 404, or 503 responses and reserves 500 for unexpected exceptions. Each response is wrapped in the account ErrorResponse structure.
+  metadata: {feature: inqacc, layer: error-handling, difficulty: medium}
+
+- description: INQACC limited bearer token behavior
+  vars:
+    question: What is the difference between the inquirer bearer token and the limited account token?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/security/BearerTokenAuthenticationFilter.java
+        relevance: 3
+        must_contain: ["valid-inqacc-limited-token"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/config/InqaccSecurityConfiguration.java
+        relevance: 2
+        must_contain: ["ACCOUNT_INQUIRER"]
+    required_facts:
+      - The inquirer token receives ROLE_ACCOUNT_INQUIRER.
+      - The limited token authenticates with a different role and cannot satisfy the account inquiry role rule.
+    forbidden_claims: ["Both tokens can access GET /v1/accounts/**."]
+    reference_answer: The filter recognizes both development tokens but grants the account-inquirer role only to the inquirer token. The security chain requires ACCOUNT_INQUIRER for account inquiry, so the limited token is authenticated but forbidden there.
+  metadata: {feature: inqacc, layer: security, difficulty: medium}
+
+- description: INQACC unauthorized versus forbidden response bodies
+  vars:
+    question: How does account security distinguish an unauthenticated request from an authenticated but forbidden request?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/security/InqaccAuthenticationEntryPoint.java
+        relevance: 3
+        must_contain: ["SC_UNAUTHORIZED"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/security/InqaccAccessDeniedHandler.java
+        relevance: 3
+        must_contain: ["SC_FORBIDDEN"]
+    required_facts:
+      - Missing or invalid authentication produces HTTP 401.
+      - Insufficient authority produces HTTP 403.
+      - Both handlers serialize structured JSON errors.
+    forbidden_claims: []
+    reference_answer: The authentication entry point writes a structured 401 response when credentials are absent or invalid. The access-denied handler writes a structured 403 response when an authenticated principal lacks the required role.
+  metadata: {feature: inqacc, layer: security, difficulty: medium}
+
+- description: INQACC JDBC date representation support
+  vars:
+    question: Which database date representations can JdbcAccountRepository normalize for account records?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/repository/JdbcAccountRepository.java
+        relevance: 3
+        must_contain: ["Unsupported date representation"]
+    required_facts:
+      - Null, integer, long, LocalDate, and string-like date values are normalized to legacy YYYYMMDD integers.
+      - Unsupported object types cause an IllegalStateException.
+    forbidden_claims: []
+    reference_answer: JdbcAccountRepository accepts several JDBC date shapes and reduces them to legacy YYYYMMDD integers. It explicitly rejects an unsupported representation instead of silently inventing a date.
+  metadata: {feature: inqacc, layer: persistence, difficulty: hard}
+
+- description: INQACC missing path segment handling
+  vars:
+    question: What happens if the account inquiry URL omits the sort code or account number path segment?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/controller/AccountInquiryController.java
+        relevance: 3
+        must_contain: ["getAccountWithMissingPathSegments"]
+    required_facts:
+      - The fallback controller mapping throws an IllegalArgumentException.
+      - The message says both sortcode and accountNumber are required path parameters.
+      - The account exception handler converts it into a validation response.
+    forbidden_claims: ["The backend supplies default account identifiers."]
+    reference_answer: The missing-segment mapping deliberately raises an IllegalArgumentException stating that both identifiers are required. The account exception advice then returns the validation error rather than attempting a lookup.
+  metadata: {feature: inqacc, layer: controller, difficulty: easy}
+
+- description: INQCUST default lookup mode
+  vars:
+    question: Which customer lookup mode is selected when the number is neither all zeroes nor all nines?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/LookupModeResolver.java
+        relevance: 3
+        must_contain: ["LookupMode.SPECIFIC"]
+    required_facts:
+      - 0000000000 selects RANDOM and 9999999999 selects LATEST.
+      - Every other customer number selects SPECIFIC.
+    forbidden_claims: ["The mode comes from a query parameter."]
+    reference_answer: LookupModeResolver treats the two sentinel values specially and returns SPECIFIC for every other customer number. The mode is derived from the path value, not a separate query parameter.
+  metadata: {feature: inqcust, layer: business-logic, difficulty: easy}
+
+- description: INQCUST random number generation bounds
+  vars:
+    question: How is a candidate customer number generated for a random customer lookup?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/DefaultRandomCustomerNumberGenerator.java
+        relevance: 3
+        must_contain: ["nextLong(1, highestCustomerNumber + 1)"]
+    required_facts:
+      - The random range starts at one and includes the highest known customer number.
+      - The selected number is formatted as a zero-padded ten-digit string.
+    forbidden_claims: ["Zero can be selected as a random candidate."]
+    reference_answer: The generator chooses a long from one through the current highest customer number and formats it with ten digits. This produces a candidate compatible with the fixed-width customer identifier.
+  metadata: {feature: inqcust, layer: function, difficulty: easy}
+
+- description: INQCUST customer record mapping
+  vars:
+    question: How does CustomerMapper clean and structure a legacy customer record?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/mapper/CustomerMapper.java
+        relevance: 3
+        must_contain: ["new AddressResponse"]
+    required_facts:
+      - Fixed-width strings are trailing-space trimmed.
+      - Address fields are grouped into AddressResponse.
+      - Status is uppercased into CustomerStatus and legacy dates are converted.
+    forbidden_claims: []
+    reference_answer: CustomerMapper removes trailing padding, groups address columns, converts legacy dates, and maps the normalized status text into CustomerStatus. The resulting CustomerResponse is shaped for the REST layer.
+  metadata: {feature: inqcust, layer: mapping, difficulty: medium}
+
+- description: INQCUST validation field extraction
+  vars:
+    question: How are bean-validation failures converted into customer inquiry field errors?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/controller/GlobalExceptionHandler.java
+        relevance: 3
+        must_contain: ["toFieldError"]
+    required_facts:
+      - Constraint violations are mapped into a list of FieldErrorResponse values.
+      - Nested property paths are reduced to their final field name.
+      - The response uses HTTP 400 and VALIDATION_ERROR.
+    forbidden_claims: []
+    reference_answer: GlobalExceptionHandler maps each constraint violation through toFieldError, keeping the final property-path segment and validation message. It returns those details in a 400 VALIDATION_ERROR response.
+  metadata: {feature: inqcust, layer: error-handling, difficulty: medium}
+
+- description: INQCUST invalid random candidates
+  vars:
+    question: Why can a generated random customer candidate be skipped even when a repository row exists?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/CustomerInquiryService.java
+        relevance: 3
+        must_contain: ["toValidRandomResponse"]
+    required_facts:
+      - A random row must have a parseable customer number.
+      - A malformed candidate is ignored rather than returned.
+      - Valid candidates are mapped into the normal successful response.
+    forbidden_claims: []
+    reference_answer: Random lookup validates the selected record before returning it. toValidRandomResponse rejects malformed customer numbers and only converts a valid record into the standard success response.
+  metadata: {feature: inqcust, layer: business-logic, difficulty: hard}
+
+- description: INQCUST frontend customer and risk presentation
+  vars:
+    question: How does the customer inquiry page present customer details, risk information, and the update action?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerInquiry/CustomerInquiryPage.tsx
+        relevance: 3
+        must_contain: ["renderRisk"]
+      - file_id: frontend/app/src/App.tsx
+        relevance: 2
+        must_contain: ["customers/:sortCode/:customerNumber/edit"]
+    required_facts:
+      - Customer details and risk assessment are rendered from a successful response.
+      - The update action routes with the source sort code and customer number.
+      - The edit route is parameterized rather than a primary workflow form.
+    forbidden_claims: ["The page updates the customer directly without navigation."]
+    reference_answer: CustomerInquiryPage renders the mapped profile and risk result, then offers an edit action carrying the customer identity. App routes that action to the parameterized CustomerUpdatePage.
+  metadata: {feature: inqcust, layer: frontend, difficulty: medium}
+
+- description: INQCUST repository table-name safety
+  vars:
+    question: How does the customer repository prevent unsafe configured schema or table identifiers?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/repository/JdbcCustomerRepository.java
+        relevance: 3
+        must_contain: ["SAFE_IDENTIFIER_PATTERN"]
+    required_facts:
+      - Schema and table names are validated against a restricted identifier pattern.
+      - Blank or unsupported identifiers cause configuration-time failure.
+      - Query values still use prepared-statement parameters.
+    forbidden_claims: ["Arbitrary table names are concatenated without validation."]
+    reference_answer: JdbcCustomerRepository validates configured identifiers before constructing its table reference and rejects blank or unsafe characters. Customer values are bound separately as SQL parameters.
+  metadata: {feature: inqcust, layer: persistence, difficulty: hard}
+
+- description: INQACCCU fixed legacy account metadata
+  vars:
+    question: Which fixed legacy fields are added when customer-account projections become account summaries?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/service/AccountRelationshipMapper.java
+        relevance: 3
+        must_contain: ["FIXED_SORT_CODE"]
+    required_facts:
+      - Each account summary receives eyecatcher ACCT.
+      - The mapped sort code is fixed to 987654.
+      - Dates are passed through DateMapper and balances come from the projection.
+    forbidden_claims: []
+    reference_answer: AccountRelationshipMapper adds the legacy ACCT eyecatcher and fixed 987654 sort code while retaining projection balances and account values. Legacy dates are normalized through DateMapper.
+  metadata: {feature: inqacccu, layer: mapping, difficulty: medium}
+
+- description: INQACCCU malformed legacy dates
+  vars:
+    question: What does DateMapper return for null or impossible YYYYMMDD account dates?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/service/DateMapper.java
+        relevance: 3
+        must_contain: ["DateTimeException"]
+    required_facts:
+      - Null input returns null.
+      - Valid eight-digit dates become ISO date strings.
+      - Impossible dates are caught and returned as null.
+    forbidden_claims: ["Malformed dates fail the entire account relationship request."]
+    reference_answer: DateMapper preserves null, formats a valid YYYYMMDD integer as an ISO date, and catches DateTimeException for impossible dates so the mapped field becomes null.
+  metadata: {feature: inqacccu, layer: function, difficulty: easy}
+
+- description: INQACCCU validation error details
+  vars:
+    question: How does customer-account inquiry report an invalid customer number field?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/controller/AccountRelationshipExceptionHandler.java
+        relevance: 3
+        must_contain: ["toValidationError"]
+    required_facts:
+      - Constraint violations become ValidationError entries.
+      - The final property-path segment is used as the field name.
+      - The envelope uses VALIDATION_ERROR and HTTP 400.
+    forbidden_claims: []
+    reference_answer: The exception handler converts each violation into a field/message pair, strips nested path prefixes, and returns the details in a 400 ApiError with type VALIDATION_ERROR.
+  metadata: {feature: inqacccu, layer: error-handling, difficulty: medium}
+
+- description: INQACCCU missing customer path
+  vars:
+    question: What does the customer-account endpoint do when customerNumber is omitted from the URL?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqacccu/controller/AccountRelationshipController.java
+        relevance: 3
+        must_contain: ["inquireWithMissingCustomerNumber"]
+    required_facts:
+      - A dedicated fallback mapping raises an IllegalArgumentException.
+      - The exception identifies customerNumber as a required path parameter.
+      - Exception advice converts it into a validation error.
+    forbidden_claims: []
+    reference_answer: The /accounts fallback does not run an inquiry. It raises a missing-customer-number validation exception, which the relationship exception handler returns as a structured 400 response.
+  metadata: {feature: inqacccu, layer: controller, difficulty: easy}
+
+- description: INQACCCU frontend legacy fail-code interpretation
+  vars:
+    question: How does the customer-account page translate legacy status codes into user messages?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerAccountInquiry/CustomerAccountInquiryPage.tsx
+        relevance: 3
+        must_contain: ["Account retrieval failed. Please retry later."]
+    required_facts:
+      - Success Y displays Inquiry successful.
+      - Fail code 1 displays Customer not found.
+      - Fail codes 2, 3, or 4 display a retry-later retrieval failure.
+    forbidden_claims: []
+    reference_answer: CustomerAccountInquiryPage interprets the legacy response instead of treating every HTTP 200 as business success. It distinguishes success, customer-not-found, staged retrieval failures, and an unknown fallback.
+  metadata: {feature: inqacccu, layer: frontend, difficulty: medium}
+
+- description: INQACCCU client malformed-error fallback
+  vars:
+    question: What error does the customer-account client return when a backend error body is not valid JSON?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/api/customerAccountInquiryClient.ts
+        relevance: 3
+        must_contain: ["safeParseError"]
+    required_facts:
+      - JSON parsing is attempted for backend failures.
+      - A malformed body becomes an INFRASTRUCTURE_ERROR fallback.
+      - Timeout and network failures remain separate result types.
+    forbidden_claims: []
+    reference_answer: safeParseError falls back to a structured infrastructure error when the body cannot be decoded. The surrounding client still distinguishes that backend response from abort timeouts and network failures.
+  metadata: {feature: inqacccu, layer: frontend-client, difficulty: medium}
+
+- description: CRECUST mock credit assessment policy
+  vars:
+    question: How does the development credit-check gateway assign a score and review date during customer creation?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/service/MockCreditCheckGateway.java
+        relevance: 3
+        must_contain: ["CreditCheckResult"]
+    required_facts:
+      - The mock gateway returns deterministic credit-check data from the request and current date.
+      - Its result supplies success, score, review date, and fail code to CustomerCreateService.
+    forbidden_claims: ["The development gateway calls an external credit bureau."]
+    reference_answer: MockCreditCheckGateway locally derives a deterministic CreditCheckResult used by customer creation. It does not perform a network call to a real credit provider.
+  metadata: {feature: crecust, layer: integration, difficulty: medium}
+
+- description: CRECUST fixed-width field sanitization
+  vars:
+    question: How are oversized or null customer text fields prepared for legacy storage during creation?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/service/CustomerCreateService.java
+        relevance: 3
+        must_contain: ["sanitize(String value, int maxLen)"]
+    required_facts:
+      - Null text becomes an empty string.
+      - Text longer than its legacy width is truncated.
+      - Values within the limit are retained.
+    forbidden_claims: ["Oversized text always rejects the create request."]
+    reference_answer: CustomerCreateService sanitizes fixed-width text by replacing null with blank and truncating content beyond each field's maximum legacy length.
+  metadata: {feature: crecust, layer: function, difficulty: easy}
+
+- description: CRECUST correlation identifier fallback
+  vars:
+    question: How does customer creation choose a correlation ID when the caller does not provide one?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/service/CustomerCreateService.java
+        relevance: 3
+        must_contain: ["correlationId(String providedCorrelationId)"]
+    required_facts:
+      - A provided nonblank correlation ID is retained.
+      - A missing or blank value is replaced with a generated UUID.
+    forbidden_claims: []
+    reference_answer: The correlationId helper preserves a usable caller identifier and generates a UUID only when that value is absent or blank.
+  metadata: {feature: crecust, layer: observability, difficulty: easy}
+
+- description: CRECUST malformed JSON error response
+  vars:
+    question: How is malformed JSON handled by the create-customer endpoint?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/controller/CustomerCreateExceptionHandler.java
+        relevance: 3
+        must_contain: ["handleMalformedJson"]
+    required_facts:
+      - HttpMessageNotReadableException is handled separately.
+      - The endpoint returns a structured create-customer validation error.
+      - The error includes a correlation identifier.
+    forbidden_claims: ["Malformed JSON reaches CustomerCreateService."]
+    reference_answer: CustomerCreateExceptionHandler catches unreadable request bodies before business processing and returns the create API's structured validation envelope with tracing information.
+  metadata: {feature: crecust, layer: error-handling, difficulty: medium}
+
+- description: CRECUST nullable JDBC values
+  vars:
+    question: How does the create repository persist nullable integer fields such as optional credit data?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/crecust/repository/JdbcCustomerCreateRepository.java
+        relevance: 3
+        must_contain: ["setNullableInt"]
+    required_facts:
+      - Non-null integers are bound normally.
+      - Null values are bound as SQL NULL rather than converted to zero.
+    forbidden_claims: []
+    reference_answer: JdbcCustomerCreateRepository uses setNullableInt so optional integer values preserve database null semantics instead of being silently changed to zero.
+  metadata: {feature: crecust, layer: persistence, difficulty: medium}
+
+- description: CRECUST frontend request payload construction
+  vars:
+    question: How does the create-customer form turn its fields into the backend request body?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerCreate/CustomerCreatePage.tsx
+        relevance: 3
+        must_contain: ["toRequestPayload"]
+    required_facts:
+      - Date-of-birth and created-date text fields become numeric day, month, and year objects.
+      - Address form fields are grouped into the nested address object.
+      - The form validates before calling createCustomer.
+    forbidden_claims: []
+    reference_answer: toRequestPayload converts the flat form state into the nested CreateCustomerRequest contract, including numeric date parts and the address object. onSubmit performs client validation before sending it.
+  metadata: {feature: crecust, layer: frontend, difficulty: medium}
+
+- description: CRECUST client protocol and fallback errors
+  vars:
+    question: What HTTP request does the create-customer client send and how does it classify failures?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/api/customerCreateClient.ts
+        relevance: 3
+        must_contain: ["method: 'POST'"]
+    required_facts:
+      - The client POSTs JSON to /v1/customers with a bearer token.
+      - HTTP 201 is success and documented error statuses become backend-error results.
+      - Abort and network failures are represented separately.
+    forbidden_claims: ["The create request uses GET."]
+    reference_answer: createCustomer sends an authenticated JSON POST to /v1/customers and treats 201 as success. Backend envelopes, abort timeouts, malformed errors, and network failures are normalized into distinct result variants.
+  metadata: {feature: crecust, layer: frontend-client, difficulty: medium}
+
+- description: UPDCUST source record lookup and failure mapping
+  vars:
+    question: What happens before UpdateCustomerService applies any requested field changes?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/service/UpdateCustomerService.java
+        relevance: 3
+        must_contain: ["findBySortCodeAndCustomerNumber"]
+    required_facts:
+      - Sort code and customer number are validated and normalized first.
+      - The existing record is loaded by both identifiers.
+      - Missing data becomes UPDCUST-404 while repository read failures become UPDCUST-500-READ.
+    forbidden_claims: ["Updates are inserted when the customer does not exist."]
+    reference_answer: The service normalizes the identity, validates the request, and loads the existing customer before applying changes. It distinguishes a business not-found result from an infrastructure read failure.
+  metadata: {feature: updcust, layer: service, difficulty: medium}
+
+- description: UPDCUST grouped legacy field updates
+  vars:
+    question: Why can changing firstName also affect title and lastName in the legacy update rules?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/service/UpdateCustomerService.java
+        relevance: 3
+        must_contain: ["applyLegacyUpdateRules"]
+    required_facts:
+      - A non-space first character in firstName activates the grouped title, first-name, and last-name update.
+      - Values whose first character is a space preserve the existing group.
+      - Other groups such as phone, address, status, and DOB are evaluated separately.
+    forbidden_claims: ["Every request field always overwrites the stored value."]
+    reference_answer: "applyLegacyUpdateRules mirrors grouped mainframe semantics: firstName acts as the trigger for replacing title and both name fields. Space-prefixed legacy blanks preserve that group while other field groups have their own triggers."
+  metadata: {feature: updcust, layer: business-logic, difficulty: hard}
+
+- description: UPDCUST structured exception envelopes
+  vars:
+    question: What information is returned when customer update validation or processing fails?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/controller/UpdateCustomerExceptionHandler.java
+        relevance: 3
+        must_contain: ["UPDCUST-400-VALIDATION"]
+    required_facts:
+      - Known UpdateCustomerException values retain their HTTP status, error code, and legacy fail code.
+      - Framework validation receives a dedicated 400 code.
+      - The envelope includes correlation ID and timestamp.
+    forbidden_claims: []
+    reference_answer: UpdateCustomerExceptionHandler preserves known domain error metadata and normalizes framework or unexpected exceptions. Every response includes code, message, legacy fail code, correlation ID, and timestamp.
+  metadata: {feature: updcust, layer: error-handling, difficulty: medium}
+
+- description: UPDCUST exact-row JDBC safeguard
+  vars:
+    question: Why does the update repository require exactly one affected customer row?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/repository/JdbcUpdateCustomerRepository.java
+        relevance: 3
+        must_contain: ["Unexpected updated rows count"]
+    required_facts:
+      - The UPDATE is constrained by sort code and customer number.
+      - Zero or multiple affected rows are treated as an inconsistent result.
+      - Only exactly one update returns the customer record.
+    forbidden_claims: []
+    reference_answer: JdbcUpdateCustomerRepository uses the complete customer identity and verifies executeUpdate returns one. Any other count signals missing or duplicate data and is rejected.
+  metadata: {feature: updcust, layer: persistence, difficulty: medium}
+
+- description: UPDCUST client response normalization
+  vars:
+    question: How does the frontend update client normalize success dates and malformed error envelopes?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/api/customerUpdateClient.ts
+        relevance: 3
+        must_contain: ["normalizeErrorEnvelope"]
+    required_facts:
+      - Success responses pass through normalizeSuccessResponse and ISO date normalization.
+      - Error payload fields are defensively converted to text.
+      - Missing or malformed errors receive a fallback envelope and correlation ID.
+    forbidden_claims: []
+    reference_answer: customerUpdateClient normalizes success dates and validates the shape of error data before exposing it to the page. Invalid error bodies are replaced with a predictable fallback that retains tracing information.
+  metadata: {feature: updcust, layer: frontend-client, difficulty: hard}
+
+- description: UPDCUST page prefill and post-success behavior
+  vars:
+    question: How is CustomerUpdatePage prefilled and what happens after a successful update?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/customerUpdate/CustomerUpdatePage.tsx
+        relevance: 3
+        must_contain: ["mapCustomerToForm"]
+    required_facts:
+      - Route parameters identify the customer and location state can provide the existing response.
+      - Customer data is mapped into editable form state.
+      - Success rebuilds inquiry-style customer data and navigates back to customer inquiry.
+    forbidden_claims: []
+    reference_answer: CustomerUpdatePage obtains identity from the route and uses navigation state to prefill the form through mapCustomerToForm. After success it reconstructs the customer inquiry state and returns the operator to the inquiry workflow.
+  metadata: {feature: updcust, layer: frontend, difficulty: hard}
+
+- description: UPDCUST endpoint request contract
+  vars:
+    question: What path, query parameter, validation, and body does the update-customer controller accept?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/updcust/controller/UpdateCustomerController.java
+        relevance: 3
+        must_contain: ["@PutMapping"]
+    required_facts:
+      - The endpoint is PUT /api/v1/customers/{customerNumber}.
+      - Customer number accepts one to ten digits and sortCode is optional.
+      - The request body is validated before service delegation.
+    forbidden_claims: ["The sort code is a required path parameter."]
+    reference_answer: UpdateCustomerController accepts a validated PUT body at the customer-number path, with an optional sortCode query parameter. It delegates the normalized inputs to UpdateCustomerService.
+  metadata: {feature: updcust, layer: controller, difficulty: medium}
+
+- description: INQTRAN composite transaction identifier
+  vars:
+    question: How is the transactionId shown by the API constructed from a legacy transaction row?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/mapper/TransactionInquiryMapper.java
+        relevance: 3
+        must_contain: ["composeTransactionId"]
+    required_facts:
+      - The mapper derives the ID from the row's identifying fields.
+      - Fixed-width string values are normalized before exposure.
+      - The amount and transaction attributes are retained in TransactionRecord.
+    forbidden_claims: ["The database supplies a separate generated transaction UUID."]
+    reference_answer: TransactionInquiryMapper composes the public transactionId from the legacy row identity and maps the normalized date, time, reference, type, description, and amount into TransactionRecord.
+  metadata: {feature: inqtran, layer: mapping, difficulty: medium}
+
+- description: INQTRAN frontend query construction
+  vars:
+    question: How does the transaction client include optional dates and pagination in the list request?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/api/transactionInquiryClient.ts
+        relevance: 3
+        must_contain: ["URLSearchParams"]
+    required_facts:
+      - The URL path carries sort code and account number.
+      - Present fromDate, toDate, limit, and offset values are added as query parameters.
+      - The request uses the configured bearer token and timeout.
+    forbidden_claims: []
+    reference_answer: inquireTransactions builds the account transaction path and uses URLSearchParams for only the optional filters and paging values that are present. It performs the GET with the shared timeout and bearer configuration.
+  metadata: {feature: inqtran, layer: frontend-client, difficulty: medium}
+
+- description: INQTRAN detail route structural validation
+  vars:
+    question: What must be valid before TransactionDetailPage sends its detail request?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/transactionInquiry/TransactionDetailPage.tsx
+        relevance: 3
+        must_contain: ["isStructurallyValidIdentity"]
+    required_facts:
+      - Sort code, account number, date, time, and reference come from route parameters.
+      - Each identifier must match its expected numeric length.
+      - Invalid identity prevents the backend request and displays an error.
+    forbidden_claims: []
+    reference_answer: TransactionDetailPage validates all five route components with isStructurallyValidIdentity before loading. A malformed deep link is rejected locally instead of being sent to the API.
+  metadata: {feature: inqtran, layer: frontend, difficulty: medium}
+
+- description: INQTRAN detail not-found semantics
+  vars:
+    question: How does transaction detail inquiry represent a valid identity that has no matching row?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/service/TransactionInquiryService.java
+        relevance: 3
+        must_contain: ["TransactionDetailInquiryResponse(false, null)"]
+    required_facts:
+      - An empty repository result is not converted into a technical exception.
+      - The response contains found false and a null transaction.
+      - Repository failures are still wrapped as TransactionTechnicalException.
+    forbidden_claims: ["A missing detail always returns HTTP 500."]
+    reference_answer: inquireDetail maps an absent physical row to a normal response with found false and no transaction. Only repository exceptions become technical failures.
+  metadata: {feature: inqtran, layer: service, difficulty: medium}
+
+- description: INQTRAN duplicate detail protection
+  vars:
+    question: What happens if the transaction detail identity matches more than one physical database row?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/repository/JdbcTransactionRepository.java
+        relevance: 3
+        must_contain: ["Duplicate physical matches detected"]
+    required_facts:
+      - The repository reads the first matching row and checks for another.
+      - A second row is treated as a repository integrity failure.
+      - The duplicate is not silently returned as one arbitrary transaction.
+    forbidden_claims: []
+    reference_answer: JdbcTransactionRepository enforces uniqueness for the composite detail identity. If a second physical row exists, it raises TransactionRepositoryException rather than selecting one silently.
+  metadata: {feature: inqtran, layer: persistence, difficulty: hard}
+
+- description: INQTRAN exception envelope mapping
+  vars:
+    question: How are validation errors and transaction infrastructure failures exposed by the backend?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/controller/TransactionInquiryExceptionHandler.java
+        relevance: 3
+        must_contain: ["handleTechnicalFailure"]
+    required_facts:
+      - Validation failures return HTTP 400 with ERR-001.
+      - Technical and unexpected failures return HTTP 500 with ERR-500.
+      - The error response includes the current correlation ID.
+    forbidden_claims: []
+    reference_answer: TransactionInquiryExceptionHandler separates invalid input from infrastructure failure, returning ERR-001/400 or ERR-500/500 respectively and attaching the MDC correlation ID.
+  metadata: {feature: inqtran, layer: error-handling, difficulty: medium}
+
+- description: INQTRAN required detail columns
+  vars:
+    question: How does the transaction repository handle null values in a matched detail row?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqtran/repository/JdbcTransactionRepository.java
+        relevance: 3
+        must_contain: ["Matched detail row contains null"]
+    required_facts:
+      - Null amount is treated as a repository failure for detail lookup.
+      - Required identity and descriptive columns are checked by requireColumn.
+      - Valid fixed-width strings are trailing-space trimmed.
+    forbidden_claims: ["Null detail fields are always replaced with empty strings."]
+    reference_answer: Detail mapping requires amount and the selected transaction columns to be non-null. A missing required value raises TransactionRepositoryException; valid strings are stripped of trailing padding.
+  metadata: {feature: inqtran, layer: persistence, difficulty: hard}
+
+- description: INQTRAN frontend page-count calculation
+  vars:
+    question: How does TransactionInquiryPage calculate pages and move between result sets?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/transactionInquiry/TransactionInquiryPage.tsx
+        relevance: 3
+        must_contain: ["Math.ceil(result.totalCount / result.limit)"]
+    required_facts:
+      - Total pages are derived from totalCount and effective limit.
+      - Next adds limit to offset and previous subtracts it without going below zero.
+      - Changing page resubmits the current filters with the new offset.
+    forbidden_claims: []
+    reference_answer: The page computes total pages from the backend count and page size. Navigation adjusts offset by one limit-sized window, clamps backward movement at zero, and reruns the existing query.
+  metadata: {feature: inqtran, layer: frontend, difficulty: medium}
+
+- description: INQSTMT client request and error classification
+  vars:
+    question: How does the statement client call the monthly statement endpoint and classify failures?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/api/statementInquiryClient.ts
+        relevance: 3
+        must_contain: ["inquireStatement"]
+    required_facts:
+      - Sort code, account number, and YYYYMM period are path segments.
+      - The request carries the bearer token and captures X-Correlation-ID.
+      - Backend, timeout, and network failures are distinct result types.
+    forbidden_claims: ["Statement retrieval uses POST."]
+    reference_answer: inquireStatement performs an authenticated GET to the account statement path, reads the correlation header, and normalizes supported backend statuses separately from timeout and network failures.
+  metadata: {feature: inqstmt, layer: frontend-client, difficulty: medium}
+
+- description: INQSTMT stable frontend entry keys
+  vars:
+    question: How does StatementInquiryPage create a stable key for each statement row?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/features/statementInquiry/StatementInquiryPage.tsx
+        relevance: 3
+        must_contain: ["entryKey"]
+    required_facts:
+      - The key combines transaction date, time, and reference.
+      - The combination reflects the legacy transaction identity displayed in the statement.
+    forbidden_claims: ["The array index is used as the statement row key."]
+    reference_answer: entryKey concatenates date, time, and reference, giving React a stable key based on transaction identity rather than list position.
+  metadata: {feature: inqstmt, layer: function, difficulty: easy}
+
+- description: INQSTMT exception and correlation mapping
+  vars:
+    question: Which statement failures become ERR-001, ERR-404, or ERR-500?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/controller/AccountStatementExceptionHandler.java
+        relevance: 3
+        must_contain: ["handleNotFound"]
+    required_facts:
+      - Validation produces ERR-001 and HTTP 400.
+      - Missing accounts produce ERR-404 and HTTP 404.
+      - Technical or unexpected failures produce ERR-500 and HTTP 500.
+    forbidden_claims: []
+    reference_answer: AccountStatementExceptionHandler maps invalid input, missing accounts, and infrastructure failures to their dedicated codes and statuses, attaching the current MDC correlation ID.
+  metadata: {feature: inqstmt, layer: error-handling, difficulty: medium}
+
+- description: INQSTMT controller path validation
+  vars:
+    question: What identifier formats does the monthly statement controller require?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/controller/AccountStatementController.java
+        relevance: 3
+        must_contain: ["getStatement"]
+    required_facts:
+      - Sort code is six digits and account number is eight digits.
+      - Period must be YYYYMM with a month from 01 through 12.
+      - Valid values delegate to retrieveStatement.
+    forbidden_claims: []
+    reference_answer: AccountStatementController validates all three path components before delegating. Its period pattern accepts a four-digit year followed by a real two-digit month.
+  metadata: {feature: inqstmt, layer: controller, difficulty: easy}
+
+- description: INQSTMT repository null normalization
+  vars:
+    question: How does JdbcStatementRepository normalize null amounts and padded statement fields?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/repository/JdbcStatementRepository.java
+        relevance: 3
+        must_contain: ["defaultAmount"]
+    required_facts:
+      - Null monetary amounts become BigDecimal.ZERO.
+      - Required strings become blank when null and are trailing-space trimmed.
+      - Nullable descriptions preserve null before service-level normalization.
+    forbidden_claims: []
+    reference_answer: The JDBC mapper defaults missing amounts to zero and strips trailing fixed-width padding. It distinguishes nullable descriptions so AccountStatementService can later replace blank descriptions with N/A.
+  metadata: {feature: inqstmt, layer: persistence, difficulty: medium}
+
+- description: INQSTMT repository failure wrapping
+  vars:
+    question: How does AccountStatementService distinguish a missing account from a database failure?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqstmt/service/AccountStatementService.java
+        relevance: 3
+        must_contain: ["StatementTechnicalException"]
+    required_facts:
+      - A false account-existence result raises StatementNotFoundException.
+      - StatementRepositoryException is caught and wrapped as StatementTechnicalException.
+      - The exception handler maps those paths to different HTTP responses.
+    forbidden_claims: []
+    reference_answer: The service treats an ordinary absent account as a business not-found condition, while caught repository exceptions become a technical statement failure for the 500 error path.
+  metadata: {feature: inqstmt, layer: service, difficulty: medium}
+
+- description: Platform route rendering fallback
+  vars:
+    question: What happens if one of the routed React banking pages throws while rendering?
+    answerable: true
+    gold_sources:
+      - file_id: frontend/app/src/App.tsx
+        relevance: 3
+        must_contain: ["RouteErrorBoundary"]
+    required_facts:
+      - Site content is wrapped in a route error boundary.
+      - The fallback displays Something Went Wrong and links back to Customer Inquiry.
+      - The render failure is logged to the console.
+    forbidden_claims: ["The entire browser process is intentionally reloaded."]
+    reference_answer: RouteErrorBoundary catches unexpected page render failures, logs diagnostic information, and replaces the route content with a recovery panel linking to customer inquiry.
+  metadata: {feature: platform, layer: frontend, difficulty: medium}
+
+- description: Platform shared UTC clock
+  vars:
+    question: How does the backend provide deterministic time access to services such as risk assessment?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/support/TimeConfiguration.java
+        relevance: 3
+        must_contain: ["Clock.systemUTC"]
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/service/RiskAssessmentService.java
+        relevance: 2
+        must_contain: ["LocalDate.now(clock)"]
+    required_facts:
+      - TimeConfiguration exposes a UTC Clock bean.
+      - RiskAssessmentService depends on Clock instead of directly using the system date.
+      - The injected clock supports consistent testing and stale-review calculations.
+    forbidden_claims: []
+    reference_answer: The support configuration supplies Clock.systemUTC, and time-sensitive services consume that clock. This centralizes timezone behavior and makes date-dependent rules controllable in tests.
+  metadata: {feature: platform, layer: configuration, difficulty: medium}
+
+- description: Platform backend application bootstrap
+  vars:
+    question: Where does the Bank of Z backend start and how are its components discovered?
+    answerable: true
+    gold_sources:
+      - file_id: backend/api/src/main/java/com/bankofz/mainframemodernization/MainframeModernizationApplication.java
+        relevance: 3
+        must_contain: ["SpringApplication.run"]
+    required_facts:
+      - MainframeModernizationApplication is the Spring Boot entry point.
+      - SpringApplication.run starts the application context.
+      - SpringBootApplication enables configuration and component discovery under the package.
+    forbidden_claims: ["The React main.tsx starts the Java API."]
+    reference_answer: MainframeModernizationApplication is the Java process entry point. Its SpringBootApplication annotation establishes the component-scanning root and SpringApplication.run boots the backend context.
+  metadata: {feature: platform, layer: bootstrap, difficulty: easy}

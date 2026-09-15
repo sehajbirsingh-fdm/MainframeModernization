@@ -1,0 +1,12 @@
+{
+  "name": "bank-of-z-rag-evaluation",
+  "private": true,
+  "scripts": {
+    "eval:retrieval": "promptfoo eval -c promptfooconfig.retrieval.yaml --max-concurrency 1",
+    "eval:answer": "promptfoo eval -c promptfooconfig.answer.yaml --max-concurrency 1",
+    "view": "promptfoo view"
+  },
+  "devDependencies": {
+    "promptfoo": "0.122.2"
+  }
+}

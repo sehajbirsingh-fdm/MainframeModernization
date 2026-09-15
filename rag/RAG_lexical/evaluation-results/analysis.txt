@@ -1,0 +1,45 @@
+Bank of Z Hybrid Retrieval Experiment
+====================================
+Latest run (UTC): 2026-09-03T12:35:51+00:00
+Mode: rerank
+Questions: 100
+Final chunks (K): 8
+Candidates: semantic=60, lexical=60
+RRF weights: semantic=0.9, lexical=0.1
+Candidates sent to reranker: 30
+Reranker: faxenoff/code-daemon-reranker-v1
+ONNX provider: CPUExecutionProvider
+Final rank fusion: retrieval=0.5, reranker=0.5
+
+Results
+-------
+Passed: 74
+Failed: 26
+Pass rate: 74.00%
+Hit@8: 0.8300
+Precision@8: 0.1288
+Recall@8: 0.7267
+MRR: 0.4825
+nDCG@8: 0.5071
+Failed question IDs: 1, 4, 5, 6, 8, 15, 20, 21, 28, 29, 33, 35, 40, 46, 50, 51, 54, 60, 66, 67, 68, 77, 85, 86, 87, 99
+Elapsed seconds: 11.051
+
+Recent runs
+-----------
+Timestamp (UTC)              Mode      K  Pass%   Hit@K  Recall@K  MRR
+2026-09-03T04:12:45+00:00    hybrid     8  71.0%   0.780    0.682  0.379
+2026-09-03T04:14:25+00:00    rerank    10  78.0%   0.840    0.732  0.444
+2026-09-03T12:25:12+00:00    rerank    10  75.0%   0.810    0.711  0.431
+2026-09-03T12:25:44+00:00    rerank    10  78.0%   0.850    0.752  0.474
+2026-09-03T12:26:16+00:00    rerank    10  79.0%   0.860    0.765  0.486
+2026-09-03T12:26:50+00:00    rerank    10  78.0%   0.860    0.765  0.492
+2026-09-03T12:30:34+00:00    hybrid    10  75.0%   0.810    0.715  0.382
+2026-09-03T12:31:42+00:00    rerank     8  74.0%   0.830    0.727  0.482
+2026-09-03T12:32:08+00:00    hybrid     8  71.0%   0.780    0.682  0.379
+2026-09-03T12:35:51+00:00    rerank     8  74.0%   0.830    0.727  0.482
+
+Artifacts
+---------
+Question details: /Users/temp/Documents/pod/MainframeModernization/rag/RAG_lexical/evaluation-results/retrieval_details_rerank_k8_20260903_123551.json
+Run history: /Users/temp/Documents/pod/MainframeModernization/rag/RAG_lexical/evaluation-results/retrieval_history.jsonl
+Gold questions: /Users/temp/Documents/pod/MainframeModernization/rag/rag_evaluation/eval_cases.yaml

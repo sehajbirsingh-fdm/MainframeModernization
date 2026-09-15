@@ -1,0 +1,671 @@
+{
+  "timestamp_utc": "2026-09-03T03:59:22+00:00",
+  "mode": "rerank",
+  "chunk_size": 8,
+  "questions": 3,
+  "gold_sources": 8,
+  "passed": 2,
+  "failed": 1,
+  "pass_rate": 0.6666666666666666,
+  "averages": {
+    "hit_at_k": 1.0,
+    "precision_at_k": 0.16666666666666666,
+    "recall_at_k": 0.5833333333333334,
+    "mrr": 0.5555555555555556,
+    "ndcg_at_k": 0.464641283254166
+  },
+  "configuration": {
+    "semantic_candidates": 60,
+    "lexical_candidates": 60,
+    "semantic_weight": 0.9,
+    "lexical_weight": 0.1,
+    "rrf_k": 60,
+    "candidate_limit": 30,
+    "retrieval_rank_weight": 0.7,
+    "reranker_rank_weight": 0.3,
+    "rerank_rrf_k": 60,
+    "batch_size": 64,
+    "rerank_model": "faxenoff/code-daemon-reranker-v1",
+    "rerank_provider": "CPUExecutionProvider"
+  },
+  "elapsed_seconds": 20.64,
+  "results": [
+    {
+      "case_number": 1,
+      "description": "INQACC button end-to-end workflow",
+      "question": "What does the Inquire Account button do and how does the request reach the backend?",
+      "metadata": {
+        "feature": "inqacc",
+        "layer": "end-to-end",
+        "difficulty": "hard"
+      },
+      "passed": false,
+      "metrics": {
+        "hit_at_k": 1.0,
+        "precision_at_k": 0.125,
+        "recall_at_k": 0.25,
+        "mrr": 1.0,
+        "ndcg_at_k": 0.492661526824024
+      },
+      "metric_passes": {
+        "hit_at_k": true,
+        "precision_at_k": true,
+        "recall_at_k": false,
+        "mrr": true,
+        "ndcg_at_k": true
+      },
+      "first_relevant_rank": 1,
+      "gold_sources": [
+        {
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx",
+          "relevance": 3,
+          "must_contain": [
+            "executeInquiry"
+          ],
+          "matched": false,
+          "matched_ranks": []
+        },
+        {
+          "file_id": "frontend/app/src/api/accountInquiryClient.ts",
+          "relevance": 3,
+          "must_contain": [
+            "/v1/accounts/"
+          ],
+          "matched": true,
+          "matched_ranks": [
+            1
+          ]
+        },
+        {
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/controller/AccountInquiryController.java",
+          "relevance": 2,
+          "must_contain": [
+            "getAccount"
+          ],
+          "matched": false,
+          "matched_ranks": []
+        },
+        {
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryService.java",
+          "relevance": 2,
+          "must_contain": [
+            "inquireAccount"
+          ],
+          "matched": false,
+          "matched_ranks": []
+        }
+      ],
+      "retrieved_chunks": [
+        {
+          "rank": 1,
+          "chunk_id": "frontend/app/src/api/accountInquiryClient.ts::chunk-0001",
+          "file_id": "frontend/app/src/api/accountInquiryClient.ts",
+          "start_line": 1,
+          "end_line": 81,
+          "cosine_similarity": 0.528906,
+          "bm25_score": 14.978668,
+          "semantic_rank": 1,
+          "lexical_rank": 13,
+          "rrf_score": 0.01612396,
+          "candidate_rank": 1,
+          "rerank_score": -4.02236843,
+          "rerank_rank": 12,
+          "rerank_fusion_score": 0.01564208,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": true,
+          "matched_gold_indices": [
+            1
+          ]
+        },
+        {
+          "rank": 2,
+          "chunk_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx::chunk-0009",
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx",
+          "start_line": 419,
+          "end_line": 480,
+          "cosine_similarity": 0.502563,
+          "bm25_score": 12.055929,
+          "semantic_rank": 5,
+          "lexical_rank": 53,
+          "rrf_score": 0.01473111,
+          "candidate_rank": 2,
+          "rerank_score": -3.6307478,
+          "rerank_rank": 9,
+          "rerank_fusion_score": 0.01563815,
+          "rerank_window_count": 5,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 3,
+          "chunk_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx::chunk-0005",
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx",
+          "start_line": 186,
+          "end_line": 244,
+          "cosine_similarity": 0.526572,
+          "bm25_score": null,
+          "semantic_rank": 3,
+          "lexical_rank": null,
+          "rrf_score": 0.01428571,
+          "candidate_rank": 4,
+          "rerank_score": -3.73645043,
+          "rerank_rank": 10,
+          "rerank_fusion_score": 0.01522321,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 4,
+          "chunk_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx::chunk-0004",
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx",
+          "start_line": 131,
+          "end_line": 184,
+          "cosine_similarity": 0.526922,
+          "bm25_score": null,
+          "semantic_rank": 2,
+          "lexical_rank": null,
+          "rrf_score": 0.01451613,
+          "candidate_rank": 3,
+          "rerank_score": -4.41816425,
+          "rerank_rank": 17,
+          "rerank_fusion_score": 0.01500722,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 5,
+          "chunk_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx::chunk-0007",
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx",
+          "start_line": 309,
+          "end_line": 359,
+          "cosine_similarity": 0.500047,
+          "bm25_score": 11.951336,
+          "semantic_rank": 8,
+          "lexical_rank": 57,
+          "rrf_score": 0.01408999,
+          "candidate_rank": 5,
+          "rerank_score": -4.6600008,
+          "rerank_rank": 21,
+          "rerank_fusion_score": 0.01447293,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 6,
+          "chunk_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx::chunk-0008",
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx",
+          "start_line": 361,
+          "end_line": 417,
+          "cosine_similarity": 0.473473,
+          "bm25_score": 19.380529,
+          "semantic_rank": 16,
+          "lexical_rank": 3,
+          "rrf_score": 0.01342941,
+          "candidate_rank": 10,
+          "rerank_score": -3.59224057,
+          "rerank_rank": 8,
+          "rerank_fusion_score": 0.01441176,
+          "rerank_window_count": 5,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 7,
+          "chunk_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx::chunk-0003",
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx",
+          "start_line": 99,
+          "end_line": 129,
+          "cosine_similarity": 0.518715,
+          "bm25_score": null,
+          "semantic_rank": 4,
+          "lexical_rank": null,
+          "rrf_score": 0.0140625,
+          "candidate_rank": 6,
+          "rerank_score": -4.62298632,
+          "rerank_rank": 20,
+          "rerank_fusion_score": 0.01435606,
+          "rerank_window_count": 2,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 8,
+          "chunk_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx::chunk-0006",
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.test.tsx",
+          "start_line": 246,
+          "end_line": 307,
+          "cosine_similarity": 0.499501,
+          "bm25_score": 13.13691,
+          "semantic_rank": 9,
+          "lexical_rank": 40,
+          "rrf_score": 0.01404348,
+          "candidate_rank": 7,
+          "rerank_score": -4.53686094,
+          "rerank_rank": 19,
+          "rerank_fusion_score": 0.01424523,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        }
+      ]
+    },
+    {
+      "case_number": 2,
+      "description": "INQACC highest account sentinel",
+      "question": "How do I retrieve the highest account number for a sort code?",
+      "metadata": {
+        "feature": "inqacc",
+        "layer": "backend",
+        "difficulty": "easy"
+      },
+      "passed": true,
+      "metrics": {
+        "hit_at_k": 1.0,
+        "precision_at_k": 0.125,
+        "recall_at_k": 0.5,
+        "mrr": 0.3333333333333333,
+        "ndcg_at_k": 0.3935773014954859
+      },
+      "metric_passes": {
+        "hit_at_k": true,
+        "precision_at_k": true,
+        "recall_at_k": true,
+        "mrr": true,
+        "ndcg_at_k": true
+      },
+      "first_relevant_rank": 3,
+      "gold_sources": [
+        {
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryService.java",
+          "relevance": 3,
+          "must_contain": [
+            "99999999",
+            "findHighestAccountNumberBySortcode"
+          ],
+          "matched": true,
+          "matched_ranks": [
+            3
+          ]
+        },
+        {
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx",
+          "relevance": 2,
+          "must_contain": [
+            "99999999"
+          ],
+          "matched": false,
+          "matched_ranks": []
+        }
+      ],
+      "retrieved_chunks": [
+        {
+          "rank": 1,
+          "chunk_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/repository/JdbcAccountRepository.java::chunk-0003",
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/repository/JdbcAccountRepository.java",
+          "start_line": 72,
+          "end_line": 124,
+          "cosine_similarity": 0.569514,
+          "bm25_score": 9.837387,
+          "semantic_rank": 1,
+          "lexical_rank": 54,
+          "rrf_score": 0.01563129,
+          "candidate_rank": 1,
+          "rerank_score": -0.23272383,
+          "rerank_rank": 2,
+          "rerank_fusion_score": 0.01631412,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 2,
+          "chunk_id": "backend/api/src/test/java/com/bankofz/mainframemodernization/inqacc/repository/MockAccountRepositoryTest.java::chunk-0002",
+          "file_id": "backend/api/src/test/java/com/bankofz/mainframemodernization/inqacc/repository/MockAccountRepositoryTest.java",
+          "start_line": 19,
+          "end_line": 64,
+          "cosine_similarity": 0.553739,
+          "bm25_score": null,
+          "semantic_rank": 2,
+          "lexical_rank": null,
+          "rrf_score": 0.01451613,
+          "candidate_rank": 2,
+          "rerank_score": -1.74169016,
+          "rerank_rank": 8,
+          "rerank_fusion_score": 0.01570209,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 3,
+          "chunk_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryService.java::chunk-0001",
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryService.java",
+          "start_line": 1,
+          "end_line": 49,
+          "cosine_similarity": 0.506509,
+          "bm25_score": null,
+          "semantic_rank": 4,
+          "lexical_rank": null,
+          "rrf_score": 0.0140625,
+          "candidate_rank": 4,
+          "rerank_score": -1.49499452,
+          "rerank_rank": 6,
+          "rerank_fusion_score": 0.01548295,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": true,
+          "matched_gold_indices": [
+            0
+          ]
+        },
+        {
+          "rank": 4,
+          "chunk_id": "backend/api/src/test/java/com/bankofz/mainframemodernization/inqacc/repository/MockAccountRepositoryTest.java::chunk-0003",
+          "file_id": "backend/api/src/test/java/com/bankofz/mainframemodernization/inqacc/repository/MockAccountRepositoryTest.java",
+          "start_line": 66,
+          "end_line": 107,
+          "cosine_similarity": 0.529106,
+          "bm25_score": null,
+          "semantic_rank": 3,
+          "lexical_rank": null,
+          "rrf_score": 0.01428571,
+          "candidate_rank": 3,
+          "rerank_score": -4.82100105,
+          "rerank_rank": 17,
+          "rerank_fusion_score": 0.01500722,
+          "rerank_window_count": 3,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 5,
+          "chunk_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/repository/JdbcCustomerRepository.java::chunk-0004",
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqcust/repository/JdbcCustomerRepository.java",
+          "start_line": 117,
+          "end_line": 157,
+          "cosine_similarity": 0.425796,
+          "bm25_score": null,
+          "semantic_rank": 8,
+          "lexical_rank": null,
+          "rrf_score": 0.01323529,
+          "candidate_rank": 8,
+          "rerank_score": -1.50312018,
+          "rerank_rank": 7,
+          "rerank_fusion_score": 0.01477173,
+          "rerank_window_count": 3,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 6,
+          "chunk_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/repository/AccountRepository.java::chunk-0001",
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/repository/AccountRepository.java",
+          "start_line": 1,
+          "end_line": 12,
+          "cosine_similarity": 0.39928,
+          "bm25_score": null,
+          "semantic_rank": 10,
+          "lexical_rank": null,
+          "rrf_score": 0.01285714,
+          "candidate_rank": 10,
+          "rerank_score": -1.35640943,
+          "rerank_rank": 5,
+          "rerank_fusion_score": 0.01461538,
+          "rerank_window_count": 1,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 7,
+          "chunk_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/repository/JdbcAccountRepository.java::chunk-0002",
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/repository/JdbcAccountRepository.java",
+          "start_line": 18,
+          "end_line": 70,
+          "cosine_similarity": 0.428679,
+          "bm25_score": null,
+          "semantic_rank": 7,
+          "lexical_rank": null,
+          "rrf_score": 0.01343284,
+          "candidate_rank": 7,
+          "rerank_score": -4.08499146,
+          "rerank_rank": 15,
+          "rerank_fusion_score": 0.01444776,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 8,
+          "chunk_id": "backend/api/src/test/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryServiceTest.java::chunk-0002",
+          "file_id": "backend/api/src/test/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryServiceTest.java",
+          "start_line": 23,
+          "end_line": 64,
+          "cosine_similarity": 0.361706,
+          "bm25_score": null,
+          "semantic_rank": 15,
+          "lexical_rank": null,
+          "rrf_score": 0.012,
+          "candidate_rank": 15,
+          "rerank_score": 0.15982223,
+          "rerank_rank": 1,
+          "rerank_fusion_score": 0.01425137,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        }
+      ]
+    },
+    {
+      "case_number": 3,
+      "description": "INQACC input validation",
+      "question": "What formats are accepted for account inquiry sort codes and account numbers?",
+      "metadata": {
+        "feature": "inqacc",
+        "layer": "validation",
+        "difficulty": "easy"
+      },
+      "passed": true,
+      "metrics": {
+        "hit_at_k": 1.0,
+        "precision_at_k": 0.25,
+        "recall_at_k": 1.0,
+        "mrr": 0.3333333333333333,
+        "ndcg_at_k": 0.5076850214429881
+      },
+      "metric_passes": {
+        "hit_at_k": true,
+        "precision_at_k": true,
+        "recall_at_k": true,
+        "mrr": true,
+        "ndcg_at_k": true
+      },
+      "first_relevant_rank": 3,
+      "gold_sources": [
+        {
+          "file_id": "frontend/app/src/features/accountInquiry/validation.ts",
+          "relevance": 3,
+          "must_contain": [
+            "^\\d{6}$",
+            "^\\d{8}$"
+          ],
+          "matched": true,
+          "matched_ranks": [
+            4
+          ]
+        },
+        {
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/validation/AccountInquiryValidator.java",
+          "relevance": 2,
+          "must_contain": [
+            "exactly 6 numeric digits",
+            "exactly 8 numeric digits"
+          ],
+          "matched": true,
+          "matched_ranks": [
+            3
+          ]
+        }
+      ],
+      "retrieved_chunks": [
+        {
+          "rank": 1,
+          "chunk_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryService.java::chunk-0001",
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/service/AccountInquiryService.java",
+          "start_line": 1,
+          "end_line": 49,
+          "cosine_similarity": 0.554984,
+          "bm25_score": null,
+          "semantic_rank": 3,
+          "lexical_rank": null,
+          "rrf_score": 0.01428571,
+          "candidate_rank": 3,
+          "rerank_score": -3.24862623,
+          "rerank_rank": 4,
+          "rerank_fusion_score": 0.01579861,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 2,
+          "chunk_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx::chunk-0003",
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx",
+          "start_line": 112,
+          "end_line": 156,
+          "cosine_similarity": 0.470499,
+          "bm25_score": 15.296645,
+          "semantic_rank": 12,
+          "lexical_rank": 3,
+          "rrf_score": 0.0140873,
+          "candidate_rank": 4,
+          "rerank_score": -2.07021213,
+          "rerank_rank": 2,
+          "rerank_fusion_score": 0.01577621,
+          "rerank_window_count": 2,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 3,
+          "chunk_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/validation/AccountInquiryValidator.java::chunk-0001",
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/validation/AccountInquiryValidator.java",
+          "start_line": 1,
+          "end_line": 24,
+          "cosine_similarity": 0.584234,
+          "bm25_score": null,
+          "semantic_rank": 2,
+          "lexical_rank": null,
+          "rrf_score": 0.01451613,
+          "candidate_rank": 2,
+          "rerank_score": -4.14460993,
+          "rerank_rank": 10,
+          "rerank_fusion_score": 0.01557604,
+          "rerank_window_count": 2,
+          "is_labeled_relevant": true,
+          "matched_gold_indices": [
+            1
+          ]
+        },
+        {
+          "rank": 4,
+          "chunk_id": "frontend/app/src/features/accountInquiry/validation.ts::chunk-0001",
+          "file_id": "frontend/app/src/features/accountInquiry/validation.ts",
+          "start_line": 1,
+          "end_line": 21,
+          "cosine_similarity": 0.594333,
+          "bm25_score": null,
+          "semantic_rank": 1,
+          "lexical_rank": null,
+          "rrf_score": 0.0147541,
+          "candidate_rank": 1,
+          "rerank_score": -4.52237988,
+          "rerank_rank": 14,
+          "rerank_fusion_score": 0.01552946,
+          "rerank_window_count": 1,
+          "is_labeled_relevant": true,
+          "matched_gold_indices": [
+            0
+          ]
+        },
+        {
+          "rank": 5,
+          "chunk_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx::chunk-0001",
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx",
+          "start_line": 1,
+          "end_line": 44,
+          "cosine_similarity": 0.533177,
+          "bm25_score": null,
+          "semantic_rank": 5,
+          "lexical_rank": null,
+          "rrf_score": 0.01384615,
+          "candidate_rank": 6,
+          "rerank_score": -1.37859511,
+          "rerank_rank": 1,
+          "rerank_fusion_score": 0.01552409,
+          "rerank_window_count": 3,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 6,
+          "chunk_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx::chunk-0004",
+          "file_id": "frontend/app/src/features/accountInquiry/AccountInquiryPage.tsx",
+          "start_line": 157,
+          "end_line": 216,
+          "cosine_similarity": 0.505852,
+          "bm25_score": null,
+          "semantic_rank": 6,
+          "lexical_rank": null,
+          "rrf_score": 0.01363636,
+          "candidate_rank": 7,
+          "rerank_score": -2.84500813,
+          "rerank_rank": 3,
+          "rerank_fusion_score": 0.01520967,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 7,
+          "chunk_id": "backend/api/src/test/java/com/bankofz/mainframemodernization/inqacc/validation/AccountInquiryValidatorTest.java::chunk-0001",
+          "file_id": "backend/api/src/test/java/com/bankofz/mainframemodernization/inqacc/validation/AccountInquiryValidatorTest.java",
+          "start_line": 1,
+          "end_line": 31,
+          "cosine_similarity": 0.533387,
+          "bm25_score": null,
+          "semantic_rank": 4,
+          "lexical_rank": null,
+          "rrf_score": 0.0140625,
+          "candidate_rank": 5,
+          "rerank_score": -4.24778271,
+          "rerank_rank": 11,
+          "rerank_fusion_score": 0.01499458,
+          "rerank_window_count": 3,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        },
+        {
+          "rank": 8,
+          "chunk_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/controller/AccountInquiryController.java::chunk-0001",
+          "file_id": "backend/api/src/main/java/com/bankofz/mainframemodernization/inqacc/controller/AccountInquiryController.java",
+          "start_line": 1,
+          "end_line": 43,
+          "cosine_similarity": 0.500005,
+          "bm25_score": null,
+          "semantic_rank": 7,
+          "lexical_rank": null,
+          "rrf_score": 0.01343284,
+          "candidate_rank": 8,
+          "rerank_score": -3.63329363,
+          "rerank_rank": 7,
+          "rerank_fusion_score": 0.01477173,
+          "rerank_window_count": 4,
+          "is_labeled_relevant": false,
+          "matched_gold_indices": []
+        }
+      ]
+    }
+  ]
+}

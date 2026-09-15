@@ -53,4 +53,30 @@ describe('CodeAssistantOverlay', () => {
     expect(screen.getByText('0000000000')).toBeInTheDocument()
     expect(screen.getByText('1 retrieved chunks')).toBeInTheDocument()
   })
+
+  it('shows the validation phase before displaying the approved answer', async () => {
+    let finishRequest: ((response: Awaited<ReturnType<typeof askCodeAssistant>>) => void) | undefined
+    mockedAskCodeAssistant.mockImplementation((_question, _history, onStatus) => {
+      onStatus?.('Validating the response...')
+      return new Promise((resolve) => {
+        finishRequest = resolve
+      })
+    })
+
+    const user = userEvent.setup()
+    render(<CodeAssistantOverlay />)
+
+    await user.click(screen.getByRole('button', { name: 'Open code assistant' }))
+    await user.type(screen.getByRole('textbox', { name: 'Codebase question' }), 'How does inquiry work?')
+    await user.click(screen.getByRole('button', { name: 'Send question' }))
+
+    expect(screen.getByRole('status')).toHaveTextContent('Validating the response...')
+
+    finishRequest?.({
+      answer: 'The validated answer.',
+      answer_model: 'openai/gpt-oss-120b',
+      sources: [],
+    })
+    expect(await screen.findByText('The validated answer.')).toBeInTheDocument()
+  })
 })
