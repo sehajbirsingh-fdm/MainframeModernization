@@ -197,6 +197,95 @@ public class JdbcTransactionRepository implements TransactionRepository {
         }
     }
 
+    @Override
+    public TransactionRow create(
+            String sortCode,
+            String accountNumber,
+            String date,
+            String time,
+            String type,
+            String description,
+            BigDecimal amount
+    ) {
+        String nextReferenceSql = """
+                SELECT COALESCE(MAX(CAST(TRIM(%s) AS BIGINT)), 0)
+                FROM %s
+                """.formatted(COL_REF, tableReference);
+        String insertSql = """
+                INSERT INTO %s (
+                    PROCTRAN_EYECATCHER,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    PROCTRAN_AMOUNT
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """.formatted(
+                tableReference,
+                COL_SORTCODE,
+                COL_NUMBER,
+                COL_DATE,
+                COL_TIME,
+                COL_REF,
+                COL_TYPE,
+                COL_DESC
+        );
+
+        try (Connection connection = dataSource.getConnection()) {
+            boolean originalAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            try {
+                long nextReference;
+                try (PreparedStatement statement = connection.prepareStatement(nextReferenceSql);
+                     ResultSet resultSet = statement.executeQuery()) {
+                    resultSet.next();
+                    nextReference = resultSet.getLong(1) + 1;
+                }
+                if (nextReference > 999_999_999_999L) {
+                    throw new SQLException("Transaction reference space exhausted");
+                }
+
+                String reference = "%012d".formatted(nextReference);
+                try (PreparedStatement statement = connection.prepareStatement(insertSql)) {
+                    statement.setString(1, "TRN ");
+                    statement.setString(2, sortCode);
+                    statement.setString(3, accountNumber);
+                    statement.setString(4, date);
+                    statement.setString(5, time);
+                    statement.setString(6, reference);
+                    statement.setString(7, type);
+                    statement.setString(8, description);
+                    statement.setBigDecimal(9, amount);
+                    statement.executeUpdate();
+                }
+                connection.commit();
+                connection.setAutoCommit(originalAutoCommit);
+                return new TransactionRow(
+                        sortCode,
+                        accountNumber,
+                        date,
+                        time,
+                        reference,
+                        type,
+                        description,
+                        amount
+                );
+            } catch (SQLException exception) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollbackFailure) {
+                    exception.addSuppressed(rollbackFailure);
+                }
+                throw exception;
+            }
+        } catch (SQLException exception) {
+            throw new TransactionRepositoryException("Failed transaction creation", exception);
+        }
+    }
+
     private void bindCommonCriteria(PreparedStatement statement, TransactionQueryCriteria criteria) throws SQLException {
         statement.setString(1, criteria.sortCode());
         statement.setString(2, criteria.accountNumber());

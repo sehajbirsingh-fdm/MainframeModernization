@@ -17,7 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class InqaccSecurityConfiguration {
 
     private static final String ACCOUNT_INQUIRER = "ACCOUNT_INQUIRER";
-        private static final String API_V1_CUSTOMERS_SINGLE = "/api/v1/customers/*";
+    private static final String API_V1_CUSTOMERS_SINGLE = "/api/v1/customers/*";
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -27,7 +27,12 @@ public class InqaccSecurityConfiguration {
             InqaccAccessDeniedHandler accessDeniedHandler
     ) throws Exception {
         http
-                .securityMatcher("/v1/accounts/**", "/api/v1/accounts/**", "/v1/customers/**", API_V1_CUSTOMERS_SINGLE)
+                .securityMatcher(
+                        "/v1/accounts/**",
+                        "/api/v1/accounts/**",
+                        "/v1/customers/**",
+                        API_V1_CUSTOMERS_SINGLE
+                )
                 // Safe to disable CSRF because this API is stateless and authenticates each request
                 // with Bearer tokens in the Authorization header, not browser cookies/sessions.
                 .csrf(csrf -> csrf.disable())
@@ -39,6 +44,7 @@ public class InqaccSecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/v1/accounts/**").hasRole(ACCOUNT_INQUIRER)
                         .requestMatchers(HttpMethod.GET, "/api/v1/accounts/**").hasRole(ACCOUNT_INQUIRER)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/accounts/*/*/transactions").hasRole(ACCOUNT_INQUIRER)
                         .requestMatchers(HttpMethod.GET, API_V1_CUSTOMERS_SINGLE).permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/customers/**").hasRole(ACCOUNT_INQUIRER)
                         .requestMatchers(HttpMethod.PUT, API_V1_CUSTOMERS_SINGLE).hasRole(ACCOUNT_INQUIRER)

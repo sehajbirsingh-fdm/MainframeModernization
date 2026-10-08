@@ -5,6 +5,7 @@ import com.bankofz.mainframemodernization.inqtran.repository.model.TransactionRo
 
 import java.util.List;
 import java.util.Optional;
+import java.math.BigDecimal;
 
 public interface TransactionRepository {
 
@@ -18,5 +19,15 @@ public interface TransactionRepository {
             String date,
             String time,
             String reference
+    );
+
+    TransactionRow create(
+            String sortCode,
+            String accountNumber,
+            String date,
+            String time,
+            String type,
+            String description,
+            BigDecimal amount
     );
 }

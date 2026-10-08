@@ -13,6 +13,7 @@ Spring Boot 3 (Java 21) backend implementing:
 - `GET /v1/accounts/{sortcode}/{accountNumber}`
 - `GET /api/v1/customers/{customerNumber}/accounts`
 - `GET /api/v1/accounts/{sortCode}/{accountNumber}/statements/{period}`
+- `POST /api/v1/accounts/{sortCode}/{accountNumber}/transactions`
 - `POST /v1/customers`
 
 ## Security
@@ -25,6 +26,9 @@ Spring Boot 3 (Java 21) backend implementing:
 ## Data Access Model
 
 The backend is DB-first and uses JDBC repositories only.
+
+Synthetic notification addresses are stored separately in `CUSTOMER_CONTACT` so
+the legacy `CUSTOMER` record format remains unchanged.
 
 - `CustomerRepository` -> `JdbcCustomerRepository`
 - `CustomerCreateRepository` -> `JdbcCustomerCreateRepository`

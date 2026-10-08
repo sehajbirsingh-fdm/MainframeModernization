@@ -1,0 +1,91 @@
+---
+config:
+  layout: fixed
+---
+flowchart TB
+ subgraph DATA["Data Foundation"]
+    direction LR
+        A["10 base transactions"]
+        B["Copilot-assisted<br>txns generated"]
+        C["Schema preserved"]
+        D[("H2 Database<br>3,000 transactions<br>45 accounts")]
+        M["30 customers + 3 test<br>few random anomalies"]
+  end
+ subgraph LIVE["Live transactions Simulation"]
+    direction LR
+        R["realtime.py<br>42 active accounts"]
+        G["Weighted random data<br>2% anomaly chance"]
+        API["Spring Boot API<br>timestamp · next reference"]
+        UI["Bank UI<br>account-txn update"]
+  end
+ subgraph DETECT["3 · Detection"]
+    direction LR
+        P["detect.py<br>live API scan"]
+        F["Account features<br>amount · time · velocity"]
+        RULES["Rules — current<br>median × 4 · 04:00 · 120s"]
+        RF["Isolation Forest<br>fit() ·score new txns"]
+        Q{"Anomaly?"}
+        T[/"Terminal finding"/]
+        N(["No action"])
+  end
+ subgraph ALERTS["Alerting"]
+    direction LR
+        SEEN{"Already flagged?"}
+        REG[("SQLite alert registry<br>unique transaction ID")]
+        ROUTE{"Recipient"}
+        CUSTOMER["Customer alert<br>debit · time · burst"]
+        BANK["Bank review<br>credit · ML risk"]
+        GROQ["&lt;Groq API&gt;<br>draft email"]
+        MAIL["Mailpit SMTP<br>local testing"]
+        BADGE["UI alert badge"]
+  end
+    A --> B
+    B --> C
+    C --> D
+    M --> D
+    R --> G
+    G -- POST --> API
+    API --> D
+    D --> UI
+    D -- GET via API --> P
+    P --> F
+    F --> RULES
+    RULES --> Q
+    F -.-> RF
+    RF -.-> Q
+    Q -- Yes --> T
+    Q -- No --> N
+    T -.-> SEEN
+    SEEN -- Yes --> N
+    SEEN -- No --> REG
+    REG --> ROUTE & BADGE
+    ROUTE --> CUSTOMER & BANK
+    CUSTOMER --> GROQ
+    GROQ --> MAIL
+
+     A:::current
+     B:::current
+     C:::current
+     D:::current
+     M:::current
+     R:::current
+     G:::current
+     API:::current
+     UI:::current
+     P:::current
+     F:::current
+     RULES:::current
+     RF:::planned
+     Q:::current
+     T:::current
+     N:::current
+     SEEN:::planned
+     REG:::planned
+     ROUTE:::planned
+     CUSTOMER:::planned
+     BANK:::planned
+     GROQ:::planned
+     MAIL:::planned
+     BADGE:::planned
+    classDef current fill:#e8f2ff,stroke:#2563eb,stroke-width:1.5px,color:#0f172a
+    classDef planned fill:#faf5ff,stroke:#7c3aed,stroke-width:1.5px,stroke-dasharray:5 4,color:#0f172a
